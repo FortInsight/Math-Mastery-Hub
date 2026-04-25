@@ -1,0 +1,449 @@
+:root {
+  --bg: #f7f3ea;
+  --card: rgba(255, 255, 255, 0.82);
+  --card-strong: #fffdf8;
+  --ink: #1d2433;
+  --muted: #5e6778;
+  --line: rgba(29, 36, 51, 0.12);
+  --brand: #0f7b6c;
+  --brand-dark: #0a5f54;
+  --accent: #f4b860;
+  --danger: #c45246;
+  --success: #1d8c61;
+  --shadow: 0 24px 60px rgba(25, 41, 61, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(244, 184, 96, 0.24), transparent 30%),
+    radial-gradient(circle at top right, rgba(15, 123, 108, 0.18), transparent 26%),
+    linear-gradient(180deg, #fff8eb 0%, #f7f3ea 44%, #eef5f2 100%);
+}
+
+button,
+textarea,
+input,
+select {
+  font: inherit;
+}
+
+.page-shell {
+  width: min(1240px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 3rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  margin-bottom: 1.5rem;
+}
+
+.hero-copy,
+.hero-panel,
+.card {
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--shadow);
+}
+
+.hero-copy,
+.hero-panel {
+  border-radius: 28px;
+  padding: 1.75rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 4vw, 4.2rem);
+  line-height: 0.98;
+  margin-bottom: 0.8rem;
+}
+
+.hero-text,
+.section-heading p,
+.summary-row span,
+.quiz-meta,
+.essay-prompt,
+#results-summary {
+  color: var(--muted);
+}
+
+.hero-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.9rem;
+  background:
+    linear-gradient(135deg, rgba(15, 123, 108, 0.95), rgba(9, 67, 97, 0.9)),
+    var(--card);
+  color: white;
+}
+
+.panel-chip {
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-weight: 700;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.5rem;
+}
+
+.card {
+  border-radius: 24px;
+  padding: 1.5rem;
+}
+
+.section-heading {
+  margin-bottom: 1rem;
+}
+
+.section-heading h2 {
+  margin-bottom: 0.3rem;
+}
+
+.section-heading p {
+  margin: 0;
+}
+
+.grade-buttons,
+.category-grid,
+.level-grid,
+.options-list,
+.results-breakdown {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.profile-panel {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(15, 123, 108, 0.08), rgba(255, 255, 255, 0.85));
+  border: 1px solid rgba(15, 123, 108, 0.12);
+}
+
+.profile-current {
+  margin-bottom: 1rem;
+}
+
+.profile-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--brand-dark);
+}
+
+.profile-form input,
+.profile-form select {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
+.profile-note {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.grade-buttons {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.category-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.level-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.grade-button,
+.category-card,
+.level-card,
+.option-button,
+.primary-button,
+.secondary-button {
+  border: 0;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.grade-button,
+.level-card,
+.secondary-button {
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.grade-button,
+.level-card {
+  padding: 0.95rem 1rem;
+  font-weight: 800;
+}
+
+.category-card {
+  padding: 1rem;
+  text-align: left;
+  background: linear-gradient(180deg, #fffdfa 0%, #f7fbfb 100%);
+  border: 1px solid rgba(15, 123, 108, 0.12);
+}
+
+.category-card h3 {
+  margin-bottom: 0.45rem;
+  font-size: 1.2rem;
+}
+
+.category-card p,
+.category-card small {
+  margin: 0;
+  color: var(--muted);
+}
+
+.category-card small {
+  display: block;
+  margin-top: 0.6rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+}
+
+.grade-button:hover,
+.category-card:hover,
+.level-card:hover,
+.option-button:hover,
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(13, 35, 53, 0.1);
+}
+
+.grade-button.active,
+.level-card.active {
+  background: linear-gradient(135deg, var(--brand), #1a9c89);
+  color: white;
+  border-color: transparent;
+}
+
+.category-card.active {
+  background: linear-gradient(145deg, #fff8ef, #f4fffb);
+  border-color: rgba(244, 184, 96, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(244, 184, 96, 0.35);
+}
+
+.summary-panel {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(244, 184, 96, 0.14), rgba(15, 123, 108, 0.08));
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(29, 36, 51, 0.08);
+}
+
+.summary-row:last-child {
+  border-bottom: 0;
+}
+
+.quiz-card {
+  background: var(--card-strong);
+}
+
+.quiz-topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.score-pill {
+  min-width: 120px;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: #f2faf8;
+  text-align: center;
+}
+
+.score-pill span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.score-pill strong {
+  font-size: 1.2rem;
+}
+
+.progress-track {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: #edf1f6;
+  margin: 1rem 0 1.25rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--brand));
+  border-radius: inherit;
+  transition: width 220ms ease;
+}
+
+.question-text {
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.45;
+  margin: 0 0 1rem;
+}
+
+.option-button {
+  padding: 1rem;
+  text-align: left;
+  background: white;
+  border: 1px solid rgba(29, 36, 51, 0.12);
+}
+
+.option-button.correct {
+  background: rgba(29, 140, 97, 0.12);
+  border-color: rgba(29, 140, 97, 0.35);
+}
+
+.option-button.wrong {
+  background: rgba(196, 82, 70, 0.12);
+  border-color: rgba(196, 82, 70, 0.35);
+}
+
+.feedback-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: #f6fafc;
+  border: 1px solid rgba(14, 60, 95, 0.1);
+  line-height: 1.6;
+}
+
+.feedback-box.success {
+  background: rgba(29, 140, 97, 0.08);
+  border-color: rgba(29, 140, 97, 0.2);
+}
+
+.feedback-box.error {
+  background: rgba(196, 82, 70, 0.08);
+  border-color: rgba(196, 82, 70, 0.18);
+}
+
+.quiz-actions,
+.results-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 0.9rem 1.25rem;
+  font-weight: 800;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, var(--brand), #1a9c89);
+  color: white;
+}
+
+.results-breakdown {
+  margin-top: 1rem;
+}
+
+.result-item {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: #fbfcfe;
+  border: 1px solid rgba(29, 36, 51, 0.08);
+}
+
+.result-item strong {
+  color: var(--ink);
+}
+
+.essay-panel textarea {
+  width: 100%;
+  margin: 1rem 0 0.8rem;
+  resize: vertical;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: white;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .page-shell {
+    width: min(100% - 1rem, 1240px);
+  }
+}

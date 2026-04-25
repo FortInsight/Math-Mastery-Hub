@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maths Mastery Hub</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Grade 1 to 12 Learning App</p>
+        <h1>Maths Mastery Hub</h1>
+        <p class="hero-text">
+          Practice by grade, choose a maths topic, answer 10 questions per level, get instant feedback,
+          and track your score as you grow.
+        </p>
+      </div>
+      <div class="hero-panel">
+        <div class="panel-chip">100 questions per category</div>
+        <div class="panel-chip">10 levels per category</div>
+        <div class="panel-chip">Instant answer feedback</div>
+        <div class="panel-chip">Essay challenge prompts</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="sidebar card">
+        <div class="section-heading">
+          <h2>Learner Profile</h2>
+          <p>Create a profile to save progress with a name, grade, and password.</p>
+        </div>
+
+        <div class="profile-panel">
+          <div class="profile-current">
+            <div class="summary-row">
+              <span>Current learner</span>
+              <strong id="profile-name-label">Guest</strong>
+            </div>
+            <div class="summary-row">
+              <span>Profile grade</span>
+              <strong id="profile-grade-label">Not set</strong>
+            </div>
+          </div>
+
+          <div class="profile-form">
+            <label class="field-label" for="profile-name">Name</label>
+            <input id="profile-name" type="text" placeholder="Enter learner name" />
+
+            <label class="field-label" for="profile-grade">Grade</label>
+            <select id="profile-grade"></select>
+
+            <label class="field-label" for="profile-password">Password</label>
+            <input id="profile-password" type="password" placeholder="Create or enter password" />
+
+            <div class="profile-actions">
+              <button id="create-profile-button" class="primary-button">Create Profile</button>
+              <button id="login-profile-button" class="secondary-button">Log In</button>
+              <button id="logout-profile-button" class="secondary-button hidden">Log Out</button>
+            </div>
+          </div>
+
+          <p class="profile-note">
+            Passwords are stored only in this browser on this device. This helps with local sign-in, but it is not bank-level security.
+          </p>
+          <div id="profile-message" class="feedback-box hidden"></div>
+        </div>
+
+        <div class="section-heading">
+          <h2>Choose Grade</h2>
+          <p>Select one level to load its maths topics.</p>
+        </div>
+        <div id="grade-buttons" class="grade-buttons"></div>
+
+        <div class="summary-panel">
+          <h3>Progress Snapshot</h3>
+          <div class="summary-row">
+            <span>Selected grade</span>
+            <strong id="selected-grade-label">Grade 1</strong>
+          </div>
+          <div class="summary-row">
+            <span>Saved to</span>
+            <strong id="save-status-label">Guest browser</strong>
+          </div>
+          <div class="summary-row">
+            <span>Selected topic</span>
+            <strong id="selected-category-label">None yet</strong>
+          </div>
+          <div class="summary-row">
+            <span>Completed levels</span>
+            <strong id="completed-levels-label">0</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="content">
+        <section class="card">
+          <div class="section-heading">
+            <h2>Maths Topics</h2>
+            <p>Each topic has 100 practice questions split into 10 levels of 10 questions.</p>
+          </div>
+          <div id="category-grid" class="category-grid"></div>
+        </section>
+
+        <section id="level-section" class="card">
+          <div class="section-heading">
+            <h2>Choose Level</h2>
+            <p>Pick a level to begin a 10-question practice round.</p>
+          </div>
+          <div id="level-grid" class="level-grid"></div>
+        </section>
+
+        <section id="quiz-section" class="card quiz-card hidden">
+          <div class="quiz-topbar">
+            <div>
+              <p id="quiz-meta" class="quiz-meta"></p>
+              <h2 id="question-title">Question</h2>
+            </div>
+            <div class="score-pill">
+              <span>Score</span>
+              <strong id="live-score">0 / 0</strong>
+            </div>
+          </div>
+
+          <div class="progress-track">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+
+          <div class="question-block">
+            <p id="question-text" class="question-text"></p>
+            <div id="options-list" class="options-list"></div>
+          </div>
+
+          <div id="feedback-box" class="feedback-box hidden"></div>
+
+          <div class="quiz-actions">
+            <button id="next-button" class="primary-button hidden">Next Question</button>
+          </div>
+        </section>
+
+        <section id="results-section" class="card hidden">
+          <div class="section-heading">
+            <h2>Level Complete</h2>
+            <p id="results-summary"></p>
+          </div>
+          <div id="results-breakdown" class="results-breakdown"></div>
+          <div class="results-actions">
+            <button id="retry-level-button" class="secondary-button">Retry Level</button>
+            <button id="next-level-button" class="primary-button">Next Level</button>
+          </div>
+        </section>
+
+        <section id="essay-section" class="card">
+          <div class="section-heading">
+            <h2>Essay / Written Challenge</h2>
+            <p>Use this to practice explaining your maths thinking after your quiz.</p>
+          </div>
+          <div class="essay-panel">
+            <p id="essay-prompt" class="essay-prompt">Select a grade and topic to see a written challenge.</p>
+            <textarea id="essay-response" rows="6" placeholder="Write your method, explanation, or reasoning here..."></textarea>
+            <button id="show-essay-feedback" class="secondary-button">Show Sample Feedback</button>
+            <div id="essay-feedback" class="feedback-box hidden"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
