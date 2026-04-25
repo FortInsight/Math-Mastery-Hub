@@ -126,6 +126,7 @@ const elements = {
   quizMeta: document.getElementById("quiz-meta"),
   questionTitle: document.getElementById("question-title"),
   questionText: document.getElementById("question-text"),
+  questionDiagram: document.getElementById("question-diagram"),
   optionsList: document.getElementById("options-list"),
   feedbackBox: document.getElementById("feedback-box"),
   nextButton: document.getElementById("next-button"),
@@ -135,10 +136,12 @@ const elements = {
   resultsBreakdown: document.getElementById("results-breakdown"),
   retryLevelButton: document.getElementById("retry-level-button"),
   nextLevelButton: document.getElementById("next-level-button"),
-  essayPrompt: document.getElementById("essay-prompt"),
-  essayResponse: document.getElementById("essay-response"),
-  showEssayFeedback: document.getElementById("show-essay-feedback"),
-  essayFeedback: document.getElementById("essay-feedback")
+  reviewLevelSelect: document.getElementById("review-level-select"),
+  openReviewButton: document.getElementById("open-review-button"),
+  reviewEmpty: document.getElementById("review-empty"),
+  reviewDetails: document.getElementById("review-details"),
+  reviewSummary: document.getElementById("review-summary"),
+  reviewBreakdown: document.getElementById("review-breakdown")
 };
 
 init();
@@ -158,7 +161,7 @@ function attachEvents() {
   elements.nextButton.addEventListener("click", moveToNextQuestion);
   elements.retryLevelButton.addEventListener("click", () => startLevel(state.selectedLevel));
   elements.nextLevelButton.addEventListener("click", moveToNextLevel);
-  elements.showEssayFeedback.addEventListener("click", renderEssayFeedback);
+  elements.openReviewButton.addEventListener("click", openSelectedReview);
 }
 
 function renderGradeButtons() {
@@ -192,7 +195,6 @@ function renderCategories() {
   elements.completedLevelsLabel.textContent = String(completedLevels);
   elements.categoryGrid.innerHTML = "";
   elements.levelGrid.innerHTML = "";
-
   categories.forEach((category) => {
     const card = document.createElement("button");
     card.className = `category-card ${category.id === state.selectedCategoryId ? "active" : ""}`;
@@ -207,13 +209,13 @@ function renderCategories() {
       hideQuizViews();
       renderCategories();
       renderLevels();
-      renderEssayPrompt();
+      renderReviewOptions();
     });
     elements.categoryGrid.appendChild(card);
   });
 
   renderLevels();
-  renderEssayPrompt();
+  renderReviewOptions();
 }
 
 function renderLevels() {
@@ -258,6 +260,7 @@ function renderQuestion() {
   elements.quizMeta.textContent = `Grade ${state.selectedGrade} | ${getSelectedCategory().title} | Level ${state.selectedLevel}`;
   elements.questionTitle.textContent = `Question ${questionNumber} of 10`;
   elements.questionText.textContent = question.prompt;
+  renderQuestionDiagram(question);
   elements.optionsList.innerHTML = "";
   elements.feedbackBox.classList.add("hidden");
   elements.feedbackBox.className = "feedback-box hidden";
@@ -303,14 +306,18 @@ function checkAnswer(selectedIndex, selectedButton) {
     prompt: question.prompt,
     correct: isCorrect,
     explanation: question.explanation,
-    answer: question.options[question.answerIndex]
+    answer: question.options[question.answerIndex],
+    selectedAnswer: question.options[selectedIndex]
   });
 
   elements.liveScore.textContent = `${state.score} / ${state.currentIndex + 1}`;
   elements.feedbackBox.classList.remove("hidden");
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
-    <strong>${isCorrect ? "Correct!" : "Not quite."}</strong>
+    <div class="feedback-reaction">
+      <span class="feedback-emoji">${isCorrect ? "🎉" : "😅"}</span>
+      <strong class="feedback-title">${isCorrect ? "Correct!" : "Not quite."}</strong>
+    </div>
     <div>${question.explanation}</div>
   `;
   elements.nextButton.textContent = state.currentIndex === state.currentQuestions.length - 1 ? "See Score" : "Next Question";
@@ -342,14 +349,7 @@ function completeLevel() {
   const percentage = Math.round((state.score / state.currentQuestions.length) * 100);
   elements.resultsSummary.textContent = `You scored ${state.score} out of 10 in Grade ${state.selectedGrade} ${category.title}, Level ${state.selectedLevel} (${percentage}%). ${savedToProfile ? `Saved to ${getCurrentProfile().name}'s profile.` : "Create or log in to a profile to save this progress."}`;
   elements.resultsBreakdown.innerHTML = state.lastResults
-    .map((result, index) => `
-      <div class="result-item">
-        <strong>Q${index + 1}: ${result.correct ? "Correct" : "Review needed"}</strong>
-        <span>${result.prompt}</span>
-        <span>Answer: ${result.answer}</span>
-        <span>${result.explanation}</span>
-      </div>
-    `)
+    .map((result, index) => renderResultItem(result, index))
     .join("");
 
   const nextLevel = Math.min(10, state.selectedLevel + 1);
@@ -357,6 +357,7 @@ function completeLevel() {
   elements.nextLevelButton.textContent = state.selectedLevel === 10 ? "Final Level Reached" : `Start Level ${nextLevel}`;
   elements.completedLevelsLabel.textContent = String(getCompletedLevelsCount(state.selectedGrade));
   renderLevels();
+  renderReviewOptions();
 }
 
 function moveToNextLevel() {
@@ -365,39 +366,70 @@ function moveToNextLevel() {
   }
 }
 
-function renderEssayPrompt() {
-  if (!state.selectedCategoryId) {
-    elements.essayPrompt.textContent = "Select a grade and topic to see a written challenge.";
-    elements.essayFeedback.classList.add("hidden");
+function renderQuestionDiagram(question) {
+  if (question.diagram) {
+    elements.questionDiagram.innerHTML = question.diagram;
+    elements.questionDiagram.classList.remove("hidden");
     return;
   }
 
-  const category = getSelectedCategory();
-  const prompt = buildEssayPrompt(state.selectedGrade, category);
-  elements.essayPrompt.textContent = prompt.prompt;
-  elements.essayFeedback.classList.add("hidden");
-  elements.essayResponse.value = "";
-}
-
-function renderEssayFeedback() {
-  if (!state.selectedCategoryId) {
-    return;
-  }
-
-  const category = getSelectedCategory();
-  const prompt = buildEssayPrompt(state.selectedGrade, category);
-  elements.essayFeedback.className = "feedback-box success";
-  elements.essayFeedback.innerHTML = `
-    <strong>Sample feedback</strong>
-    <div>${prompt.feedback}</div>
-    <div><strong>Teacher tip:</strong> ${prompt.tip}</div>
-  `;
-  elements.essayFeedback.classList.remove("hidden");
+  elements.questionDiagram.innerHTML = "";
+  elements.questionDiagram.classList.add("hidden");
 }
 
 function hideQuizViews() {
   elements.quizSection.classList.add("hidden");
   elements.resultsSection.classList.add("hidden");
+}
+
+function renderReviewOptions() {
+  const attempts = getSavedAttemptsForSelection();
+
+  if (!state.selectedCategoryId || attempts.length === 0) {
+    elements.reviewLevelSelect.innerHTML = `<option value="">No saved levels yet</option>`;
+    elements.reviewLevelSelect.disabled = true;
+    elements.openReviewButton.disabled = true;
+    elements.reviewEmpty.classList.remove("hidden");
+    elements.reviewDetails.classList.add("hidden");
+    return;
+  }
+
+  elements.reviewLevelSelect.disabled = false;
+  elements.openReviewButton.disabled = false;
+  elements.reviewLevelSelect.innerHTML = attempts
+    .map((attempt) => `<option value="${attempt.level}">Level ${attempt.level} | Score ${attempt.score}/10</option>`)
+    .join("");
+  elements.reviewEmpty.classList.add("hidden");
+}
+
+function openSelectedReview() {
+  if (!state.selectedCategoryId) {
+    return;
+  }
+
+  const level = Number(elements.reviewLevelSelect.value);
+  const attempt = getSavedAttempt(state.selectedGrade, state.selectedCategoryId, level);
+  if (!attempt) {
+    return;
+  }
+
+  elements.reviewDetails.classList.remove("hidden");
+  elements.reviewSummary.textContent = `Grade ${state.selectedGrade} | ${getSelectedCategory().title} | Level ${level} | Score ${attempt.score}/10`;
+  elements.reviewBreakdown.innerHTML = attempt.results
+    .map((result, index) => renderResultItem(result, index))
+    .join("");
+}
+
+function renderResultItem(result, index) {
+  return `
+    <div class="result-item">
+      <strong>Q${index + 1}: ${result.correct ? "Correct" : "Review needed"}</strong>
+      <span>${result.prompt}</span>
+      <span>Your answer: ${result.selectedAnswer}</span>
+      <span>Correct answer: ${result.answer}</span>
+      <span>${result.explanation}</span>
+    </div>
+  `;
 }
 
 function getSelectedCategory() {
@@ -456,6 +488,7 @@ function applyCurrentProfile() {
   }
 
   renderProfilePanel();
+  renderReviewOptions();
 }
 
 function renderProfilePanel() {
@@ -606,7 +639,11 @@ function saveCompletedLevel(grade, categoryId, level, score) {
   if (!profile.progress[grade][categoryId]) {
     profile.progress[grade][categoryId] = {};
   }
-  profile.progress[grade][categoryId][level] = { score, completedAt: new Date().toISOString() };
+  profile.progress[grade][categoryId][level] = {
+    score,
+    completedAt: new Date().toISOString(),
+    results: state.lastResults
+  };
   profilesStore.profiles[profile.id] = profile;
   saveProfilesStore();
   return true;
@@ -619,6 +656,21 @@ function getCompletedLevelsCount(grade) {
 
 function isLevelCompleted(grade, categoryId, level) {
   return Boolean(getActiveProgress()[grade]?.[categoryId]?.[level]);
+}
+
+function getSavedAttempt(grade, categoryId, level) {
+  return getActiveProgress()[grade]?.[categoryId]?.[level] || null;
+}
+
+function getSavedAttemptsForSelection() {
+  if (!state.selectedCategoryId) {
+    return [];
+  }
+
+  const categoryProgress = getActiveProgress()[state.selectedGrade]?.[state.selectedCategoryId] || {};
+  return Object.entries(categoryProgress)
+    .map(([level, attempt]) => ({ level: Number(level), ...attempt }))
+    .sort((a, b) => a.level - b.level);
 }
 
 function makeCategory(id, title, description, factory, config) {
@@ -919,7 +971,23 @@ const questionFactories = {
         prompt: `A right triangle has legs ${a} and ${b}. Which is closest to the hypotenuse length?`,
         options,
         answerIndex,
-        explanation: `Use the Pythagorean theorem: c^2 = ${a}^2 + ${b}^2, so c is about ${correct}.`
+        explanation: `Use the Pythagorean theorem: c^2 = ${a}^2 + ${b}^2, so c is about ${correct}.`,
+        diagram: triangleDiagram(a, b)
+      };
+    }
+
+    if (level >= 9 && index % 4 === 1) {
+      const l = number(4, difficultyStep(6, difficulty, 18), rng);
+      const w = number(3, difficultyStep(5, difficulty, 14), rng);
+      const h = number(2, difficultyStep(4, difficulty, 12), rng);
+      const correct = 2 * ((l * w) + (l * h) + (w * h));
+      const { options, answerIndex } = buildOptions(correct, [correct + (l * w), correct - (w * h), correct + 2 * h], rng);
+      return {
+        prompt: `Find the surface area of this rectangular prism.`,
+        options: options.map((option) => `${option} cm^2`),
+        answerIndex,
+        explanation: `Surface area = 2(lw + lh + wh) = 2(${l * w} + ${l * h} + ${w * h}) = ${correct} cm^2.`,
+        diagram: prismDiagram(l, w, h)
       };
     }
 
@@ -931,7 +999,8 @@ const questionFactories = {
         prompt: `What is the volume of a cube with side length ${side} cm?`,
         options: options.map((option) => `${option} cm^3`),
         answerIndex,
-        explanation: `Volume of a cube is side^3, so ${side}^3 = ${correct} cm^3.`
+        explanation: `Volume of a cube is side^3, so ${side}^3 = ${correct} cm^3.`,
+        diagram: cubeDiagram(side)
       };
     }
 
@@ -942,7 +1011,8 @@ const questionFactories = {
       prompt: `What kind of angle is ${angle} degrees?`,
       options,
       answerIndex,
-      explanation: `${angle} degrees is ${correct}.`
+      explanation: `${angle} degrees is ${correct}.`,
+      diagram: angleDiagram(angle)
     };
   },
 
@@ -1256,11 +1326,52 @@ function placeValueQuestion(value, grade) {
   };
 }
 
-function buildEssayPrompt(grade, category) {
-  const title = category.title;
-  return {
-    prompt: `Written challenge for Grade ${grade} ${title}: Explain how you would solve one problem from this topic step by step. Include why your method works and how you know your answer is reasonable.`,
-    feedback: `A strong answer should name the strategy, show each step in order, use maths words clearly, and end by checking whether the answer makes sense in the problem.`,
-    tip: `Try using sentence starters like "First I...", "Next I...", and "I know my answer is correct because...".`
-  };
+function angleDiagram(angle) {
+  return `
+    <svg viewBox="0 0 240 160" aria-label="Angle diagram">
+      <line x1="40" y1="120" x2="120" y2="120" stroke="#1d2433" stroke-width="4" />
+      <line x1="40" y1="120" x2="${40 + Math.cos((angle * Math.PI) / 180) * 80}" y2="${120 - Math.sin((angle * Math.PI) / 180) * 80}" stroke="#0f7b6c" stroke-width="4" />
+      <path d="M70 120 A30 30 0 0 1 ${40 + Math.cos((angle * Math.PI) / 180) * 30} ${120 - Math.sin((angle * Math.PI) / 180) * 30}" fill="none" stroke="#f4b860" stroke-width="4" />
+      <text x="90" y="105" font-size="16" fill="#1d2433">${angle} deg</text>
+    </svg>
+  `;
+}
+
+function triangleDiagram(a, b) {
+  return `
+    <svg viewBox="0 0 240 170" aria-label="Right triangle diagram">
+      <polygon points="40,130 160,130 40,40" fill="#edf7f5" stroke="#0f7b6c" stroke-width="4" />
+      <text x="88" y="148" font-size="16" fill="#1d2433">${a}</text>
+      <text x="12" y="92" font-size="16" fill="#1d2433">${b}</text>
+      <rect x="40" y="114" width="16" height="16" fill="none" stroke="#f4b860" stroke-width="3" />
+    </svg>
+  `;
+}
+
+function cubeDiagram(side) {
+  return `
+    <svg viewBox="0 0 240 190" aria-label="Cube diagram">
+      <rect x="55" y="55" width="90" height="90" fill="#f8fbff" stroke="#0f7b6c" stroke-width="4" />
+      <rect x="85" y="30" width="90" height="90" fill="#edf7f5" stroke="#0f7b6c" stroke-width="4" />
+      <line x1="55" y1="55" x2="85" y2="30" stroke="#0f7b6c" stroke-width="4" />
+      <line x1="145" y1="55" x2="175" y2="30" stroke="#0f7b6c" stroke-width="4" />
+      <line x1="145" y1="145" x2="175" y2="120" stroke="#0f7b6c" stroke-width="4" />
+      <text x="100" y="170" font-size="16" fill="#1d2433">${side} cm</text>
+    </svg>
+  `;
+}
+
+function prismDiagram(length, width, height) {
+  return `
+    <svg viewBox="0 0 280 190" aria-label="Rectangular prism diagram">
+      <rect x="45" y="65" width="120" height="80" fill="#f8fbff" stroke="#0f7b6c" stroke-width="4" />
+      <rect x="95" y="35" width="120" height="80" fill="#edf7f5" stroke="#0f7b6c" stroke-width="4" />
+      <line x1="45" y1="65" x2="95" y2="35" stroke="#0f7b6c" stroke-width="4" />
+      <line x1="165" y1="65" x2="215" y2="35" stroke="#0f7b6c" stroke-width="4" />
+      <line x1="165" y1="145" x2="215" y2="115" stroke="#0f7b6c" stroke-width="4" />
+      <text x="92" y="160" font-size="15" fill="#1d2433">l = ${length} cm</text>
+      <text x="220" y="82" font-size="15" fill="#1d2433">h = ${height} cm</text>
+      <text x="152" y="28" font-size="15" fill="#1d2433">w = ${width} cm</text>
+    </svg>
+  `;
 }

@@ -16,12 +16,17 @@
           Practice by grade, choose a maths topic, answer 10 questions per level, get instant feedback,
           and track your score as you grow.
         </p>
+        <div class="hero-actions">
+          <div class="hero-badge">Start here: choose a grade</div>
+          <div class="hero-badge">Then pick a topic</div>
+          <div class="hero-badge">Then start Level 1</div>
+        </div>
       </div>
       <div class="hero-panel">
         <div class="panel-chip">100 questions per category</div>
         <div class="panel-chip">10 levels per category</div>
         <div class="panel-chip">Instant answer feedback</div>
-        <div class="panel-chip">Essay challenge prompts</div>
+        <div class="panel-chip">Profile-based progress saving</div>
       </div>
     </header>
 
@@ -69,7 +74,7 @@
 
         <div class="section-heading">
           <h2>Choose Grade</h2>
-          <p>Select one level to load its maths topics.</p>
+          <p>This is the first step. Pick a grade to unlock matching topics.</p>
         </div>
         <div id="grade-buttons" class="grade-buttons"></div>
 
@@ -98,7 +103,7 @@
         <section class="card">
           <div class="section-heading">
             <h2>Maths Topics</h2>
-            <p>Each topic has 100 practice questions split into 10 levels of 10 questions.</p>
+            <p>This is the second step. Pick one topic to see its levels.</p>
           </div>
           <div id="category-grid" class="category-grid"></div>
         </section>
@@ -106,7 +111,7 @@
         <section id="level-section" class="card">
           <div class="section-heading">
             <h2>Choose Level</h2>
-            <p>Pick a level to begin a 10-question practice round.</p>
+            <p>This is the third step. Start with Level 1 if you are new to the topic.</p>
           </div>
           <div id="level-grid" class="level-grid"></div>
         </section>
@@ -129,6 +134,7 @@
 
           <div class="question-block">
             <p id="question-text" class="question-text"></p>
+            <div id="question-diagram" class="question-diagram hidden"></div>
             <div id="options-list" class="options-list"></div>
           </div>
 
@@ -151,16 +157,19 @@
           </div>
         </section>
 
-        <section id="essay-section" class="card">
+        <section id="review-section" class="card">
           <div class="section-heading">
-            <h2>Essay / Written Challenge</h2>
-            <p>Use this to practice explaining your maths thinking after your quiz.</p>
+            <h2>Review Past Levels</h2>
+            <p>Open any completed level to see the questions answered and the feedback from that attempt.</p>
           </div>
-          <div class="essay-panel">
-            <p id="essay-prompt" class="essay-prompt">Select a grade and topic to see a written challenge.</p>
-            <textarea id="essay-response" rows="6" placeholder="Write your method, explanation, or reasoning here..."></textarea>
-            <button id="show-essay-feedback" class="secondary-button">Show Sample Feedback</button>
-            <div id="essay-feedback" class="feedback-box hidden"></div>
+          <div class="review-controls">
+            <select id="review-level-select"></select>
+            <button id="open-review-button" class="secondary-button">Open Review</button>
+          </div>
+          <div id="review-empty" class="feedback-box">Complete a level while logged in to save a review history here.</div>
+          <div id="review-details" class="hidden">
+            <p id="review-summary" class="quiz-meta"></p>
+            <div id="review-breakdown" class="results-breakdown"></div>
           </div>
         </section>
       </section>
