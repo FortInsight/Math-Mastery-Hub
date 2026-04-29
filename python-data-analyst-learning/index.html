@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python For Data Analysts Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Start To Finish Learning Path</p>
+        <h1>Python For Data Analysts</h1>
+        <p class="hero-text">
+          Learn Python step by step for real data analyst work. Move from beginner basics into pandas,
+          data cleaning, visualization, SQL workflows, and automation with guided quiz practice.
+        </p>
+        <div class="hero-actions">
+          <div class="hero-badge">Pick your profile</div>
+          <div class="hero-badge">Choose a module</div>
+          <div class="hero-badge">Complete levels</div>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="panel-chip">18 learning modules</div>
+        <div class="panel-chip">100 questions per module</div>
+        <div class="panel-chip">10 levels per module</div>
+        <div class="panel-chip">Saved progress and review</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="sidebar card">
+        <div class="section-heading section-heading--collapsible">
+          <div>
+            <h2>Learner Profile</h2>
+            <p>Create a learner profile to save progress in this browser.</p>
+          </div>
+          <button id="toggle-profile-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="false">
+            Show Profile
+          </button>
+        </div>
+
+        <div id="profile-panel-content" class="hidden">
+          <div class="profile-panel">
+            <div class="profile-current">
+              <div class="summary-row">
+                <span>Current learner</span>
+                <strong id="profile-name-label">Guest</strong>
+              </div>
+              <div class="summary-row">
+                <span>Track</span>
+                <strong id="profile-track-label">Python Analyst Path</strong>
+              </div>
+            </div>
+
+            <div class="profile-form">
+              <label class="field-label" for="profile-name">Name</label>
+              <input id="profile-name" type="text" placeholder="Enter learner name" />
+
+              <label class="field-label" for="profile-focus">Learning focus</label>
+              <select id="profile-focus">
+                <option value="general">General Data Analyst</option>
+                <option value="excel-to-python">Excel To Python</option>
+                <option value="sql-python">SQL + Python Analyst</option>
+                <option value="reporting">Reporting & Automation</option>
+              </select>
+
+              <label class="field-label" for="profile-password">Password</label>
+              <input id="profile-password" type="password" placeholder="Create or enter password" />
+
+              <div class="profile-actions">
+                <button id="create-profile-button" class="primary-button" type="button">Create Profile</button>
+                <button id="login-profile-button" class="secondary-button" type="button">Log In</button>
+                <button id="logout-profile-button" class="secondary-button hidden" type="button">Log Out</button>
+              </div>
+            </div>
+
+            <p class="profile-note">Saved only in this browser on this device.</p>
+            <div id="profile-message" class="feedback-box hidden"></div>
+          </div>
+        </div>
+
+        <div class="summary-panel">
+          <h3>Learning Snapshot</h3>
+          <div class="summary-row">
+            <span>Current module</span>
+            <strong id="selected-module-label">None yet</strong>
+          </div>
+          <div class="summary-row">
+            <span>Saved to</span>
+            <strong id="save-status-label">Guest browser</strong>
+          </div>
+          <div class="summary-row">
+            <span>Completed levels</span>
+            <strong id="completed-levels-label">0</strong>
+          </div>
+          <div class="summary-row">
+            <span>Modules finished</span>
+            <strong id="completed-modules-label">0</strong>
+          </div>
+        </div>
+
+        <div class="roadmap-card">
+          <h3>Roadmap</h3>
+          <ol id="roadmap-list" class="roadmap-list"></ol>
+        </div>
+      </section>
+
+      <section class="content">
+        <section class="card">
+          <div class="section-heading">
+            <h2>Python Learning Modules</h2>
+            <p>Follow the path from beginner Python to real analyst work with data cleaning, analysis, and reporting.</p>
+          </div>
+          <div id="module-grid" class="category-grid"></div>
+        </section>
+
+        <section id="level-section" class="card hidden">
+          <div class="section-heading">
+            <h2>Choose Level</h2>
+            <p>Each module has 10 levels. Start at Level 1 and grow into more advanced analyst tasks.</p>
+          </div>
+          <div id="level-grid" class="level-grid"></div>
+        </section>
+
+        <section id="quiz-section" class="card quiz-card hidden">
+          <div class="quiz-topbar">
+            <div>
+              <p id="quiz-meta" class="quiz-meta"></p>
+              <h2 id="question-title">Question</h2>
+            </div>
+            <div class="score-pill">
+              <span>Score</span>
+              <strong id="live-score">0 / 0</strong>
+            </div>
+          </div>
+
+          <div class="progress-track">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+
+          <div class="question-block">
+            <p id="question-text" class="question-text"></p>
+            <pre id="question-code" class="question-code hidden"></pre>
+            <div id="options-list" class="options-list"></div>
+          </div>
+
+          <div id="feedback-box" class="feedback-box hidden"></div>
+
+          <div class="quiz-actions">
+            <button id="next-button" class="primary-button hidden" type="button">Next Question</button>
+          </div>
+        </section>
+
+        <section id="results-section" class="card hidden">
+          <div class="section-heading">
+            <h2>Level Complete</h2>
+            <p id="results-summary"></p>
+          </div>
+          <div id="results-breakdown" class="results-breakdown"></div>
+          <div class="results-actions">
+            <button id="retry-level-button" class="secondary-button" type="button">Retry Level</button>
+            <button id="next-level-button" class="primary-button" type="button">Next Level</button>
+          </div>
+        </section>
+
+        <section id="review-section" class="card hidden">
+          <div class="section-heading">
+            <h2>Review Past Levels</h2>
+            <p>Reopen completed levels to review your answers and explanations.</p>
+          </div>
+          <div class="review-controls">
+            <select id="review-level-select"></select>
+            <button id="open-review-button" class="secondary-button" type="button">Open Review</button>
+          </div>
+          <div id="review-empty" class="feedback-box">Choose a module and complete a level to save review history here.</div>
+          <div id="review-details" class="hidden">
+            <p id="review-summary" class="quiz-meta"></p>
+            <div id="review-breakdown" class="results-breakdown"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
