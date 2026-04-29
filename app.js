@@ -4,15 +4,19 @@ const curriculum = {
   1: [
     makeCategory("numbers", "Numbers to 100", "Count, compare, order, and build number sense.", "numberSense", { min: 0, max: 100 }),
     makeCategory("add-sub", "Addition & Subtraction", "Solve simple number stories and number sentences.", "additionSubtraction", { maxA: 20, maxB: 20 }),
+    makeCategory("counting", "Counting & Ordering", "Practice counting forward, backward, and ordering numbers.", "numberSense", { min: 0, max: 50 }),
     makeCategory("shapes", "Shapes & Space", "Identify 2D and 3D shapes and their features.", "geometry", { level: 1 }),
     makeCategory("measurement", "Measurement & Time", "Compare length, mass, time, and money ideas.", "measurement", { level: 1 }),
+    makeCategory("time", "Time & Calendar", "Read clocks, days, and everyday time ideas.", "measurement", { level: 1 }),
     makeCategory("patterns", "Patterns & Data", "Extend patterns and read picture data.", "patternsData", { level: 1 })
   ],
   2: [
     makeCategory("numbers", "Place Value", "Work with ones, tens, and numbers to 1,000.", "numberSense", { min: 10, max: 1000 }),
     makeCategory("add-sub", "Addition & Subtraction", "Add and subtract with regrouping ideas.", "additionSubtraction", { maxA: 100, maxB: 100 }),
+    makeCategory("skip-counting", "Skip Counting", "Build fluency with 2s, 5s, 10s, and repeated patterns.", "patternsData", { level: 2 }),
     makeCategory("measurement", "Measurement & Money", "Tell time, count coins, and compare measures.", "measurement", { level: 2 }),
     makeCategory("shapes", "Shapes & Fractions", "Name shapes and equal parts.", "geometry", { level: 2 }),
+    makeCategory("fractions", "Equal Parts", "Recognize halves, thirds, and fourths in shapes.", "fractionsDecimalsPercent", { stage: "basicFractions" }),
     makeCategory("patterns", "Patterns & Graphs", "Use skip counting and read simple graphs.", "patternsData", { level: 2 })
   ],
   3: [
@@ -20,70 +24,90 @@ const curriculum = {
     makeCategory("mult-div", "Multiplication & Division", "Use arrays, groups, and fact families.", "multiplicationDivision", { max: 10 }),
     makeCategory("fractions", "Fractions", "Understand halves, thirds, fourths, and simple comparisons.", "fractionsDecimalsPercent", { stage: "basicFractions" }),
     makeCategory("measurement", "Measurement", "Perimeter, time, mass, capacity, and money.", "measurement", { level: 3 }),
-    makeCategory("geometry", "Geometry & Data", "Angles, shapes, bar graphs, and tables.", "geometry", { level: 3 })
+    makeCategory("geometry", "Geometry & Data", "Angles, shapes, bar graphs, and tables.", "geometry", { level: 3 }),
+    makeCategory("graphs", "Graphs & Tables", "Read bar graphs, tables, and simple data displays.", "patternsData", { level: 3 }),
+    makeCategory("money", "Money Problems", "Solve everyday spending and change questions.", "measurement", { level: 3 })
   ],
   4: [
     makeCategory("numbers", "Whole Numbers", "Compare, round, and estimate larger numbers.", "numberSense", { min: 100, max: 100000 }),
     makeCategory("mult-div", "Multiplication & Division", "Multi-step operations with larger factors.", "multiplicationDivision", { max: 12 }),
     makeCategory("fractions", "Fractions & Decimals", "Equivalent fractions and tenths.", "fractionsDecimalsPercent", { stage: "fractionDecimalBridge" }),
     makeCategory("measurement", "Measurement & Area", "Area, perimeter, elapsed time, and conversions.", "measurement", { level: 4 }),
-    makeCategory("patterns", "Patterns & Algebra", "Number patterns and input-output rules.", "patternsData", { level: 4 })
+    makeCategory("patterns", "Patterns & Algebra", "Number patterns and input-output rules.", "patternsData", { level: 4 }),
+    makeCategory("geometry", "Lines, Angles & Shapes", "Study lines, angles, symmetry, and polygons.", "geometry", { level: 4 }),
+    makeCategory("data", "Data & Graphing", "Read charts, graphs, and line plot style questions.", "patternsData", { level: 4 })
   ],
   5: [
     makeCategory("numbers", "Number Sense", "Place value, rounding, and powers of 10.", "numberSense", { min: 1000, max: 1000000 }),
     makeCategory("operations", "Operations", "Multiply, divide, and solve word problems.", "multiplicationDivision", { max: 20 }),
     makeCategory("fractions", "Fractions, Decimals & Percent", "Operate with fractions and decimals.", "fractionsDecimalsPercent", { stage: "upperElementary" }),
     makeCategory("geometry", "Geometry", "Volume, coordinates, and classification.", "geometry", { level: 5 }),
-    makeCategory("data", "Data & Patterns", "Graphs, mean ideas, and pattern rules.", "patternsData", { level: 5 })
+    makeCategory("data", "Data & Patterns", "Graphs, mean ideas, and pattern rules.", "patternsData", { level: 5 }),
+    makeCategory("measurement", "Measurement & Conversions", "Convert units and solve area and volume questions.", "measurement", { level: 5 }),
+    makeCategory("graphing", "Coordinate Graphing", "Plot points and describe positions on a grid.", "geometry", { level: 5 })
   ],
   6: [
     makeCategory("numbers", "Ratios & Number Sense", "Factors, multiples, and rational number foundations.", "numberSense", { min: 10, max: 500 }),
     makeCategory("operations", "Fractions & Decimals", "Compute with fractions, decimals, and percent.", "fractionsDecimalsPercent", { stage: "middleSchoolStart" }),
     makeCategory("algebra", "Expressions & Equations", "Use variables, order of operations, and simple equations.", "algebra", { level: 6 }),
     makeCategory("geometry", "Geometry & Measurement", "Area, surface area, and volume.", "geometry", { level: 6 }),
-    makeCategory("data", "Statistics", "Interpret data sets and probability language.", "statisticsProbability", { level: 6 })
+    makeCategory("data", "Statistics", "Interpret data sets and probability language.", "statisticsProbability", { level: 6 }),
+    makeCategory("ratios", "Ratios & Rates", "Use unit rates, ratio language, and percent ideas.", "ratiosProportions", { level: 6 }),
+    makeCategory("integers", "Integers Intro", "Prepare for signed number thinking with ordered values.", "integersRational", { level: 6 })
   ],
   7: [
     makeCategory("integers", "Integers & Rational Numbers", "Add, subtract, multiply, and divide signed numbers.", "integersRational", { level: 7 }),
     makeCategory("algebra", "Algebraic Expressions", "Simplify expressions and solve equations.", "algebra", { level: 7 }),
     makeCategory("ratios", "Ratios & Proportions", "Rates, percent, and proportional thinking.", "ratiosProportions", { level: 7 }),
     makeCategory("geometry", "Geometry", "Angles, circles, and scale drawings.", "geometry", { level: 7 }),
-    makeCategory("data", "Data & Probability", "Compare samples and experimental probability.", "statisticsProbability", { level: 7 })
+    makeCategory("data", "Data & Probability", "Compare samples and experimental probability.", "statisticsProbability", { level: 7 }),
+    makeCategory("equations", "Equations & Inequalities", "Solve one-step and multi-step equation problems.", "algebra", { level: 7 }),
+    makeCategory("percent", "Percent Applications", "Solve tax, discount, and percent change questions.", "ratiosProportions", { level: 7 })
   ],
   8: [
     makeCategory("numbers", "Rational & Irrational Numbers", "Classify numbers and use exponents.", "integersRational", { level: 8 }),
     makeCategory("algebra", "Linear Equations", "Solve equations and analyze linear relationships.", "algebra", { level: 8 }),
     makeCategory("functions", "Functions", "Understand input-output rules, tables, and graphs.", "functionsGraphing", { level: 8 }),
     makeCategory("geometry", "Transformations & Geometry", "Congruence, similarity, and the Pythagorean theorem.", "geometry", { level: 8 }),
-    makeCategory("data", "Statistics", "Scatter plots, lines of best fit, and probability.", "statisticsProbability", { level: 8 })
+    makeCategory("data", "Statistics", "Scatter plots, lines of best fit, and probability.", "statisticsProbability", { level: 8 }),
+    makeCategory("exponents", "Exponents & Roots", "Work with powers, roots, and scientific notation ideas.", "integersRational", { level: 8 }),
+    makeCategory("systems", "Linear Patterns", "Compare patterns in tables, graphs, and equations.", "functionsGraphing", { level: 8.5 })
   ],
   9: [
     makeCategory("algebra", "Algebra Foundations", "Laws of exponents, factoring, and solving equations.", "algebra", { level: 9 }),
     makeCategory("functions", "Linear Functions", "Slope, intercepts, tables, and graphs.", "functionsGraphing", { level: 9 }),
     makeCategory("geometry", "Geometry", "Triangles, similarity, and coordinate geometry.", "geometry", { level: 9 }),
     makeCategory("statistics", "Statistics & Probability", "Analyze distributions and probability models.", "statisticsProbability", { level: 9 }),
-    makeCategory("financial", "Financial Math", "Discounts, tax, interest, and budgeting.", "financialMath", { level: 9 })
+    makeCategory("financial", "Financial Math", "Discounts, tax, interest, and budgeting.", "financialMath", { level: 9 }),
+    makeCategory("quadratics", "Intro to Quadratics", "Explore quadratic patterns, forms, and solutions.", "algebra", { level: 9.5 }),
+    makeCategory("relations", "Relations & Graphs", "Interpret graphs, relations, and domain-range ideas.", "functionsGraphing", { level: 9 })
   ],
   10: [
     makeCategory("algebra", "Advanced Algebra", "Quadratics, radicals, and polynomial operations.", "algebra", { level: 10 }),
     makeCategory("functions", "Functions & Graphing", "Linear, quadratic, and exponential behaviour.", "functionsGraphing", { level: 10 }),
     makeCategory("trig", "Trigonometry", "Use right triangle ratios and angle relationships.", "trigonometry", { level: 10 }),
     makeCategory("statistics", "Statistics & Probability", "Normal ideas, variation, and event probability.", "statisticsProbability", { level: 10 }),
-    makeCategory("geometry", "Measurement & Geometry", "Surface area, volume, and coordinate geometry.", "geometry", { level: 10 })
+    makeCategory("geometry", "Measurement & Geometry", "Surface area, volume, and coordinate geometry.", "geometry", { level: 10 }),
+    makeCategory("exponents", "Powers & Radicals", "Simplify radical and exponent expressions.", "algebra", { level: 10 }),
+    makeCategory("finance", "Applied Financial Math", "Use percentage models, budgeting, and interest.", "financialMath", { level: 10 })
   ],
   11: [
     makeCategory("functions", "Functions", "Polynomial, rational, logarithmic, and exponential ideas.", "functionsGraphing", { level: 11 }),
     makeCategory("algebra", "Advanced Algebra", "Sequences, series, and equation solving.", "algebra", { level: 11 }),
     makeCategory("trig", "Trigonometry", "Unit circle, identities, and solving trig equations.", "trigonometry", { level: 11 }),
     makeCategory("statistics", "Statistics", "Sampling, distributions, and inference ideas.", "statisticsProbability", { level: 11 }),
-    makeCategory("precalc", "Pre-Calculus", "Rates of change and model analysis.", "functionsGraphing", { level: 11.5 })
+    makeCategory("precalc", "Pre-Calculus", "Rates of change and model analysis.", "functionsGraphing", { level: 11.5 }),
+    makeCategory("sequences", "Sequences & Series", "Work with arithmetic and geometric sequences.", "algebra", { level: 11 }),
+    makeCategory("logarithms", "Exponential & Logarithmic Models", "Study growth, decay, and logarithmic behaviour.", "functionsGraphing", { level: 11.2 })
   ],
   12: [
     makeCategory("calculus", "Calculus", "Limits, derivatives, and real-world applications.", "calculus", { level: 12 }),
     makeCategory("advanced-func", "Advanced Functions", "Composite, inverse, and transformed functions.", "functionsGraphing", { level: 12 }),
     makeCategory("trig", "Trigonometry", "Advanced identities and modelling.", "trigonometry", { level: 12 }),
     makeCategory("statistics", "Statistics & Probability", "Expected value, inference, and models.", "statisticsProbability", { level: 12 }),
-    makeCategory("financial", "Financial Math", "Loans, annuities, and growth models.", "financialMath", { level: 12 })
+    makeCategory("financial", "Financial Math", "Loans, annuities, and growth models.", "financialMath", { level: 12 }),
+    makeCategory("derivatives", "Derivatives & Applications", "Use derivative rules and interpret rates of change.", "calculus", { level: 12 }),
+    makeCategory("integrated-func", "Function Transformations", "Combine advanced functions, graphs, and modelling.", "functionsGraphing", { level: 12.2 })
   ]
 };
 
@@ -113,6 +137,10 @@ const elements = {
   loginProfileButton: document.getElementById("login-profile-button"),
   logoutProfileButton: document.getElementById("logout-profile-button"),
   profileMessage: document.getElementById("profile-message"),
+  toggleProfilePanelButton: document.getElementById("toggle-profile-panel-button"),
+  profilePanelContent: document.getElementById("profile-panel-content"),
+  toggleGradePanelButton: document.getElementById("toggle-grade-panel-button"),
+  gradePanelContent: document.getElementById("grade-panel-content"),
   gradeButtons: document.getElementById("grade-buttons"),
   categoryGrid: document.getElementById("category-grid"),
   levelGrid: document.getElementById("level-grid"),
@@ -136,6 +164,7 @@ const elements = {
   resultsBreakdown: document.getElementById("results-breakdown"),
   retryLevelButton: document.getElementById("retry-level-button"),
   nextLevelButton: document.getElementById("next-level-button"),
+  reviewSection: document.getElementById("review-section"),
   reviewLevelSelect: document.getElementById("review-level-select"),
   openReviewButton: document.getElementById("open-review-button"),
   reviewEmpty: document.getElementById("review-empty"),
@@ -162,6 +191,24 @@ function attachEvents() {
   elements.retryLevelButton.addEventListener("click", () => startLevel(state.selectedLevel));
   elements.nextLevelButton.addEventListener("click", moveToNextLevel);
   elements.openReviewButton.addEventListener("click", openSelectedReview);
+  if (elements.toggleProfilePanelButton) {
+    elements.toggleProfilePanelButton.addEventListener("click", toggleProfilePanel);
+  }
+  if (elements.toggleGradePanelButton) {
+    elements.toggleGradePanelButton.addEventListener("click", toggleGradePanel);
+  }
+}
+
+function toggleProfilePanel() {
+  const isHidden = elements.profilePanelContent.classList.toggle("hidden");
+  elements.toggleProfilePanelButton.textContent = isHidden ? "Show Profile" : "Hide Profile";
+  elements.toggleProfilePanelButton.setAttribute("aria-expanded", String(!isHidden));
+}
+
+function toggleGradePanel() {
+  const isHidden = elements.gradePanelContent.classList.toggle("hidden");
+  elements.toggleGradePanelButton.textContent = isHidden ? "Show Grades" : "Hide Grades";
+  elements.toggleGradePanelButton.setAttribute("aria-expanded", String(!isHidden));
 }
 
 function renderGradeButtons() {
@@ -195,6 +242,7 @@ function renderCategories() {
   elements.completedLevelsLabel.textContent = String(completedLevels);
   elements.categoryGrid.innerHTML = "";
   elements.levelGrid.innerHTML = "";
+  elements.levelSection.classList.add("hidden");
   categories.forEach((category) => {
     const card = document.createElement("button");
     card.className = `category-card ${category.id === state.selectedCategoryId ? "active" : ""}`;
@@ -222,11 +270,12 @@ function renderLevels() {
   elements.levelGrid.innerHTML = "";
 
   if (!state.selectedCategoryId) {
-    elements.levelGrid.innerHTML = `<p class="quiz-meta">Choose a topic above to unlock its 10 levels.</p>`;
+    elements.levelSection.classList.add("hidden");
     return;
   }
 
   const category = getSelectedCategory();
+  elements.levelSection.classList.remove("hidden");
   elements.selectedCategoryLabel.textContent = category.title;
 
   for (let level = 1; level <= 10; level += 1) {
@@ -249,6 +298,7 @@ function startLevel(level) {
 
   elements.resultsSection.classList.add("hidden");
   elements.quizSection.classList.remove("hidden");
+  elements.reviewSection?.classList.add("hidden");
   renderLevels();
   renderQuestion();
 }
@@ -344,6 +394,7 @@ function completeLevel() {
   const savedToProfile = saveCompletedLevel(state.selectedGrade, category.id, state.selectedLevel, state.score);
   elements.quizSection.classList.add("hidden");
   elements.resultsSection.classList.remove("hidden");
+  elements.reviewSection?.classList.remove("hidden");
   elements.progressBar.style.width = "100%";
 
   const percentage = Math.round((state.score / state.currentQuestions.length) * 100);
@@ -380,12 +431,25 @@ function renderQuestionDiagram(question) {
 function hideQuizViews() {
   elements.quizSection.classList.add("hidden");
   elements.resultsSection.classList.add("hidden");
+  elements.reviewSection?.classList.remove("hidden");
 }
 
 function renderReviewOptions() {
   const attempts = getSavedAttemptsForSelection();
 
-  if (!state.selectedCategoryId || attempts.length === 0) {
+  if (!state.selectedCategoryId) {
+    elements.reviewSection.classList.add("hidden");
+    elements.reviewLevelSelect.innerHTML = `<option value="">Choose a topic first</option>`;
+    elements.reviewLevelSelect.disabled = true;
+    elements.openReviewButton.disabled = true;
+    elements.reviewEmpty.classList.remove("hidden");
+    elements.reviewDetails.classList.add("hidden");
+    return;
+  }
+
+  elements.reviewSection.classList.remove("hidden");
+
+  if (attempts.length === 0) {
     elements.reviewLevelSelect.innerHTML = `<option value="">No saved levels yet</option>`;
     elements.reviewLevelSelect.disabled = true;
     elements.openReviewButton.disabled = true;
@@ -719,11 +783,43 @@ function shuffle(list, rng) {
 }
 
 function buildOptions(correct, distractors, rng, formatter = (value) => String(value)) {
-  const options = shuffle([correct, ...distractors], rng).map(formatter);
+  const rawPool = shuffle([correct, ...distractors], rng);
+  const options = [];
+  const seen = new Set();
+
+  rawPool.forEach((value) => {
+    const label = formatter(value);
+    if (!seen.has(label)) {
+      seen.add(label);
+      options.push(label);
+    }
+  });
+
+  let attempt = 1;
+  while (options.length < 4 && attempt <= 12) {
+    const fallbackValue = buildFallbackOptionValue(correct, attempt);
+    const fallbackLabel = formatter(fallbackValue);
+    if (!seen.has(fallbackLabel)) {
+      seen.add(fallbackLabel);
+      options.push(fallbackLabel);
+    }
+    attempt += 1;
+  }
+
+  const shuffledOptions = shuffle(options.slice(0, 4), rng);
   return {
-    options,
-    answerIndex: options.indexOf(formatter(correct))
+    options: shuffledOptions,
+    answerIndex: shuffledOptions.indexOf(formatter(correct))
   };
+}
+
+function buildFallbackOptionValue(correct, attempt) {
+  if (typeof correct === "number" && Number.isFinite(correct)) {
+    const step = Math.max(1, Math.abs(Math.round(correct / 5)) || 1);
+    return correct + (step * attempt);
+  }
+
+  return `${correct} ${attempt + 1}`;
 }
 
 function pick(list, rng) {

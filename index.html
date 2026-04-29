@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Maths Mastery Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -32,51 +35,63 @@
 
     <main class="layout">
       <section class="sidebar card">
-        <div class="section-heading">
-          <h2>Learner Profile</h2>
-          <p>Create a profile to save progress with a name, grade, and password.</p>
-        </div>
-
-        <div class="profile-panel">
-          <div class="profile-current">
-            <div class="summary-row">
-              <span>Current learner</span>
-              <strong id="profile-name-label">Guest</strong>
-            </div>
-            <div class="summary-row">
-              <span>Profile grade</span>
-              <strong id="profile-grade-label">Not set</strong>
-            </div>
+        <div class="section-heading section-heading--collapsible">
+          <div>
+            <h2>Learner Profile</h2>
+            <p>Create a profile to save progress with a name, grade, and password.</p>
           </div>
+          <button id="toggle-profile-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="false">
+            Show Profile
+          </button>
+        </div>
 
-          <div class="profile-form">
-            <label class="field-label" for="profile-name">Name</label>
-            <input id="profile-name" type="text" placeholder="Enter learner name" />
-
-            <label class="field-label" for="profile-grade">Grade</label>
-            <select id="profile-grade"></select>
-
-            <label class="field-label" for="profile-password">Password</label>
-            <input id="profile-password" type="password" placeholder="Create or enter password" />
-
-            <div class="profile-actions">
-              <button id="create-profile-button" class="primary-button">Create Profile</button>
-              <button id="login-profile-button" class="secondary-button">Log In</button>
-              <button id="logout-profile-button" class="secondary-button hidden">Log Out</button>
+        <div id="profile-panel-content" class="hidden">
+          <div class="profile-panel">
+            <div class="profile-current">
+              <div class="summary-row">
+                <span>Current learner</span>
+                <strong id="profile-name-label">Guest</strong>
+              </div>
+              <div class="summary-row">
+                <span>Profile grade</span>
+                <strong id="profile-grade-label">Not set</strong>
+              </div>
             </div>
+
+            <div class="profile-form">
+              <label class="field-label" for="profile-name">Name</label>
+              <input id="profile-name" type="text" placeholder="Enter learner name" />
+
+              <label class="field-label" for="profile-grade">Grade</label>
+              <select id="profile-grade"></select>
+
+              <label class="field-label" for="profile-password">Password</label>
+              <input id="profile-password" type="password" placeholder="Create or enter password" />
+
+              <div class="profile-actions">
+                <button id="create-profile-button" class="primary-button">Create Profile</button>
+                <button id="login-profile-button" class="secondary-button">Log In</button>
+                <button id="logout-profile-button" class="secondary-button hidden">Log Out</button>
+              </div>
+            </div>
+
+            <p class="profile-note">Saved only in this browser on this device.</p>
+            <div id="profile-message" class="feedback-box hidden"></div>
           </div>
-
-          <p class="profile-note">
-            Passwords are stored only in this browser on this device. This helps with local sign-in, but it is not bank-level security.
-          </p>
-          <div id="profile-message" class="feedback-box hidden"></div>
         </div>
 
-        <div class="section-heading">
-          <h2>Choose Grade</h2>
-          <p>This is the first step. Pick a grade to unlock matching topics.</p>
+        <div class="section-heading section-heading--collapsible">
+          <div>
+            <h2>Choose Grade</h2>
+            <p>This is the first step. Pick a grade to unlock matching topics.</p>
+          </div>
+          <button id="toggle-grade-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
+            Hide Grades
+          </button>
         </div>
-        <div id="grade-buttons" class="grade-buttons"></div>
+        <div id="grade-panel-content">
+          <div id="grade-buttons" class="grade-buttons"></div>
+        </div>
 
         <div class="summary-panel">
           <h3>Progress Snapshot</h3>
