@@ -151,6 +151,8 @@ const elements = {
   saveStatusLabel: document.getElementById("save-status-label"),
   selectedCategoryLabel: document.getElementById("selected-category-label"),
   completedLevelsLabel: document.getElementById("completed-levels-label"),
+  scoreHistoryEmpty: document.getElementById("score-history-empty"),
+  scoreHistoryList: document.getElementById("score-history-list"),
   quizMeta: document.getElementById("quiz-meta"),
   questionTitle: document.getElementById("question-title"),
   questionText: document.getElementById("question-text"),
@@ -181,6 +183,7 @@ function init() {
   renderGradeButtons();
   renderCategories();
   attachEvents();
+  renderScoreHistory();
 }
 
 function attachEvents() {
@@ -409,6 +412,7 @@ function completeLevel() {
   elements.completedLevelsLabel.textContent = String(getCompletedLevelsCount(state.selectedGrade));
   renderLevels();
   renderReviewOptions();
+  renderScoreHistory();
 }
 
 function moveToNextLevel() {
@@ -544,6 +548,7 @@ function applyCurrentProfile() {
   const profile = getCurrentProfile();
 
   if (profile) {
+    ensureProfileShape(profile);
     state.selectedGrade = profile.grade;
     elements.profileGradeInput.value = String(profile.grade);
   } else {
@@ -553,6 +558,7 @@ function applyCurrentProfile() {
 
   renderProfilePanel();
   renderReviewOptions();
+  renderScoreHistory();
 }
 
 function renderProfilePanel() {
@@ -592,7 +598,8 @@ function handleCreateProfile() {
     name,
     grade,
     passwordHash: hashPassword(password),
-    progress: {}
+    progress: {},
+    scoreHistory: []
   };
   profilesStore.currentProfileId = profileId;
   saveProfilesStore();
@@ -671,7 +678,15 @@ function hashPassword(password) {
 }
 
 function getCurrentProfile() {
-  return state.currentProfileId ? profilesStore.profiles[state.currentProfileId] || null : null;
+  if (!state.currentProfileId) {
+    return null;
+  }
+
+  const profile = profilesStore.profiles[state.currentProfileId] || null;
+  if (profile) {
+    ensureProfileShape(profile);
+  }
+  return profile;
 }
 
 function getActiveProgress() {
@@ -708,9 +723,59 @@ function saveCompletedLevel(grade, categoryId, level, score) {
     completedAt: new Date().toISOString(),
     results: state.lastResults
   };
+  const category = curriculum[grade].find((item) => item.id === categoryId);
+  profile.scoreHistory.unshift({
+    grade,
+    categoryId,
+    categoryTitle: category ? category.title : categoryId,
+    level,
+    score,
+    percentage: Math.round((score / 10) * 100),
+    completedAt: profile.progress[grade][categoryId][level].completedAt
+  });
+  profile.scoreHistory = profile.scoreHistory.slice(0, 30);
   profilesStore.profiles[profile.id] = profile;
   saveProfilesStore();
   return true;
+}
+
+function renderScoreHistory() {
+  const profile = getCurrentProfile();
+
+  if (!profile || !profile.scoreHistory.length) {
+    elements.scoreHistoryEmpty.classList.remove("hidden");
+    elements.scoreHistoryList.innerHTML = "";
+    return;
+  }
+
+  elements.scoreHistoryEmpty.classList.add("hidden");
+  elements.scoreHistoryList.innerHTML = profile.scoreHistory
+    .slice(0, 10)
+    .map((entry) => `
+      <div class="history-item">
+        <strong>Grade ${entry.grade} | ${entry.categoryTitle}</strong>
+        <span>Level ${entry.level} | Score ${entry.score}/10 (${entry.percentage}%)</span>
+        <small>${formatDateTime(entry.completedAt)}</small>
+      </div>
+    `)
+    .join("");
+}
+
+function ensureProfileShape(profile) {
+  if (!profile.progress || typeof profile.progress !== "object") {
+    profile.progress = {};
+  }
+  if (!Array.isArray(profile.scoreHistory)) {
+    profile.scoreHistory = [];
+  }
+}
+
+function formatDateTime(value) {
+  try {
+    return new Date(value).toLocaleString();
+  } catch (error) {
+    return value;
+  }
 }
 
 function getCompletedLevelsCount(grade) {

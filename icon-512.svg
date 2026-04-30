@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Maths Mastery icon">
+  <rect width="512" height="512" rx="96" fill="#12386f"/>
+  <rect x="60" y="60" width="392" height="392" rx="76" fill="#0b2550" stroke="#68c5ff" stroke-width="12"/>
+  <circle cx="170" cy="180" r="48" fill="#56d6a2"/>
+  <path d="M154 180h32M170 164v32" stroke="#0b2550" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="342" cy="180" r="48" fill="#ff7d7d"/>
+  <path d="M326 180h32" stroke="#0b2550" stroke-width="12" stroke-linecap="round"/>
+  <rect x="126" y="274" width="260" height="84" rx="24" fill="#2196f3"/>
+  <text x="256" y="329" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#ffffff">123</text>
+  <text x="256" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="700" fill="#ffffff">MATH</text>
+</svg>

@@ -381,6 +381,34 @@ h1 {
   border-bottom: 0;
 }
 
+.history-empty {
+  color: #ffffff;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.history-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.history-item {
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(162, 192, 255, 0.16);
+  color: #ffffff;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.history-item strong,
+.history-item span,
+.history-item small {
+  color: #ffffff;
+}
+
 .quiz-card {
   background: var(--card-strong);
 }
