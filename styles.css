@@ -484,6 +484,20 @@ h1 {
   border-bottom: 0;
 }
 
+#course-time-label,
+#daily-time-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.95), rgba(104, 197, 255, 0.9));
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 10px 22px rgba(33, 150, 243, 0.22);
+}
+
 .history-empty {
   color: #ffffff;
   font-size: 0.98rem;
