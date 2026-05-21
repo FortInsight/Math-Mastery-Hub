@@ -126,12 +126,17 @@ const state = {
   answered: false,
   lastResults: [],
   questionResults: [],
-  currentProfileId: null
+  currentProfileId: null,
+  studyTimerId: null,
+  lastStudyTickAt: 0
 };
 
 const questionBankCache = new Map();
 const profilesStoreKey = "maths-mastery-profiles-v1";
 const profilesStore = loadProfilesStore();
+const guestStoreKey = "maths-mastery-guest-v1";
+const guestStore = loadGuestStore();
+const studyTickMs = 1000;
 
 const elements = {
   profileNameLabel: document.getElementById("profile-name-label"),
@@ -164,6 +169,8 @@ const elements = {
   saveStatusLabel: document.getElementById("save-status-label"),
   selectedCategoryLabel: document.getElementById("selected-category-label"),
   completedLevelsLabel: document.getElementById("completed-levels-label"),
+  courseTimeLabel: document.getElementById("course-time-label"),
+  dailyTimeLabel: document.getElementById("daily-time-label"),
   scoreHistoryEmpty: document.getElementById("score-history-empty"),
   scoreHistoryList: document.getElementById("score-history-list"),
   quizMeta: document.getElementById("quiz-meta"),
@@ -204,6 +211,8 @@ function init() {
   renderCategories();
   attachEvents();
   renderScoreHistory();
+  renderStudyTime();
+  startStudyTimer();
 }
 
 function attachEvents() {
@@ -226,6 +235,8 @@ function attachEvents() {
   if (elements.toggleGradePanelButton) {
     elements.toggleGradePanelButton.addEventListener("click", toggleGradePanel);
   }
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("beforeunload", flushStudyTime);
 }
 
 function toggleProfilePanel() {
@@ -241,6 +252,7 @@ function toggleGradePanel() {
 }
 
 function handleCategorySelect(event, track) {
+  flushStudyTime();
   state.selectedCategoryId = event.target.value || null;
   state.selectedPatTab = getDefaultPatTabId(state.selectedCategoryId);
   if (track === "maths" && elements.englishCategorySelect) {
@@ -254,6 +266,7 @@ function handleCategorySelect(event, track) {
   renderCategories();
   renderLevels();
   renderReviewOptions();
+  renderStudyTime();
 }
 
 function renderGradeButtons() {
@@ -264,6 +277,7 @@ function renderGradeButtons() {
     button.className = `grade-button ${grade === state.selectedGrade ? "active" : ""}`;
     button.textContent = `Grade ${grade}`;
     button.addEventListener("click", () => {
+      flushStudyTime();
       state.selectedGrade = grade;
       syncProfileGrade();
       state.selectedCategoryId = null;
@@ -273,6 +287,7 @@ function renderGradeButtons() {
       hideQuizViews();
       renderGradeButtons();
       renderCategories();
+      renderStudyTime();
     });
     elements.gradeButtons.appendChild(button);
   });
@@ -420,6 +435,7 @@ function renderPatTabs(selectedCategory) {
     button.className = `pat-tab-button ${tab.id === state.selectedPatTab ? "active" : ""}`;
     button.textContent = tab.label;
     button.addEventListener("click", () => {
+      flushStudyTime();
       state.selectedPatTab = tab.id;
       state.selectedLevel = null;
       state.currentQuestions = [];
@@ -427,6 +443,7 @@ function renderPatTabs(selectedCategory) {
       renderCategories();
       renderLevels();
       renderReviewOptions();
+      renderStudyTime();
     });
     elements.patTabBar.appendChild(button);
   });
@@ -473,6 +490,7 @@ function renderLevels() {
 }
 
 function startLevel(level) {
+  flushStudyTime();
   state.selectedLevel = level;
   state.currentQuestions = getQuestionBank(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab).slice((level - 1) * 10, level * 10);
   state.currentIndex = 0;
@@ -486,6 +504,7 @@ function startLevel(level) {
   elements.reviewSection?.classList.add("hidden");
   renderLevels();
   renderQuestion();
+  renderStudyTime();
 }
 
 function renderQuestion() {
@@ -718,7 +737,9 @@ function moveToNextQuestion() {
 }
 
 function completeLevel() {
+  flushStudyTime();
   const activeContext = getActiveCategoryContext();
+  const currentProfile = getCurrentProfile();
   state.lastResults = state.questionResults
     .filter(Boolean)
     .map(({ selectedIndex: ignoredSelectedIndex, ...result }) => result);
@@ -729,7 +750,12 @@ function completeLevel() {
   elements.progressBar.style.width = "100%";
 
   const percentage = Math.round((state.score / state.currentQuestions.length) * 100);
-  elements.resultsSummary.textContent = `You scored ${state.score} out of 10 in Grade ${state.selectedGrade} ${activeContext.title}, Level ${state.selectedLevel} (${percentage}%). ${savedToProfile ? `Saved to ${getCurrentProfile().name}'s profile.` : "Create or log in to a profile to save this progress."}`;
+  const saveMessage = savedToProfile
+    ? currentProfile
+      ? `Saved to ${currentProfile.name}'s profile.`
+      : "Saved in this browser for guest progress."
+    : "Create or log in to a profile to save this progress.";
+  elements.resultsSummary.textContent = `You scored ${state.score} out of 10 in Grade ${state.selectedGrade} ${activeContext.title}, Level ${state.selectedLevel} (${percentage}%). ${saveMessage}`;
   elements.resultsBreakdown.innerHTML = state.lastResults
     .map((result, index) => renderResultItem(result, index))
     .join("");
@@ -741,6 +767,7 @@ function completeLevel() {
   renderLevels();
   renderReviewOptions();
   renderScoreHistory();
+  renderStudyTime();
 }
 
 function moveToNextLevel() {
@@ -929,30 +956,47 @@ function resetSelectedTopicProgress() {
     return;
   }
 
-  const profile = getCurrentProfile();
-  if (!profile) {
-    showProfileMessage("Log in to a learner profile first so completed topic progress can be cleared.", "error");
-    return;
-  }
-
+  flushStudyTime();
   const activeContext = getActiveCategoryContext();
-  const gradeProgress = profile.progress?.[state.selectedGrade];
-  if (!gradeProgress?.[activeContext.key]) {
-    renderResetTopicButton();
-    return;
+  const profile = getCurrentProfile();
+  if (profile) {
+    const gradeProgress = profile.progress?.[state.selectedGrade];
+    if (!gradeProgress?.[activeContext.key]) {
+      renderResetTopicButton();
+      return;
+    }
+
+    delete gradeProgress[activeContext.key];
+    if (Object.keys(gradeProgress).length === 0) {
+      delete profile.progress[state.selectedGrade];
+    }
+
+    profile.scoreHistory = (profile.scoreHistory || []).filter((entry) => {
+      return !(entry.grade === state.selectedGrade && entry.categoryId === activeContext.key);
+    });
+    clearStudyTimeForContext(profile.studyTime, activeContext.key);
+
+    profilesStore.profiles[profile.id] = profile;
+    saveProfilesStore();
+  } else {
+    ensureGuestStoreShape();
+    const gradeProgress = guestStore.progress?.[state.selectedGrade];
+    if (!gradeProgress?.[activeContext.key]) {
+      renderResetTopicButton();
+      return;
+    }
+
+    delete gradeProgress[activeContext.key];
+    if (Object.keys(gradeProgress).length === 0) {
+      delete guestStore.progress[state.selectedGrade];
+    }
+
+    guestStore.scoreHistory = (guestStore.scoreHistory || []).filter((entry) => {
+      return !(entry.grade === state.selectedGrade && entry.categoryId === activeContext.key);
+    });
+    clearStudyTimeForContext(guestStore.studyTime, activeContext.key);
+    saveGuestStore();
   }
-
-  delete gradeProgress[activeContext.key];
-  if (Object.keys(gradeProgress).length === 0) {
-    delete profile.progress[state.selectedGrade];
-  }
-
-  profile.scoreHistory = (profile.scoreHistory || []).filter((entry) => {
-    return !(entry.grade === state.selectedGrade && entry.categoryId === activeContext.key);
-  });
-
-  profilesStore.profiles[profile.id] = profile;
-  saveProfilesStore();
 
   state.selectedLevel = null;
   state.currentQuestions = [];
@@ -968,6 +1012,7 @@ function resetSelectedTopicProgress() {
   renderLevels();
   renderReviewOptions();
   renderScoreHistory();
+  renderStudyTime();
   showProfileMessage(`Saved progress for ${activeContext.title} was cleared. You can now start fresh from Level 1.`, "success");
 }
 
@@ -1033,14 +1078,35 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
 
   const category = curriculum[grade].find((item) => item.id === categoryId);
   const seedBase = hashCode(cacheKey);
+  const seenPrompts = new Set();
   const bank = Array.from({ length: 100 }, (_, index) => {
-    const rng = mulberry32(seedBase + index * 97 + 1);
     const difficulty = Math.floor(index / 10) + 1;
-    return questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index, difficulty);
+
+    for (let attempt = 0; attempt < 18; attempt += 1) {
+      const rng = mulberry32(seedBase + index * 97 + 1 + (attempt * 1009));
+      const question = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index + attempt, difficulty);
+      const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
+      if (!seenPrompts.has(normalizedPrompt)) {
+        seenPrompts.add(normalizedPrompt);
+        return question;
+      }
+    }
+
+    const fallbackRng = mulberry32(seedBase + index * 97 + 1 + 99991);
+    const fallbackQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, index + 37, difficulty);
+    seenPrompts.add(normalizeQuestionPrompt(fallbackQuestion.prompt));
+    return fallbackQuestion;
   });
 
   questionBankCache.set(cacheKey, bank);
   return bank;
+}
+
+function normalizeQuestionPrompt(prompt) {
+  return String(prompt || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
 function loadProfilesStore() {
@@ -1054,8 +1120,23 @@ function loadProfilesStore() {
   }
 }
 
+function loadGuestStore() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(guestStoreKey));
+    return stored && typeof stored === "object"
+      ? { progress: stored.progress || {}, scoreHistory: stored.scoreHistory || [], studyTime: stored.studyTime || null }
+      : { progress: {}, scoreHistory: [], studyTime: null };
+  } catch (error) {
+    return { progress: {}, scoreHistory: [], studyTime: null };
+  }
+}
+
 function saveProfilesStore() {
   localStorage.setItem(profilesStoreKey, JSON.stringify(profilesStore));
+}
+
+function saveGuestStore() {
+  localStorage.setItem(guestStoreKey, JSON.stringify(guestStore));
 }
 
 function populateProfileGradeOptions() {
@@ -1065,6 +1146,7 @@ function populateProfileGradeOptions() {
 }
 
 function applyCurrentProfile() {
+  flushStudyTime();
   state.currentProfileId = profilesStore.currentProfileId;
   const profile = getCurrentProfile();
 
@@ -1080,6 +1162,7 @@ function applyCurrentProfile() {
   renderProfilePanel();
   renderReviewOptions();
   renderScoreHistory();
+  renderStudyTime();
 }
 
 function renderProfilePanel() {
@@ -1120,7 +1203,8 @@ function handleCreateProfile() {
     grade,
     passwordHash: hashPassword(password),
     progress: {},
-    scoreHistory: []
+    scoreHistory: [],
+    studyTime: createEmptyStudyTime()
   };
   profilesStore.currentProfileId = profileId;
   saveProfilesStore();
@@ -1132,6 +1216,7 @@ function handleCreateProfile() {
   applyCurrentProfile();
   renderGradeButtons();
   renderCategories();
+  renderStudyTime();
   showProfileMessage(`Profile created for ${name}. Progress will now be saved to this learner.`, "success");
 }
 
@@ -1162,6 +1247,7 @@ function handleLoginProfile() {
   applyCurrentProfile();
   renderGradeButtons();
   renderCategories();
+  renderStudyTime();
   showProfileMessage(`Welcome back, ${profile.name}. Your saved work has been loaded.`, "success");
 }
 
@@ -1176,6 +1262,7 @@ function handleLogoutProfile() {
   applyCurrentProfile();
   renderGradeButtons();
   renderCategories();
+  renderStudyTime();
   showProfileMessage("You are now signed out. Create or log in to a profile to save progress.", "success");
 }
 
@@ -1211,7 +1298,12 @@ function getCurrentProfile() {
 }
 
 function getActiveProgress() {
-  return getCurrentProfile()?.progress || {};
+  const profile = getCurrentProfile();
+  if (profile) {
+    return profile.progress || {};
+  }
+  ensureGuestStoreShape();
+  return guestStore.progress || {};
 }
 
 function syncProfileGrade() {
@@ -1229,47 +1321,74 @@ function syncProfileGrade() {
 
 function saveCompletedLevel(grade, categoryId, categoryTitle, level, score) {
   const profile = getCurrentProfile();
-  if (!profile) {
-    return false;
+  const completedAt = new Date().toISOString();
+
+  if (profile) {
+    if (!profile.progress[grade]) {
+      profile.progress[grade] = {};
+    }
+    if (!profile.progress[grade][categoryId]) {
+      profile.progress[grade][categoryId] = {};
+    }
+    profile.progress[grade][categoryId][level] = {
+      score,
+      completedAt,
+      results: state.lastResults
+    };
+    profile.scoreHistory.unshift({
+      grade,
+      categoryId,
+      categoryTitle,
+      level,
+      score,
+      percentage: Math.round((score / 10) * 100),
+      completedAt
+    });
+    profile.scoreHistory = profile.scoreHistory.slice(0, 30);
+    profilesStore.profiles[profile.id] = profile;
+    saveProfilesStore();
+    return true;
   }
 
-  if (!profile.progress[grade]) {
-    profile.progress[grade] = {};
+  ensureGuestStoreShape();
+  if (!guestStore.progress[grade]) {
+    guestStore.progress[grade] = {};
   }
-  if (!profile.progress[grade][categoryId]) {
-    profile.progress[grade][categoryId] = {};
+  if (!guestStore.progress[grade][categoryId]) {
+    guestStore.progress[grade][categoryId] = {};
   }
-  profile.progress[grade][categoryId][level] = {
+  guestStore.progress[grade][categoryId][level] = {
     score,
-    completedAt: new Date().toISOString(),
+    completedAt,
     results: state.lastResults
   };
-  profile.scoreHistory.unshift({
+  guestStore.scoreHistory.unshift({
     grade,
     categoryId,
     categoryTitle,
     level,
     score,
     percentage: Math.round((score / 10) * 100),
-    completedAt: profile.progress[grade][categoryId][level].completedAt
+    completedAt
   });
-  profile.scoreHistory = profile.scoreHistory.slice(0, 30);
-  profilesStore.profiles[profile.id] = profile;
-  saveProfilesStore();
+  guestStore.scoreHistory = guestStore.scoreHistory.slice(0, 30);
+  saveGuestStore();
   return true;
 }
 
 function renderScoreHistory() {
   const profile = getCurrentProfile();
+  ensureGuestStoreShape();
+  const scoreHistory = profile ? profile.scoreHistory : guestStore.scoreHistory;
 
-  if (!profile || !profile.scoreHistory.length) {
+  if (!scoreHistory.length) {
     elements.scoreHistoryEmpty.classList.remove("hidden");
     elements.scoreHistoryList.innerHTML = "";
     return;
   }
 
   elements.scoreHistoryEmpty.classList.add("hidden");
-  elements.scoreHistoryList.innerHTML = profile.scoreHistory
+  elements.scoreHistoryList.innerHTML = scoreHistory
     .slice(0, 10)
     .map((entry) => `
       <div class="history-item">
@@ -1287,6 +1406,25 @@ function ensureProfileShape(profile) {
   }
   if (!Array.isArray(profile.scoreHistory)) {
     profile.scoreHistory = [];
+  }
+  if (!profile.studyTime || typeof profile.studyTime !== "object") {
+    profile.studyTime = createEmptyStudyTime();
+  } else {
+    ensureStudyTimeShape(profile.studyTime);
+  }
+}
+
+function ensureGuestStoreShape() {
+  if (!guestStore.progress || typeof guestStore.progress !== "object") {
+    guestStore.progress = {};
+  }
+  if (!Array.isArray(guestStore.scoreHistory)) {
+    guestStore.scoreHistory = [];
+  }
+  if (!guestStore.studyTime || typeof guestStore.studyTime !== "object") {
+    guestStore.studyTime = createEmptyStudyTime();
+  } else {
+    ensureStudyTimeShape(guestStore.studyTime);
   }
 }
 
@@ -1321,6 +1459,157 @@ function getSavedAttemptsForSelection() {
   return Object.entries(categoryProgress)
     .map(([level, attempt]) => ({ level: Number(level), ...attempt }))
     .sort((a, b) => a.level - b.level);
+}
+
+function createEmptyStudyTime() {
+  return {
+    byCourse: {},
+    byDay: {}
+  };
+}
+
+function ensureStudyTimeShape(studyTime) {
+  if (!studyTime.byCourse || typeof studyTime.byCourse !== "object") {
+    studyTime.byCourse = {};
+  }
+  if (!studyTime.byDay || typeof studyTime.byDay !== "object") {
+    studyTime.byDay = {};
+  }
+}
+
+function getActiveStudyTimeStore() {
+  const profile = getCurrentProfile();
+  if (profile) {
+    ensureProfileShape(profile);
+    return profile.studyTime;
+  }
+  ensureGuestStoreShape();
+  return guestStore.studyTime;
+}
+
+function getTodayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isStudySessionActive() {
+  return document.visibilityState === "visible" && Boolean(state.selectedCategoryId);
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState !== "visible") {
+    flushStudyTime();
+  }
+}
+
+function startStudyTimer() {
+  if (state.studyTimerId) {
+    return;
+  }
+
+  state.lastStudyTickAt = Date.now();
+  state.studyTimerId = window.setInterval(() => {
+    const now = Date.now();
+    const elapsedMs = now - state.lastStudyTickAt;
+    state.lastStudyTickAt = now;
+
+    if (!isStudySessionActive()) {
+      renderStudyTime();
+      return;
+    }
+
+    addStudyTime(elapsedMs);
+  }, studyTickMs);
+}
+
+function flushStudyTime() {
+  if (!state.lastStudyTickAt) {
+    state.lastStudyTickAt = Date.now();
+    return;
+  }
+
+  const now = Date.now();
+  const elapsedMs = now - state.lastStudyTickAt;
+  state.lastStudyTickAt = now;
+
+  if (isStudySessionActive() && elapsedMs > 0) {
+    addStudyTime(elapsedMs);
+    return;
+  }
+
+  renderStudyTime();
+}
+
+function addStudyTime(elapsedMs) {
+  if (!state.selectedCategoryId || elapsedMs <= 0) {
+    renderStudyTime();
+    return;
+  }
+
+  const secondsToAdd = Math.max(1, Math.round(elapsedMs / 1000));
+  const activeContext = getActiveCategoryContext();
+  if (!activeContext.key) {
+    renderStudyTime();
+    return;
+  }
+
+  const studyTime = getActiveStudyTimeStore();
+  ensureStudyTimeShape(studyTime);
+
+  studyTime.byCourse[activeContext.key] = (studyTime.byCourse[activeContext.key] || 0) + secondsToAdd;
+  const todayKey = getTodayKey();
+  studyTime.byDay[todayKey] = (studyTime.byDay[todayKey] || 0) + secondsToAdd;
+
+  persistStudyTime();
+  renderStudyTime();
+}
+
+function persistStudyTime() {
+  const profile = getCurrentProfile();
+  if (profile) {
+    profilesStore.profiles[profile.id] = profile;
+    saveProfilesStore();
+    return;
+  }
+  saveGuestStore();
+}
+
+function clearStudyTimeForContext(studyTime, contextKey) {
+  if (!studyTime || !contextKey) {
+    return;
+  }
+  ensureStudyTimeShape(studyTime);
+  delete studyTime.byCourse[contextKey];
+}
+
+function renderStudyTime() {
+  if (!elements.courseTimeLabel || !elements.dailyTimeLabel) {
+    return;
+  }
+
+  const studyTime = getActiveStudyTimeStore();
+  ensureStudyTimeShape(studyTime);
+  const activeContext = getActiveCategoryContext();
+  const courseSeconds = activeContext.key ? (studyTime.byCourse[activeContext.key] || 0) : 0;
+  const todaySeconds = studyTime.byDay[getTodayKey()] || 0;
+
+  elements.courseTimeLabel.textContent = formatStudyTime(courseSeconds);
+  elements.dailyTimeLabel.textContent = formatStudyTime(todaySeconds);
+}
+
+function formatStudyTime(totalSeconds) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds || 0));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m ${seconds}s`;
 }
 
 function makeCategory(id, title, description, factory, config) {
@@ -1541,6 +1830,44 @@ function englishBand(grade) {
 
 function pick(list, rng) {
   return list[number(0, list.length - 1, rng)];
+}
+
+function difficultyTier(difficulty) {
+  if (difficulty <= 3) {
+    return 1;
+  }
+  if (difficulty <= 7) {
+    return 2;
+  }
+  return 3;
+}
+
+function progressivePool(pool, difficulty, minimum = 4) {
+  if (!pool.length) {
+    return [];
+  }
+
+  const unlockedRatio = 0.3 + ((Math.max(1, difficulty) - 1) * 0.08);
+  const unlockedCount = Math.min(
+    pool.length,
+    Math.max(Math.min(minimum, pool.length), Math.ceil(pool.length * unlockedRatio))
+  );
+  return pool.slice(0, unlockedCount);
+}
+
+function chooseFromProgressivePool(pool, rng, difficulty, index, minimum = 4) {
+  const available = progressivePool(pool, difficulty, minimum);
+  const source = available.length ? available : pool;
+  const offset = source.length ? ((difficulty - 1) * 3) % source.length : 0;
+  return source[(index + offset) % source.length];
+}
+
+function chooseFromProgressiveGroups(groups, rng, difficulty, index) {
+  const tier = difficultyTier(difficulty);
+  const availableGroups = groups.slice(0, tier).flat().filter((item) => Array.isArray(item) ? item.length : Boolean(item));
+  const normalizedPool = availableGroups.flatMap((entry) => Array.isArray(entry) ? entry : [entry]);
+  const offset = normalizedPool.length ? ((difficulty - 1) * 2) % normalizedPool.length : 0;
+  return normalizedPool[(index + offset) % normalizedPool.length];
 }
 
 const englishQuestionPools = {
@@ -3739,10 +4066,10 @@ const questionFactories = {
     };
   },
 
-  englishGrammar(rng, grade, config, index) {
+  englishGrammar(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.grammar[band];
-    const item = pool[index % pool.length];
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -3754,10 +4081,10 @@ const questionFactories = {
     };
   },
 
-  englishVocabulary(rng, grade, config, index) {
+  englishVocabulary(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.vocabulary[band];
-    const item = pool[index % pool.length];
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -3769,10 +4096,10 @@ const questionFactories = {
     };
   },
 
-  englishWriting(rng, grade, config, index) {
+  englishWriting(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishWritingPools[band];
-    const item = pool[index % pool.length];
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -3784,42 +4111,27 @@ const questionFactories = {
     };
   },
 
-  englishPatPartA(rng, grade, config, index) {
-    const essayPools = [
-      patPartAEssayIntroductionChoices,
-      patPartAThesisChoices,
-      patPartAEssaySupportChoices,
-      patPartAOrganizationChoices,
-      patPartARevisionChoices,
-      patPartAVocabularyChoices,
-      patPartAEssayConclusionChoices,
-      patPartAConventionsChoices,
-      englishPatPartAEssayGeneralPool
+  englishPatPartA(rng, grade, config, index, difficulty) {
+    const essayGroups = [
+      [patPartAEssayIntroductionChoices, patPartAThesisChoices, patPartAEssaySupportChoices],
+      [patPartAOrganizationChoices, patPartARevisionChoices, patPartAVocabularyChoices],
+      [patPartAEssayConclusionChoices, patPartAConventionsChoices, englishPatPartAEssayGeneralPool]
     ];
-    const narrativePools = [
-      patPartANarrativeIntroductionChoices,
-      patPartANarrativeSupportChoices,
-      patPartAOrganizationChoices,
-      patPartARevisionChoices,
-      patPartANarrativeConclusionChoices,
-      patPartAConventionsChoices,
-      patPartAVoiceChoices,
-      englishPatPartANarrativeGeneralPool
+    const narrativeGroups = [
+      [patPartANarrativeIntroductionChoices, patPartANarrativeSupportChoices],
+      [patPartAOrganizationChoices, patPartARevisionChoices, patPartAVoiceChoices],
+      [patPartANarrativeConclusionChoices, patPartAConventionsChoices, englishPatPartANarrativeGeneralPool]
     ];
-    const businessPools = [
-      englishPatPartABusinessWritingPool,
-      patPartAOrganizationChoices,
-      patPartARevisionChoices,
-      patPartAVocabularyChoices,
-      patPartAConventionsChoices
+    const businessGroups = [
+      [englishPatPartABusinessWritingPool.slice(0, 4)],
+      [englishPatPartABusinessWritingPool.slice(0, 8)],
+      [englishPatPartABusinessWritingPool]
     ];
-    const pools = config.patTabId === "narrative"
-      ? narrativePools
+    const item = config.patTabId === "narrative"
+      ? chooseFromProgressiveGroups(narrativeGroups, rng, difficulty, index)
       : config.patTabId === "business-writing"
-        ? businessPools
-        : essayPools;
-    const pool = pools[index % pools.length];
-    const item = pick(pool, rng);
+        ? chooseFromProgressiveGroups(businessGroups, rng, difficulty, index)
+        : chooseFromProgressiveGroups(essayGroups, rng, difficulty, index);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -3831,13 +4143,13 @@ const questionFactories = {
     };
   },
 
-  englishPatPartB(rng, grade, config, index) {
+  englishPatPartB(rng, grade, config, index, difficulty) {
     const pool = config.patTabId === "visual"
       ? englishPatPartBVisualPool
       : config.patTabId === "informational"
         ? englishPatPartBInformationalPool
         : englishPatPartBLiteraryPool;
-    const item = pick(pool, rng);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -3849,7 +4161,7 @@ const questionFactories = {
     };
   },
 
-  englishPatGrade6PartB(rng, grade, config, index) {
+  englishPatGrade6PartB(rng, grade, config, index, difficulty) {
     const pool = config.patTabId === "poetry"
       ? englishPatGrade6PartBPoetryPool
       : config.patTabId === "visual"
@@ -3857,7 +4169,7 @@ const questionFactories = {
         : config.patTabId === "informational"
           ? englishPatGrade6PartBInformationalPool
           : englishPatGrade6PartBStoryPool;
-    const item = pick(pool, rng);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
