@@ -173,6 +173,9 @@ const elements = {
   dailyTimeLabel: document.getElementById("daily-time-label"),
   scoreHistoryEmpty: document.getElementById("score-history-empty"),
   scoreHistoryList: document.getElementById("score-history-list"),
+  heroTodayTime: document.getElementById("hero-today-time"),
+  heroWeekAchievement: document.getElementById("hero-week-achievement"),
+  heroActivityChart: document.getElementById("hero-activity-chart"),
   quizMeta: document.getElementById("quiz-meta"),
   questionTitle: document.getElementById("question-title"),
   questionInstruction: document.getElementById("question-instruction"),
@@ -212,6 +215,7 @@ function init() {
   attachEvents();
   renderScoreHistory();
   renderStudyTime();
+  renderHeroActivity();
   startStudyTimer();
 }
 
@@ -1263,6 +1267,7 @@ function applyCurrentProfile() {
   renderReviewOptions();
   renderScoreHistory();
   renderStudyTime();
+  renderHeroActivity();
 }
 
 function renderProfilePanel() {
@@ -1317,6 +1322,7 @@ function handleCreateProfile() {
   renderGradeButtons();
   renderCategories();
   renderStudyTime();
+  renderHeroActivity();
   showProfileMessage(`Profile created for ${name}. Progress will now be saved to this learner.`, "success");
 }
 
@@ -1348,6 +1354,7 @@ function handleLoginProfile() {
   renderGradeButtons();
   renderCategories();
   renderStudyTime();
+  renderHeroActivity();
   showProfileMessage(`Welcome back, ${profile.name}. Your saved work has been loaded.`, "success");
 }
 
@@ -1363,6 +1370,7 @@ function handleLogoutProfile() {
   renderGradeButtons();
   renderCategories();
   renderStudyTime();
+  renderHeroActivity();
   showProfileMessage("You are now signed out. Create or log in to a profile to save progress.", "success");
 }
 
@@ -1484,6 +1492,7 @@ function renderScoreHistory() {
   if (!scoreHistory.length) {
     elements.scoreHistoryEmpty.classList.remove("hidden");
     elements.scoreHistoryList.innerHTML = "";
+    renderHeroActivity();
     return;
   }
 
@@ -1498,6 +1507,8 @@ function renderScoreHistory() {
       </div>
     `)
     .join("");
+
+  renderHeroActivity();
 }
 
 function ensureProfileShape(profile) {
@@ -1698,6 +1709,7 @@ function renderStudyTime() {
 
   elements.courseTimeLabel.textContent = formatStudyTime(courseSeconds);
   elements.dailyTimeLabel.textContent = formatStudyTime(todaySeconds);
+  renderHeroActivity();
 }
 
 function formatStudyTime(totalSeconds) {
@@ -1710,6 +1722,102 @@ function formatStudyTime(totalSeconds) {
     return `${hours}h ${minutes}m`;
   }
   return `${minutes}m ${seconds}s`;
+}
+
+function renderHeroActivity() {
+  if (!elements.heroTodayTime || !elements.heroWeekAchievement || !elements.heroActivityChart) {
+    return;
+  }
+
+  const profile = getCurrentProfile();
+  ensureGuestStoreShape();
+  const studyTime = profile ? profile.studyTime : guestStore.studyTime;
+  const scoreHistory = profile ? profile.scoreHistory : guestStore.scoreHistory;
+  ensureStudyTimeShape(studyTime);
+
+  const todayKey = getTodayKey();
+  elements.heroTodayTime.textContent = formatStudyTime(studyTime.byDay[todayKey] || 0);
+
+  const dayItems = getPastSevenDaysActivity(studyTime.byDay, scoreHistory);
+  const weeklyLevels = dayItems.reduce((total, item) => total + item.levelsCompleted, 0);
+  elements.heroWeekAchievement.textContent = `${weeklyLevels} level${weeklyLevels === 1 ? "" : "s"}`;
+
+  const maxSeconds = Math.max(...dayItems.map((item) => item.seconds), 0);
+  elements.heroActivityChart.innerHTML = dayItems
+    .map((item) => {
+      const height = maxSeconds > 0 ? Math.max(10, Math.round((item.seconds / maxSeconds) * 100)) : 10;
+      return `
+        <div class="hero-activity-day">
+          <div class="hero-activity-meta">
+            <span class="hero-activity-time">${formatCompactStudyTime(item.seconds)}</span>
+            <span class="hero-activity-achievement">${item.levelsCompleted} done</span>
+          </div>
+          <div class="hero-activity-bar-wrap">
+            <div class="hero-activity-bar ${item.seconds === 0 ? "is-empty" : ""}" style="height:${height}px"></div>
+          </div>
+          <span class="hero-activity-label">${item.label}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function getPastSevenDaysActivity(byDay, scoreHistory) {
+  const items = [];
+  const completedByDay = {};
+
+  (scoreHistory || []).forEach((entry) => {
+    const dayKey = formatDayKeyFromValue(entry.completedAt);
+    if (!dayKey) {
+      return;
+    }
+    completedByDay[dayKey] = (completedByDay[dayKey] || 0) + 1;
+  });
+
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - offset);
+    const key = buildDayKey(date);
+    items.push({
+      key,
+      label: date.toLocaleDateString(undefined, { weekday: "short" }),
+      seconds: byDay[key] || 0,
+      levelsCompleted: completedByDay[key] || 0
+    });
+  }
+
+  return items;
+}
+
+function buildDayKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDayKeyFromValue(value) {
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return buildDayKey(date);
+  } catch (error) {
+    return "";
+  }
+}
+
+function formatCompactStudyTime(totalSeconds) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds || 0));
+  if (safeSeconds >= 3600) {
+    return `${Math.floor(safeSeconds / 3600)}h`;
+  }
+  if (safeSeconds >= 60) {
+    return `${Math.floor(safeSeconds / 60)}m`;
+  }
+  return `${safeSeconds}s`;
 }
 
 function makeCategory(id, title, description, factory, config) {
