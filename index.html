@@ -31,6 +31,21 @@
           <div class="hero-badge">Then pick a topic</div>
           <div class="hero-badge">Then start Level 1</div>
         </div>
+        <div class="topic-search-panel hero-search-panel">
+          <div class="topic-search-head">
+            <div>
+              <h3>Search Topics</h3>
+              <p>Find a course or question across grades, like logarithms, fractions, punctuation, or PAT.</p>
+            </div>
+          </div>
+          <div class="topic-search-row">
+            <input id="topic-search-input" class="topic-search-input" type="text" placeholder="Search across grades" />
+            <button id="topic-search-button" class="secondary-button" type="button">Search</button>
+          </div>
+          <div id="topic-search-results" class="topic-search-results">
+            <div class="topic-search-empty">Search a topic or keyword to see matching courses and question levels.</div>
+          </div>
+        </div>
       </div>
       <div class="hero-panel">
         <div class="hero-panel-heading">
@@ -166,21 +181,6 @@
             <div class="topic-select-wrap">
               <label class="field-label" for="english-category-select">English</label>
               <select id="english-category-select" class="topic-select"></select>
-            </div>
-          </div>
-          <div class="topic-search-panel">
-            <div class="topic-search-head">
-              <div>
-                <h3>Search Topics</h3>
-                <p>Find a course or question in this grade, like logarithms, fractions, punctuation, or PAT.</p>
-              </div>
-            </div>
-            <div class="topic-search-row">
-              <input id="topic-search-input" class="topic-search-input" type="text" placeholder="Search this grade" />
-              <button id="topic-search-button" class="secondary-button" type="button">Search</button>
-            </div>
-            <div id="topic-search-results" class="topic-search-results">
-              <div class="topic-search-empty">Search a topic or keyword to see matching courses and question levels.</div>
             </div>
           </div>
           <div id="category-current-card" class="category-current-card hidden"></div>

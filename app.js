@@ -1136,20 +1136,20 @@ function renderTopicSearch() {
     return;
   }
 
-  const results = searchTopicsForGrade(query, state.selectedGrade);
+  const results = searchTopicsAcrossGrades(query);
   if (!results.length) {
-    elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">No matches found in Grade ${state.selectedGrade}. Try another keyword.</div>`;
+    elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">No matches found. Try another keyword or a broader topic name.</div>`;
     return;
   }
 
   elements.topicSearchResults.innerHTML = results.map((result) => `
     <div class="topic-search-result">
       <strong>${escapeHtml(result.category.title)}</strong>
-      <span>${escapeHtml(result.trackLabel)}</span>
+      <span>${escapeHtml(result.trackLabel)} | Grade ${result.grade}</span>
       <small>${escapeHtml(result.preview)}</small>
       <div class="topic-search-actions">
-        <button type="button" class="secondary-button topic-search-action" data-action="open-topic" data-category-id="${escapeHtml(result.category.id)}">Open Topic</button>
-        ${Number.isFinite(result.level) ? `<button type="button" class="secondary-button topic-search-action" data-action="open-level" data-category-id="${escapeHtml(result.category.id)}" data-pat-tab-id="${escapeHtml(result.patTabId || "")}" data-level="${result.level}">Open Level ${result.level}</button>` : ""}
+        <button type="button" class="secondary-button topic-search-action" data-action="open-topic" data-grade="${result.grade}" data-category-id="${escapeHtml(result.category.id)}">Open Topic</button>
+        ${Number.isFinite(result.level) ? `<button type="button" class="secondary-button topic-search-action" data-action="open-level" data-grade="${result.grade}" data-category-id="${escapeHtml(result.category.id)}" data-pat-tab-id="${escapeHtml(result.patTabId || "")}" data-level="${result.level}">Open Grade ${result.grade} Level ${result.level}</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -1226,6 +1226,19 @@ function searchTopicsForGrade(query, grade) {
   });
 }
 
+function searchTopicsAcrossGrades(query) {
+  return grades.flatMap((grade) =>
+    searchTopicsForGrade(query, grade).map((result) => ({
+      ...result,
+      grade
+    }))
+  ).sort((a, b) => {
+    const aStarts = normalizeTopicSearchText(a.category.title).startsWith(query) ? 0 : 1;
+    const bStarts = normalizeTopicSearchText(b.category.title).startsWith(query) ? 0 : 1;
+    return aStarts - bStarts || a.grade - b.grade || a.category.title.localeCompare(b.category.title);
+  });
+}
+
 function handleTopicSearchJump(event) {
   const button = event.target.closest("[data-action]");
   if (!button) {
@@ -1233,16 +1246,19 @@ function handleTopicSearchJump(event) {
   }
 
   const categoryId = button.dataset.categoryId;
+  const targetGrade = Number(button.dataset.grade) || state.selectedGrade;
   if (!categoryId) {
     return;
   }
 
   flushStudyTime();
+  state.selectedGrade = targetGrade;
   state.selectedCategoryId = categoryId;
-  state.selectedPatTab = button.dataset.patTabId || getDefaultPatTabId(categoryId, state.selectedGrade);
+  state.selectedPatTab = button.dataset.patTabId || getDefaultPatTabId(categoryId, targetGrade);
   state.selectedLevel = null;
   state.currentQuestions = [];
   hideQuizViews();
+  renderGradeButtons();
   renderCategories();
   renderLevels();
   renderReviewOptions();
