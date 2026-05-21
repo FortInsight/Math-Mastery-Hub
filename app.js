@@ -120,6 +120,7 @@ const state = {
   selectedCategoryId: null,
   selectedPatTab: null,
   selectedLevel: null,
+  searchQuery: "",
   currentQuestions: [],
   currentIndex: 0,
   score: 0,
@@ -155,6 +156,9 @@ const elements = {
   gradeButtons: document.getElementById("grade-buttons"),
   mathCategorySelect: document.getElementById("math-category-select"),
   englishCategorySelect: document.getElementById("english-category-select"),
+  topicSearchInput: document.getElementById("topic-search-input"),
+  topicSearchButton: document.getElementById("topic-search-button"),
+  topicSearchResults: document.getElementById("topic-search-results"),
   categoryCurrentCard: document.getElementById("category-current-card"),
   patTabSection: document.getElementById("pat-tab-section"),
   patTabTitle: document.getElementById("pat-tab-title"),
@@ -233,6 +237,12 @@ function attachEvents() {
   elements.hintButton?.addEventListener("click", toggleHint);
   elements.mathCategorySelect?.addEventListener("change", (event) => handleCategorySelect(event, "maths"));
   elements.englishCategorySelect?.addEventListener("change", (event) => handleCategorySelect(event, "english"));
+  elements.topicSearchInput?.addEventListener("input", (event) => {
+    state.searchQuery = event.target.value;
+    renderTopicSearch();
+  });
+  elements.topicSearchButton?.addEventListener("click", renderTopicSearch);
+  elements.topicSearchResults?.addEventListener("click", handleTopicSearchJump);
   if (elements.toggleProfilePanelButton) {
     elements.toggleProfilePanelButton.addEventListener("click", toggleProfilePanel);
   }
@@ -268,6 +278,7 @@ function handleCategorySelect(event, track) {
   state.selectedLevel = null;
   hideQuizViews();
   renderCategories();
+  renderTopicSearch();
   renderLevels();
   renderReviewOptions();
   renderStudyTime();
@@ -291,6 +302,7 @@ function renderGradeButtons() {
       hideQuizViews();
       renderGradeButtons();
       renderCategories();
+      renderTopicSearch();
       renderStudyTime();
     });
     elements.gradeButtons.appendChild(button);
@@ -308,6 +320,7 @@ function renderCategories() {
   elements.levelGrid.innerHTML = "";
   elements.levelSection.classList.add("hidden");
   renderCategorySelector(categories);
+  renderTopicSearch();
 
   renderLevels();
   renderReviewOptions();
@@ -1106,6 +1119,179 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
 
   questionBankCache.set(cacheKey, bank);
   return bank;
+}
+
+function renderTopicSearch() {
+  if (!elements.topicSearchResults) {
+    return;
+  }
+
+  const query = normalizeTopicSearchText(state.searchQuery || "");
+  if (elements.topicSearchInput && elements.topicSearchInput.value !== state.searchQuery) {
+    elements.topicSearchInput.value = state.searchQuery;
+  }
+
+  if (!query) {
+    elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">Search a topic or keyword to see matching courses and question levels.</div>`;
+    return;
+  }
+
+  const results = searchTopicsForGrade(query, state.selectedGrade);
+  if (!results.length) {
+    elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">No matches found in Grade ${state.selectedGrade}. Try another keyword.</div>`;
+    return;
+  }
+
+  elements.topicSearchResults.innerHTML = results.map((result) => `
+    <div class="topic-search-result">
+      <strong>${escapeHtml(result.category.title)}</strong>
+      <span>${escapeHtml(result.trackLabel)}</span>
+      <small>${escapeHtml(result.preview)}</small>
+      <div class="topic-search-actions">
+        <button type="button" class="secondary-button topic-search-action" data-action="open-topic" data-category-id="${escapeHtml(result.category.id)}">Open Topic</button>
+        ${Number.isFinite(result.level) ? `<button type="button" class="secondary-button topic-search-action" data-action="open-level" data-category-id="${escapeHtml(result.category.id)}" data-pat-tab-id="${escapeHtml(result.patTabId || "")}" data-level="${result.level}">Open Level ${result.level}</button>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+function searchTopicsForGrade(query, grade) {
+  const categories = curriculum[grade] || [];
+
+  return categories.flatMap((category) => {
+    const tabs = getPatTabDefinitions(category.id, grade);
+    const baseText = normalizeTopicSearchText(`${category.title} ${category.description}`);
+    const matches = [];
+
+    if (tabs.length) {
+      tabs.forEach((tab) => {
+        const bank = getQuestionBank(grade, category.id, tab.id);
+        const questionIndex = bank.findIndex((question) => {
+          const promptParts = splitQuestionPrompt(question.prompt);
+          const searchable = [
+            category.title,
+            category.description,
+            tab.label,
+            tab.description,
+            promptParts.instruction,
+            promptParts.body,
+            question.hint || "",
+            question.explanation || ""
+          ].join(" ");
+          return normalizeTopicSearchText(searchable).includes(query);
+        });
+        const tabText = normalizeTopicSearchText(`${tab.label} ${tab.description}`);
+        if (baseText.includes(query) || tabText.includes(query) || questionIndex >= 0) {
+          matches.push({
+            category,
+            patTabId: tab.id,
+            trackLabel: `English | ${tab.label}`,
+            level: questionIndex >= 0 ? Math.floor(questionIndex / 10) + 1 : null,
+            preview: questionIndex >= 0 ? buildQuestionPreview(bank[questionIndex].prompt) : tab.description
+          });
+        }
+      });
+      return matches;
+    }
+
+    const bank = getQuestionBank(grade, category.id, null);
+    const questionIndex = bank.findIndex((question) => {
+      const promptParts = splitQuestionPrompt(question.prompt);
+      const searchable = [
+        category.title,
+        category.description,
+        promptParts.instruction,
+        promptParts.body,
+        question.hint || "",
+        question.explanation || ""
+      ].join(" ");
+      return normalizeTopicSearchText(searchable).includes(query);
+    });
+
+    if (baseText.includes(query) || questionIndex >= 0) {
+      return [{
+        category,
+        patTabId: null,
+        trackLabel: category.id.startsWith("english-") ? "English" : "Maths",
+        level: questionIndex >= 0 ? Math.floor(questionIndex / 10) + 1 : null,
+        preview: questionIndex >= 0 ? buildQuestionPreview(bank[questionIndex].prompt) : category.description
+      }];
+    }
+
+    return [];
+  }).sort((a, b) => {
+    const aStarts = normalizeTopicSearchText(a.category.title).startsWith(query) ? 0 : 1;
+    const bStarts = normalizeTopicSearchText(b.category.title).startsWith(query) ? 0 : 1;
+    return aStarts - bStarts || a.category.title.localeCompare(b.category.title);
+  });
+}
+
+function handleTopicSearchJump(event) {
+  const button = event.target.closest("[data-action]");
+  if (!button) {
+    return;
+  }
+
+  const categoryId = button.dataset.categoryId;
+  if (!categoryId) {
+    return;
+  }
+
+  flushStudyTime();
+  state.selectedCategoryId = categoryId;
+  state.selectedPatTab = button.dataset.patTabId || getDefaultPatTabId(categoryId, state.selectedGrade);
+  state.selectedLevel = null;
+  state.currentQuestions = [];
+  hideQuizViews();
+  renderCategories();
+  renderLevels();
+  renderReviewOptions();
+  renderStudyTime();
+
+  if (categoryId.startsWith("english-")) {
+    if (elements.englishCategorySelect) {
+      elements.englishCategorySelect.value = categoryId;
+    }
+    if (elements.mathCategorySelect) {
+      elements.mathCategorySelect.value = "";
+    }
+  } else {
+    if (elements.mathCategorySelect) {
+      elements.mathCategorySelect.value = categoryId;
+    }
+    if (elements.englishCategorySelect) {
+      elements.englishCategorySelect.value = "";
+    }
+  }
+
+  if (button.dataset.action === "open-level") {
+    const level = Number(button.dataset.level);
+    if (level >= 1 && level <= 10) {
+      startLevel(level);
+    }
+  }
+}
+
+function normalizeTopicSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s&-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildQuestionPreview(prompt) {
+  const parts = splitQuestionPrompt(prompt);
+  return parts.body || parts.instruction || prompt;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function normalizeQuestionPrompt(prompt) {
