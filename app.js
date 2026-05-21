@@ -1084,7 +1084,8 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
 
     for (let attempt = 0; attempt < 18; attempt += 1) {
       const rng = mulberry32(seedBase + index * 97 + 1 + (attempt * 1009));
-      const question = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index + attempt, difficulty);
+      const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index + attempt, difficulty);
+      const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
       const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
       if (!seenPrompts.has(normalizedPrompt)) {
         seenPrompts.add(normalizedPrompt);
@@ -1093,7 +1094,8 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     }
 
     const fallbackRng = mulberry32(seedBase + index * 97 + 1 + 99991);
-    const fallbackQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, index + 37, difficulty);
+    const fallbackRawQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, index + 37, difficulty);
+    const fallbackQuestion = ensureQuestionHint(category.factory, fallbackRawQuestion, difficulty, category.config);
     seenPrompts.add(normalizeQuestionPrompt(fallbackQuestion.prompt));
     return fallbackQuestion;
   });
@@ -1107,6 +1109,104 @@ function normalizeQuestionPrompt(prompt) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+function ensureQuestionHint(factoryName, question, difficulty, config = {}) {
+  if (question.hint) {
+    return question;
+  }
+
+  return {
+    ...question,
+    hint: buildMathHint(factoryName, question.prompt, difficulty, config)
+  };
+}
+
+function buildMathHint(factoryName, prompt, difficulty, config = {}) {
+  switch (factoryName) {
+    case "numberSense":
+      if (/Round /.test(prompt)) {
+        return "Look at the digit to the right of the place you are rounding to. If it is 5 or more, round up.";
+      }
+      if (/Fill in the missing number/.test(prompt)) {
+        return "Check how the numbers are counting. Look at the difference between the numbers you can see.";
+      }
+      return "Compare the numbers carefully and look at place value from left to right.";
+    case "additionSubtraction":
+      return difficulty <= 4
+        ? "Line up the numbers and count carefully. Check whether the question is asking you to add or subtract."
+        : "Work step by step and watch for regrouping or borrowing if the numbers are larger.";
+    case "multiplicationDivision":
+      return / x /.test(prompt)
+        ? "Think of multiplication as equal groups or repeated addition."
+        : "Use the fact family. Ask yourself what number times the divisor gives the dividend.";
+    case "fractionsDecimalsPercent":
+      if (/Convert .*% to a decimal/.test(prompt)) {
+        return "Percent means out of 100, so move the decimal two places to the left.";
+      }
+      if (/as a decimal/.test(prompt) || /What decimal is equal/.test(prompt)) {
+        return "A fraction becomes a decimal when you divide the numerator by the denominator.";
+      }
+      return "Look at the whole, then compare how many parts are chosen out of the total equal parts.";
+    case "measurement":
+      if (/area/.test(prompt.toLowerCase())) {
+        return "For a rectangle, multiply length by width. Keep the square units.";
+      }
+      if (/time/.test(prompt.toLowerCase()) || /say the time/.test(prompt.toLowerCase())) {
+        return "Notice whether the minutes show o'clock, quarter past, half past, or quarter to.";
+      }
+      return "Compare the measurements carefully and pay attention to what the question is asking you to find.";
+    case "geometry":
+      if (/surface area/i.test(prompt)) {
+        return "Surface area means add the area of every outside face.";
+      }
+      if (/volume/i.test(prompt)) {
+        return "Volume tells how much space is inside a solid. For a cube, multiply side x side x side.";
+      }
+      if (/hypotenuse/i.test(prompt)) {
+        return "Use the Pythagorean theorem: square the legs, add them, then take the square root.";
+      }
+      if (/angle/i.test(prompt.toLowerCase())) {
+        return "Compare the angle to 90 degrees: less than 90 is acute, 90 is right, more than 90 is obtuse.";
+      }
+      return "Use the shape facts you know, like number of sides, angle size, or the correct geometry formula.";
+    case "patternsData":
+      return /pattern/i.test(prompt)
+        ? "Find how the numbers are changing each time, then use the same rule once more."
+        : "Add or compare the data values carefully before choosing the answer.";
+    case "algebra":
+      if (/Solve:/.test(prompt)) {
+        return "Undo the operation on x by doing the opposite operation to both sides.";
+      }
+      if (/Simplify:/.test(prompt)) {
+        return "Combine only like terms. Terms with the same variable can be added together.";
+      }
+      return "Substitute the value in place of the variable, then follow the order of operations.";
+    case "statisticsProbability":
+      if (/mean/i.test(prompt)) {
+        return "Add all the values, then divide by how many values there are.";
+      }
+      return "Probability is favorable outcomes over total outcomes. Count the total equally likely outcomes first.";
+    case "integersRational":
+      return "Watch the signs carefully. A minus beside a negative number can change the operation.";
+    case "ratiosProportions":
+      return "Keep the ratio balanced by multiplying or dividing both parts by the same number.";
+    case "functionsGraphing":
+      return /what is y when x/i.test(prompt.toLowerCase()) || /what is f\(/i.test(prompt.toLowerCase()) || /what is g\(/i.test(prompt.toLowerCase())
+        ? "Substitute the given x-value into the rule, then simplify step by step."
+        : "Use the rule carefully and check the order of operations.";
+    case "trigonometry":
+      return "Use the special-angle values you know from triangles or the unit circle.";
+    case "calculus":
+      return "Use the power rule: bring the exponent down, then subtract 1 from the exponent.";
+    case "financialMath":
+      if (/discount/i.test(prompt.toLowerCase())) {
+        return "Find the percent off, then subtract it from the original price or multiply by 1 minus the discount rate.";
+      }
+      return "For simple interest, use principal x rate x time. Convert the percent to a decimal if needed.";
+    default:
+      return "Break the question into steps and use the math rule or formula that matches the topic.";
+  }
 }
 
 function loadProfilesStore() {
