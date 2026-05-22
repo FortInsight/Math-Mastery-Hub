@@ -158,6 +158,7 @@ const elements = {
   englishCategorySelect: document.getElementById("english-category-select"),
   topicSearchInput: document.getElementById("topic-search-input"),
   topicSearchButton: document.getElementById("topic-search-button"),
+  clearSearchButton: document.getElementById("clear-search-button"),
   topicSearchResults: document.getElementById("topic-search-results"),
   categoryCurrentCard: document.getElementById("category-current-card"),
   patTabSection: document.getElementById("pat-tab-section"),
@@ -242,6 +243,7 @@ function attachEvents() {
     renderTopicSearch();
   });
   elements.topicSearchButton?.addEventListener("click", renderTopicSearch);
+  elements.clearSearchButton?.addEventListener("click", clearTopicSearch);
   elements.topicSearchResults?.addEventListener("click", handleTopicSearchJump);
   if (elements.toggleProfilePanelButton) {
     elements.toggleProfilePanelButton.addEventListener("click", toggleProfilePanel);
@@ -522,6 +524,7 @@ function startLevel(level) {
   renderLevels();
   renderQuestion();
   renderStudyTime();
+  elements.quizSection?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderQuestion() {
@@ -1239,7 +1242,16 @@ function searchTopicsAcrossGrades(query) {
   });
 }
 
+function clearTopicSearch() {
+  state.searchQuery = "";
+  if (elements.topicSearchInput) {
+    elements.topicSearchInput.value = "";
+  }
+  renderTopicSearch();
+}
+
 function handleTopicSearchJump(event) {
+  event.preventDefault();
   const button = event.target.closest("[data-action]");
   if (!button) {
     return;
@@ -1258,11 +1270,6 @@ function handleTopicSearchJump(event) {
   state.selectedLevel = null;
   state.currentQuestions = [];
   hideQuizViews();
-  renderGradeButtons();
-  renderCategories();
-  renderLevels();
-  renderReviewOptions();
-  renderStudyTime();
 
   if (categoryId.startsWith("english-")) {
     if (elements.englishCategorySelect) {
@@ -1280,12 +1287,25 @@ function handleTopicSearchJump(event) {
     }
   }
 
+  renderGradeButtons();
+  renderCategories();
+  renderLevels();
+  renderReviewOptions();
+  renderStudyTime();
+  renderTopicSearch();
+
   if (button.dataset.action === "open-level") {
     const level = Number(button.dataset.level);
     if (level >= 1 && level <= 10) {
       startLevel(level);
     }
+    return;
   }
+
+  window.requestAnimationFrame(() => {
+    elements.categoryCurrentCard?.classList.remove("hidden");
+    (elements.categoryCurrentCard || elements.levelSection)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 function normalizeTopicSearchText(value) {
