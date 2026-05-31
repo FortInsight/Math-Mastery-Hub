@@ -662,6 +662,58 @@ h1 {
   border-color: transparent;
 }
 
+.probability-example-section {
+  margin-top: 1rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 120, 0.12), transparent 24%),
+    rgba(8, 26, 58, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.probability-example-content {
+  display: grid;
+  gap: 0.95rem;
+  margin-top: 0.95rem;
+}
+
+.probability-example-card {
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(104, 197, 255, 0.18);
+}
+
+.probability-example-card h4 {
+  margin: 0 0 0.55rem;
+  color: #ffffff;
+  font-size: 1.06rem;
+}
+
+.probability-example-card p {
+  margin: 0.35rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.55;
+}
+
+.probability-example-card .mastery-followup {
+  margin-top: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(104, 197, 255, 0.1);
+  border: 1px solid rgba(104, 197, 255, 0.18);
+}
+
+.probability-example-card strong {
+  color: #ffffff;
+}
+
+.probability-example-card .probability-diagram,
+.probability-example-card .probability-table {
+  margin-top: 0.8rem;
+}
+
 .grade-button:hover,
 .level-card:hover,
 .option-button:hover,
@@ -838,6 +890,37 @@ h1 {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.probability-diagram {
+  display: grid;
+  gap: 0.6rem;
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.probability-diagram strong {
+  color: #ffffff;
+}
+
+.probability-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98rem;
+}
+
+.probability-table th,
+.probability-table td {
+  border: 1px solid rgba(162, 192, 255, 0.22);
+  padding: 0.55rem 0.65rem;
+  text-align: center;
+  color: #ffffff;
+}
+
+.probability-table th {
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 800;
 }
 
 .answer-feedback-layout {

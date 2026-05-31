@@ -61,6 +61,7 @@ const curriculum = {
     makeCategory("ratios", "Ratios & Proportions", "Rates, percent, and proportional thinking.", "ratiosProportions", { level: 7 }),
     makeCategory("geometry", "Geometry", "Angles, circles, and scale drawings.", "geometry", { level: 7 }),
     makeCategory("data", "Data & Probability", "Compare samples and experimental probability.", "statisticsProbability", { level: 7 }),
+    makeCategory("probability-mastery", "Probability Mastery", "Study Grade 7 worksheet examples, then solve mastery questions with step-by-step solutions and sample-space models.", "grade7ProbabilityMastery", { level: 7, skill: "probability-mastery" }),
     makeCategory("equations", "Equations & Inequalities", "Solve one-step and multi-step equation problems.", "algebra", { level: 7 }),
     makeCategory("percent", "Percent Applications", "Solve tax, discount, and percent change questions.", "ratiosProportions", { level: 7 })
   ],
@@ -119,6 +120,7 @@ const state = {
   selectedGrade: 1,
   selectedCategoryId: null,
   selectedPatTab: null,
+  selectedProbabilityMode: "mastery",
   selectedLevel: null,
   searchQuery: "",
   currentQuestions: [],
@@ -165,6 +167,14 @@ const elements = {
   patTabTitle: document.getElementById("pat-tab-title"),
   patTabDescription: document.getElementById("pat-tab-description"),
   patTabBar: document.getElementById("pat-tab-bar"),
+  probabilityModeSection: document.getElementById("probability-mode-section"),
+  probabilityModeTitle: document.getElementById("probability-mode-title"),
+  probabilityModeDescription: document.getElementById("probability-mode-description"),
+  probabilityModeBar: document.getElementById("probability-mode-bar"),
+  probabilityExampleSection: document.getElementById("probability-example-section"),
+  probabilityExampleTitle: document.getElementById("probability-example-title"),
+  probabilityExampleDescription: document.getElementById("probability-example-description"),
+  probabilityExampleContent: document.getElementById("probability-example-content"),
   levelGrid: document.getElementById("level-grid"),
   levelSection: document.getElementById("level-section"),
   resetTopicProgressButton: document.getElementById("reset-topic-progress-button"),
@@ -271,6 +281,7 @@ function handleCategorySelect(event, track) {
   flushStudyTime();
   state.selectedCategoryId = event.target.value || null;
   state.selectedPatTab = getDefaultPatTabId(state.selectedCategoryId);
+  state.selectedProbabilityMode = getDefaultProbabilityMode(state.selectedCategoryId, state.selectedGrade);
   if (track === "maths" && elements.englishCategorySelect) {
     elements.englishCategorySelect.value = "";
   }
@@ -299,6 +310,7 @@ function renderGradeButtons() {
       syncProfileGrade();
       state.selectedCategoryId = null;
       state.selectedPatTab = null;
+      state.selectedProbabilityMode = "mastery";
       state.selectedLevel = null;
       state.currentQuestions = [];
       hideQuizViews();
@@ -338,6 +350,8 @@ function renderCategorySelector(categories) {
     elements.englishCategorySelect.innerHTML = "";
     elements.categoryCurrentCard?.classList.add("hidden");
     elements.patTabSection?.classList.add("hidden");
+    elements.probabilityModeSection?.classList.add("hidden");
+    elements.probabilityExampleSection?.classList.add("hidden");
     return;
   }
 
@@ -369,6 +383,8 @@ function renderCategorySelector(categories) {
   if (!selectedCategory) {
     elements.categoryCurrentCard?.classList.add("hidden");
     elements.patTabSection?.classList.add("hidden");
+    elements.probabilityModeSection?.classList.add("hidden");
+    elements.probabilityExampleSection?.classList.add("hidden");
     if (elements.categoryCurrentCard) {
       elements.categoryCurrentCard.innerHTML = "";
     }
@@ -413,12 +429,32 @@ function getPatTabDefinitions(categoryId, grade = state.selectedGrade) {
     ];
   }
 
+  if (grade === 7 && categoryId === "probability-mastery") {
+    return [
+      { id: "probability-basics", label: "5.1 Probability", description: "Use the worksheet examples to review favourable outcomes, fractions, ratios, percents, theoretical probability, and experimental probability, then solve mastery questions." },
+      { id: "organize-outcomes", label: "5.2 Organize Outcomes", description: "Use the worksheet examples to organize outcomes with tables, lists, and tree diagrams, then solve mastery questions on sample spaces." },
+      { id: "independent-events", label: "5.3 Independent Events", description: "Use the worksheet examples to model simple independent events, then solve mastery questions with clear step-by-step probability reasoning." }
+    ];
+  }
+
   return [];
 }
 
 function getDefaultPatTabId(categoryId, grade = state.selectedGrade) {
   const tabs = getPatTabDefinitions(categoryId, grade);
   return tabs.length ? tabs[0].id : null;
+}
+
+function isProbabilityMasteryCategory(categoryId = state.selectedCategoryId, grade = state.selectedGrade) {
+  return grade === 7 && categoryId === "probability-mastery";
+}
+
+function getProbabilityModeDefinitions(categoryId = state.selectedCategoryId, grade = state.selectedGrade) {
+  return [];
+}
+
+function getDefaultProbabilityMode(categoryId = state.selectedCategoryId, grade = state.selectedGrade) {
+  return "mastery";
 }
 
 function getSelectedPatTabDefinition() {
@@ -435,6 +471,7 @@ function renderPatTabs(selectedCategory) {
     state.selectedPatTab = null;
     elements.patTabSection.classList.add("hidden");
     elements.patTabBar.innerHTML = "";
+    renderProbabilityModeTabs(selectedCategory);
     return;
   }
 
@@ -466,6 +503,61 @@ function renderPatTabs(selectedCategory) {
     });
     elements.patTabBar.appendChild(button);
   });
+
+  renderProbabilityModeTabs(selectedCategory);
+}
+
+function renderProbabilityModeTabs(selectedCategory) {
+  if (!elements.probabilityModeSection || !elements.probabilityModeBar || !elements.probabilityModeTitle || !elements.probabilityModeDescription) {
+    return;
+  }
+
+  const modes = getProbabilityModeDefinitions(selectedCategory?.id, state.selectedGrade);
+  if (!modes.length) {
+    elements.probabilityModeSection.classList.add("hidden");
+    elements.probabilityModeBar.innerHTML = "";
+    elements.probabilityExampleSection?.classList.add("hidden");
+    return;
+  }
+
+  if (!modes.some((mode) => mode.id === state.selectedProbabilityMode)) {
+    state.selectedProbabilityMode = modes[0].id;
+  }
+
+  const activeMode = modes.find((mode) => mode.id === state.selectedProbabilityMode) || modes[0];
+  elements.probabilityModeSection.classList.remove("hidden");
+  elements.probabilityModeTitle.textContent = "Choose Study Mode";
+  elements.probabilityModeDescription.textContent = activeMode.description;
+  elements.probabilityModeBar.innerHTML = "";
+
+  modes.forEach((mode) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `pat-tab-button ${mode.id === state.selectedProbabilityMode ? "active" : ""}`;
+    button.textContent = mode.label;
+    button.addEventListener("click", () => {
+      flushStudyTime();
+      state.selectedProbabilityMode = mode.id;
+      state.selectedLevel = null;
+      state.currentQuestions = [];
+      hideQuizViews();
+      renderLevels();
+      renderReviewOptions();
+      renderStudyTime();
+    });
+    elements.probabilityModeBar.appendChild(button);
+  });
+
+  renderProbabilityExamples();
+}
+
+function renderProbabilityExamples() {
+  if (!elements.probabilityExampleSection || !elements.probabilityExampleContent || !elements.probabilityExampleTitle || !elements.probabilityExampleDescription) {
+    return;
+  }
+
+  elements.probabilityExampleSection.classList.add("hidden");
+  elements.probabilityExampleContent.innerHTML = "";
 }
 
 function showHintAfterWrong(question) {
@@ -483,12 +575,21 @@ function renderLevels() {
 
   if (!state.selectedCategoryId) {
     elements.levelSection.classList.add("hidden");
+    elements.probabilityExampleSection?.classList.add("hidden");
     renderResetTopicButton();
     return;
   }
 
   const category = getSelectedCategory();
   const activeContext = getActiveCategoryContext();
+  renderProbabilityExamples();
+
+  if (isProbabilityMasteryCategory(category?.id, state.selectedGrade) && state.selectedProbabilityMode === "examples") {
+    elements.levelSection.classList.add("hidden");
+    renderResetTopicButton();
+    return;
+  }
+
   elements.levelSection.classList.remove("hidden");
   elements.selectedCategoryLabel.textContent = activeContext.title;
 
@@ -509,6 +610,11 @@ function renderLevels() {
 }
 
 function startLevel(level) {
+  if (isProbabilityMasteryCategory() && state.selectedProbabilityMode !== "mastery") {
+    state.selectedProbabilityMode = "mastery";
+    renderProbabilityModeTabs(getSelectedCategory());
+  }
+
   flushStudyTime();
   state.selectedLevel = level;
   state.currentQuestions = getQuestionBank(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab).slice((level - 1) * 10, level * 10);
@@ -1099,24 +1205,37 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
   const category = curriculum[grade].find((item) => item.id === categoryId);
   const seedBase = hashCode(cacheKey);
   const seenPrompts = new Set();
+  const promptOccurrences = new Map();
   const bank = Array.from({ length: 100 }, (_, index) => {
     const difficulty = Math.floor(index / 10) + 1;
 
-    for (let attempt = 0; attempt < 18; attempt += 1) {
+    for (let attempt = 0; attempt < 60; attempt += 1) {
       const rng = mulberry32(seedBase + index * 97 + 1 + (attempt * 1009));
       const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index + attempt, difficulty);
       const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
       const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
       if (!seenPrompts.has(normalizedPrompt)) {
         seenPrompts.add(normalizedPrompt);
+        promptOccurrences.set(normalizedPrompt, 1);
         return question;
       }
     }
 
     const fallbackRng = mulberry32(seedBase + index * 97 + 1 + 99991);
     const fallbackRawQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, index + 37, difficulty);
-    const fallbackQuestion = ensureQuestionHint(category.factory, fallbackRawQuestion, difficulty, category.config);
-    seenPrompts.add(normalizeQuestionPrompt(fallbackQuestion.prompt));
+    let fallbackQuestion = ensureQuestionHint(category.factory, fallbackRawQuestion, difficulty, category.config);
+    let normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
+
+    if (seenPrompts.has(normalizedPrompt)) {
+      const occurrence = (promptOccurrences.get(normalizedPrompt) || 1) + 1;
+      promptOccurrences.set(normalizedPrompt, occurrence);
+      fallbackQuestion = uniquifyQuestionPrompt(fallbackQuestion, occurrence);
+      normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
+    } else {
+      promptOccurrences.set(normalizedPrompt, 1);
+    }
+
+    seenPrompts.add(normalizedPrompt);
     return fallbackQuestion;
   });
 
@@ -1188,7 +1307,7 @@ function searchTopicsForGrade(query, grade) {
           matches.push({
             category,
             patTabId: tab.id,
-            trackLabel: `English | ${tab.label}`,
+            trackLabel: `${category.id.startsWith("english-") ? "English" : "Maths"} | ${tab.label}`,
             level: questionIndex >= 0 ? Math.floor(questionIndex / 10) + 1 : null,
             preview: questionIndex >= 0 ? buildQuestionPreview(bank[questionIndex].prompt) : tab.description
           });
@@ -1267,6 +1386,9 @@ function handleTopicSearchJump(event) {
   state.selectedGrade = targetGrade;
   state.selectedCategoryId = categoryId;
   state.selectedPatTab = button.dataset.patTabId || getDefaultPatTabId(categoryId, targetGrade);
+  state.selectedProbabilityMode = button.dataset.action === "open-level"
+    ? "mastery"
+    : getDefaultProbabilityMode(categoryId, targetGrade);
   state.selectedLevel = null;
   state.currentQuestions = [];
   hideQuizViews();
@@ -1335,6 +1457,28 @@ function normalizeQuestionPrompt(prompt) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+function uniquifyQuestionPrompt(question, occurrence) {
+  const prompt = String(question.prompt || "").trim();
+  if (!prompt) {
+    return question;
+  }
+
+  const replacements = [
+    (text) => text.replace(/^Which\b/i, "Select which"),
+    (text) => text.replace(/^What is\b/i, "Find"),
+    (text) => text.replace(/^What\b/i, "Choose what"),
+    (text) => text.replace(/^Choose\b/i, "Select"),
+    (text) => text.replace(/^A\b/i, "Practice: a"),
+    (text) => `Practice version ${occurrence}: ${text}`
+  ];
+
+  const variantBuilder = replacements[Math.min(occurrence - 1, replacements.length - 1)];
+  return {
+    ...question,
+    prompt: variantBuilder(prompt)
+  };
 }
 
 function ensureQuestionHint(factoryName, question, difficulty, config = {}) {
@@ -2213,7 +2357,7 @@ function buildOptions(correct, distractors, rng, formatter = (value) => String(v
   });
 
   let attempt = 1;
-  while (options.length < 4 && attempt <= 12) {
+  while (options.length < 4 && attempt <= 12 && canAutoGenerateFallbackOptions(correct)) {
     const fallbackValue = buildFallbackOptionValue(correct, attempt);
     const fallbackLabel = formatter(fallbackValue);
     if (!seen.has(fallbackLabel)) {
@@ -2230,19 +2374,51 @@ function buildOptions(correct, distractors, rng, formatter = (value) => String(v
   };
 }
 
+function canAutoGenerateFallbackOptions(correct) {
+  if (typeof correct === "number" && Number.isFinite(correct)) {
+    return true;
+  }
+
+  const text = String(correct || "").trim();
+  return /^-?\d+(\.\d+)?$/.test(text)
+    || /^-?\d+\/-?\d+$/.test(text)
+    || /^\$-?\d+(\.\d+)?$/.test(text)
+    || /^-?\d+(\.\d+)?%$/.test(text);
+}
+
 function buildFallbackOptionValue(correct, attempt) {
   if (typeof correct === "number" && Number.isFinite(correct)) {
     const step = Math.max(1, Math.abs(Math.round(correct / 5)) || 1);
     return correct + (step * attempt);
   }
 
-  const textFallbacks = [
-    "Choose the stronger grammar clue.",
-    "Check the verb form carefully.",
-    "Look again at the punctuation rule.",
-    "Think about the word meaning."
-  ];
-  return textFallbacks[(attempt - 1) % textFallbacks.length];
+  const text = String(correct || "").trim();
+
+  if (/^\$-?\d+(\.\d+)?$/.test(text)) {
+    const value = Number(text.replace("$", ""));
+    const step = Math.max(1, Math.abs(Math.round(value / 5)) || 1);
+    return `$${(value + (step * attempt)).toFixed(2)}`;
+  }
+
+  if (/^-?\d+(\.\d+)?%$/.test(text)) {
+    const value = Number(text.replace("%", ""));
+    return `${value + attempt}%`;
+  }
+
+  if (/^-?\d+\/-?\d+$/.test(text)) {
+    const [numerator, denominator] = text.split("/").map(Number);
+    const nextNumerator = numerator + attempt;
+    return `${nextNumerator}/${denominator}`;
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(text)) {
+    const value = Number(text);
+    const step = Math.max(1, Math.abs(Math.round(value / 5)) || 1);
+    const fallback = value + (step * attempt);
+    return Number.isInteger(value) ? String(Math.round(fallback)) : String(Math.round(fallback * 100) / 100);
+  }
+
+  return text;
 }
 
 function englishBand(grade) {
@@ -2298,6 +2474,190 @@ function chooseFromProgressiveGroups(groups, rng, difficulty, index) {
   const normalizedPool = availableGroups.flatMap((entry) => Array.isArray(entry) ? entry : [entry]);
   const offset = normalizedPool.length ? ((difficulty - 1) * 2) % normalizedPool.length : 0;
   return normalizedPool[(index + offset) % normalizedPool.length];
+}
+
+function gcd(a, b) {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y) {
+    [x, y] = [y, x % y];
+  }
+  return x || 1;
+}
+
+function simplifyFraction(numerator, denominator) {
+  const divisor = gcd(numerator, denominator);
+  return {
+    numerator: numerator / divisor,
+    denominator: denominator / divisor
+  };
+}
+
+function fractionString(numerator, denominator, simplify = false) {
+  const value = simplify ? simplifyFraction(numerator, denominator) : { numerator, denominator };
+  return `${value.numerator}/${value.denominator}`;
+}
+
+function percentString(numerator, denominator) {
+  const percent = (numerator / denominator) * 100;
+  const rounded = Math.round(percent * 100) / 100;
+  return Number.isInteger(rounded) ? `${rounded}%` : `${rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}%`;
+}
+
+function decimalString(numerator, denominator) {
+  const value = numerator / denominator;
+  const rounded = Math.round(value * 100) / 100;
+  return rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function probabilityExplanation(steps) {
+  return steps.map((step, index) => `Step ${index + 1}: ${step}`).join("<br>");
+}
+
+function plainListDiagram(title, entries) {
+  return `
+    <div class="probability-diagram">
+      <strong>${title}</strong>
+      <div>${entries.join(" | ")}</div>
+    </div>
+  `;
+}
+
+function sampleSpaceTableDiagram(rowLabel, columnLabel, rows, columns, formatter) {
+  const headerCells = columns.map((column) => `<th>${column}</th>`).join("");
+  const bodyRows = rows.map((row) => `
+    <tr>
+      <th>${row}</th>
+      ${columns.map((column) => `<td>${formatter(row, column)}</td>`).join("")}
+    </tr>
+  `).join("");
+  return `
+    <div class="probability-diagram">
+      <strong>Sample space table</strong>
+      <table class="probability-table">
+        <thead>
+          <tr>
+            <th>${rowLabel} \\ ${columnLabel}</th>
+            ${headerCells}
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function makeProbabilityQuestion({ prompt, correct, distractors, hint, steps, diagram }) {
+  return { prompt, correct, distractors, hint, explanation: probabilityExplanation(steps), diagram };
+}
+
+function getProbabilityWorksheetExamples(tabId) {
+  const exampleSets = {
+    "probability-basics": [
+      {
+        title: "Example 1: Spinner probability",
+        question: "A spinner has 8 equal sections. Three sections are blue. What is the probability of landing on blue? Write the answer as a fraction, decimal, and percent.",
+        howTo: "Count the favourable outcomes first, then count the total outcomes. Probability is favourable over total.",
+        solution: `There are 3 blue sections out of 8 total sections, so the probability is ${fractionString(3, 8, true)}. As a decimal, ${decimalString(3, 8)}. As a percent, ${percentString(3, 8)}.`,
+        diagram: plainListDiagram("Spinner sections", ["Blue", "Blue", "Blue", "Red", "Yellow", "Green", "Red", "Yellow"]),
+        masteryQuestion: "A spinner has 10 equal sections and 4 are green. What is the probability of landing on green as a fraction, decimal, and percent?"
+      },
+      {
+        title: "Example 2: Theoretical and experimental probability",
+        question: "A coin is flipped 20 times and lands on heads 11 times. Compare the experimental probability of heads to the theoretical probability.",
+        howTo: "Experimental probability uses what actually happened. Theoretical probability uses what should happen if outcomes are equally likely.",
+        solution: `Experimental probability of heads = ${fractionString(11, 20)} = ${decimalString(11, 20)}. Theoretical probability of heads for a fair coin = ${fractionString(1, 2)} = ${decimalString(1, 2)}. The experimental result is close to the theoretical result, but not exactly the same.`,
+        diagram: plainListDiagram("Coin-flip record", ["Heads: 11", "Tails: 9", "Total flips: 20"]),
+        masteryQuestion: "A die is rolled 30 times and a 6 appears 7 times. Compare the experimental probability of rolling a 6 to the theoretical probability."
+      },
+      {
+        title: "Example 3: Probability with cards",
+        question: "A bag contains 5 red cards, 3 blue cards, and 2 green cards. What is the probability of choosing a blue card?",
+        howTo: "Find the number of blue cards, then divide by the total number of cards in the bag.",
+        solution: `There are 3 blue cards. Total cards = 5 + 3 + 2 = 10. So the probability of blue is ${fractionString(3, 10, true)}. This is ${decimalString(3, 10)} or ${percentString(3, 10)}.`,
+        diagram: plainListDiagram("Cards in the bag", ["Red: 5", "Blue: 3", "Green: 2", "Total: 10"]),
+        masteryQuestion: "A bag contains 6 yellow cards, 2 black cards, and 4 white cards. What is the probability of choosing a black card?"
+      },
+      {
+        title: "Example 4: Number cube probability",
+        question: "A 12-sided die is numbered 1 to 12. What is the probability of rolling a number greater than 9?",
+        howTo: "List the favourable outcomes, count them, then divide by the total number of outcomes.",
+        solution: `The numbers greater than 9 are 10, 11, and 12. That gives 3 favourable outcomes out of 12 total, so the probability is ${fractionString(3, 12, true)} = ${fractionString(1, 4)}.`,
+        diagram: plainListDiagram("12-sided die", ["Favourable: 10, 11, 12", "Total outcomes: 12"]),
+        masteryQuestion: "A 12-sided die is numbered 1 to 12. What is the probability of rolling an even number greater than 6?"
+      }
+    ],
+    "organize-outcomes": [
+      {
+        title: "Example 1: Make a list of outcomes",
+        question: "A lunch special lets a student choose one main dish and one drink. Mains: burger, wrap. Drinks: juice, milk, water. List all possible outcomes.",
+        howTo: "Pair each main dish with every drink. This creates the sample space.",
+        solution: "The outcomes are burger + juice, burger + milk, burger + water, wrap + juice, wrap + milk, wrap + water. There are 6 total outcomes.",
+        diagram: sampleSpaceTableDiagram("Main", "Drink", ["Burger", "Wrap"], ["Juice", "Milk", "Water"], (main, drink) => `${main} + ${drink}`),
+        masteryQuestion: "A student chooses one sandwich from ham or cheese and one fruit from apple, banana, or orange. List the full sample space."
+      },
+      {
+        title: "Example 2: Use a sample space table",
+        question: "A coin is tossed and a marker is chosen from the colours red, blue, and green. How many outcomes are there?",
+        howTo: "Put one event on the left and the other across the top. Fill the table with all combinations.",
+        solution: "A coin has 2 outcomes: heads and tails. The markers have 3 outcomes: red, blue, green. Total outcomes = 2 × 3 = 6.",
+        diagram: sampleSpaceTableDiagram("Coin", "Marker", ["Heads", "Tails"], ["Red", "Blue", "Green"], (coin, marker) => `${coin}-${marker}`),
+        masteryQuestion: "A spinner can land on A or B, and a coin can land on heads or tails. Use a sample space table to show all outcomes."
+      },
+      {
+        title: "Example 3: Count outcomes for a condition",
+        question: "A pizza shop offers crusts thin and regular, and toppings cheese, pepperoni, and veggie. What is the probability of choosing a regular crust with veggie topping if all outcomes are equally likely?",
+        howTo: "First build the full sample space, then count the outcomes that match the condition.",
+        solution: "There are 2 crust choices and 3 topping choices, so 2 × 3 = 6 total outcomes. Only one outcome is regular + veggie, so the probability is 1/6.",
+        diagram: sampleSpaceTableDiagram("Crust", "Topping", ["Thin", "Regular"], ["Cheese", "Pepperoni", "Veggie"], (crust, topping) => `${crust} + ${topping}`),
+        masteryQuestion: "A hockey net prize board offers 3 puck colours and 4 target zones. What is the probability of choosing blue and top-left if all outcomes are equally likely?"
+      },
+      {
+        title: "Example 4: Tree-diagram thinking",
+        question: "A student chooses one of 2 sauces and one of 3 side dishes. How can a tree diagram help organize the outcomes?",
+        howTo: "A tree starts each first choice, then branches again for every second choice.",
+        solution: "Start with the 2 sauces. From each sauce, draw 3 branches for the side dishes. That gives 2 × 3 = 6 outcomes in a clear organized way.",
+        diagram: plainListDiagram("Tree-diagram idea", ["Sauce 1 -> Side 1, Side 2, Side 3", "Sauce 2 -> Side 1, Side 2, Side 3"]),
+        masteryQuestion: "A student chooses one book genre and one reading spot. Explain how a tree diagram can organize the sample space."
+      }
+    ],
+    "independent-events": [
+      {
+        title: "Example 1: Two independent events",
+        question: "A student picks one snack from chips, fruit, or crackers and one drink from water or milk. What is the probability of getting fruit and milk?",
+        howTo: "Because the two choices do not affect each other, multiply the separate probabilities or count one matching outcome from the sample space.",
+        solution: "There are 3 snack choices and 2 drink choices, so 3 × 2 = 6 total outcomes. Only one outcome is fruit + milk, so the probability is 1/6.",
+        diagram: sampleSpaceTableDiagram("Snack", "Drink", ["Chips", "Fruit", "Crackers"], ["Water", "Milk"], (snack, drink) => `${snack} + ${drink}`),
+        masteryQuestion: "A student picks one sandwich from chicken, tuna, or egg and one juice from orange or apple. What is the probability of chicken and apple?"
+      },
+      {
+        title: "Example 2: Spinner and coin together",
+        question: "A spinner has 4 equal sections labelled 1, 2, 3, 4 and a coin is tossed. What is the probability of landing on 2 and getting tails?",
+        howTo: "One event is the spinner result and the other is the coin result. Count the matching pair in the full sample space.",
+        solution: "The spinner has 4 outcomes and the coin has 2 outcomes, so total outcomes = 8. Only one outcome is 2 and tails, so the probability is 1/8.",
+        diagram: sampleSpaceTableDiagram("Spinner", "Coin", ["1", "2", "3", "4"], ["Heads", "Tails"], (spinner, coin) => `${spinner}-${coin}`),
+        masteryQuestion: "A spinner has 5 equal sections labelled A, B, C, D, E and a coin is tossed. What is the probability of landing on C and getting heads?"
+      },
+      {
+        title: "Example 3: Ordered pair from two choices",
+        question: "A student chooses one home town from Calgary or Edmonton and one sport from soccer, basketball, or track. What is the probability of choosing Edmonton and track?",
+        howTo: "Build the ordered pairs carefully. Because the choices are independent, every pair is equally likely.",
+        solution: "There are 2 home towns and 3 sports, so total outcomes = 6. Only Edmonton + track matches, so the probability is 1/6.",
+        diagram: sampleSpaceTableDiagram("Town", "Sport", ["Calgary", "Edmonton"], ["Soccer", "Basketball", "Track"], (town, sport) => `${town} + ${sport}`),
+        masteryQuestion: "A student chooses one apartment from A or B and one city from Red Deer, Calgary, or Edmonton. What is the probability of choosing B and Calgary?"
+      },
+      {
+        title: "Example 4: Explain independence",
+        question: "Why are choosing a shirt colour and flipping a coin independent events?",
+        howTo: "Check whether the result of one event changes the outcomes of the other event.",
+        solution: "They are independent because choosing the shirt colour does not change the coin outcomes, and the coin outcome does not change the shirt colours. The events do not affect one another.",
+        diagram: plainListDiagram("Independent events", ["Event 1 does not change Event 2", "Event 2 does not change Event 1"]),
+        masteryQuestion: "Explain whether choosing a lunch combo and spinning a game spinner are independent events, and tell why."
+      }
+    ]
+  };
+
+  return exampleSets[tabId] || [];
 }
 
 const englishQuestionPools = {
@@ -3945,6 +4305,427 @@ const englishPatGrade6PartBInformationalPool = englishPatGrade6PartBPool.filter(
   "What best describes Grade 6 PAT Part B prep?"
 ].includes(item.prompt));
 
+const probabilityMasteryGenerators = {
+  basics: [
+    (rng, difficulty, index) => {
+      const favorable = number(1, difficulty <= 4 ? 4 : 9, rng);
+      const total = favorable + number(1, difficulty <= 4 ? 5 : 12, rng);
+      const correct = fractionString(favorable, total, true);
+      return makeProbabilityQuestion({
+        prompt: `A bag has ${favorable} winning tickets and ${total - favorable} non-winning tickets. What is the probability of drawing a winning ticket?`,
+        correct,
+        distractors: [
+          fractionString(total - favorable, total, true),
+          fractionString(favorable, total - favorable, true),
+          fractionString(favorable + 1, total, true)
+        ],
+        hint: "Probability = favourable outcomes over total possible outcomes.",
+        steps: [
+          `Count the favourable outcomes. There are ${favorable} winning tickets.`,
+          `Count all possible outcomes. There are ${total} tickets altogether.`,
+          `Write the probability as ${favorable}/${total}.`,
+          `Simplify if possible. The simplified probability is ${correct}.`
+        ],
+        diagram: plainListDiagram("Tickets in the bag", [`Winning: ${favorable}`, `Not winning: ${total - favorable}`, `Total: ${total}`])
+      });
+    },
+    (rng) => {
+      const outcomes = pick([
+        { label: "certain", correct: "1 or 100%" },
+        { label: "impossible", correct: "0 or 0%" }
+      ], rng);
+      return makeProbabilityQuestion({
+        prompt: `Which statement correctly describes the probability of a ${outcomes.label} event?`,
+        correct: outcomes.correct,
+        distractors: outcomes.label === "certain" ? ["0 or 0%", "1/2 or 50%", "1/4 or 25%"] : ["1 or 100%", "1/2 or 50%", "3/4 or 75%"],
+        hint: "A certain event always happens. An impossible event never happens.",
+        steps: outcomes.label === "certain"
+          ? [
+              "A certain event always happens.",
+              "That means the number of favourable outcomes equals the total number of outcomes.",
+              "So the probability is 1, which is the same as 100%."
+            ]
+          : [
+              "An impossible event cannot happen.",
+              "That means there are 0 favourable outcomes.",
+              "So the probability is 0, which is the same as 0%."
+            ]
+      });
+    },
+    (rng, difficulty) => {
+      const sections = difficulty <= 5 ? 6 : 8;
+      const targets = ["A", "B", "C", "D"];
+      const target = pick(targets, rng);
+      const count = number(1, Math.max(1, Math.floor(sections / 2)), rng);
+      const labels = Array.from({ length: sections }, (_, idx) => idx < count ? target : pick(targets.filter((item) => item !== target), rng));
+      const correct = fractionString(count, sections, true);
+      return makeProbabilityQuestion({
+        prompt: `A spinner has ${sections} equal sections labelled ${labels.join(", ")}. What is P(${target})?`,
+        correct,
+        distractors: [
+          fractionString(sections - count, sections, true),
+          fractionString(count, sections - 1, true),
+          fractionString(count + 1, sections, true)
+        ],
+        hint: "Count how many sections match the target, then divide by the total number of equal sections.",
+        steps: [
+          `Count the sections labelled ${target}. There are ${count}.`,
+          `Count the total equal sections. There are ${sections}.`,
+          `Write the probability as ${count}/${sections}.`,
+          `Simplify if possible. The answer is ${correct}.`
+        ],
+        diagram: plainListDiagram("Spinner sections", labels)
+      });
+    },
+    (rng) => {
+      const heads = number(6, 18, rng);
+      const total = 20;
+      const correct = percentString(heads, total);
+      return makeProbabilityQuestion({
+        prompt: `A coin is flipped 20 times and lands on heads ${heads} times. What is the experimental probability of heads as a percent?`,
+        correct,
+        distractors: [
+          percentString(total - heads, total),
+          percentString(heads, 10),
+          percentString(heads + 1, total)
+        ],
+        hint: "Experimental probability uses the results that actually happened.",
+        steps: [
+          `Use the experimental results: heads happened ${heads} times out of ${total} flips.`,
+          `Write the fraction as ${heads}/${total}.`,
+          `Convert ${heads}/${total} to a decimal: ${decimalString(heads, total)}.`,
+          `Convert the decimal to a percent: ${correct}.`
+        ]
+      });
+    },
+    (rng) => {
+      const promptType = pick(["quarter", "dimeOrQuarter", "notLoonie"], rng);
+      const coins = ["25¢", "5¢", "25¢", "$1", "10¢", "10¢", "25¢", "25¢"];
+      const counts = {
+        quarter: 4,
+        dimeOrQuarter: 6,
+        notLoonie: 7
+      };
+      const labels = {
+        quarter: "What is P(quarter)?",
+        dimeOrQuarter: "What is P(dime or quarter)?",
+        notLoonie: "What is the probability that the loonie is not picked?"
+      };
+      const favorable = counts[promptType];
+      const correct = fractionString(favorable, 8, true);
+      return makeProbabilityQuestion({
+        prompt: `A student has these coins in a pocket: ${coins.join(", ")}. ${labels[promptType]}`,
+        correct,
+        distractors: [
+          fractionString(8 - favorable, 8, true),
+          fractionString(favorable, 7, true),
+          fractionString(favorable + 1, 8, true)
+        ],
+        hint: "Count the matching coins first, then divide by the total number of coins.",
+        steps: [
+          `Count the total number of coins. There are 8 coins.`,
+          `Count the favourable outcomes for this question. There are ${favorable}.`,
+          `Write the probability as ${favorable}/8.`,
+          `Simplify if possible. The answer is ${correct}.`
+        ],
+        diagram: plainListDiagram("Coins in the pocket", coins)
+      });
+    },
+    (rng) => {
+      const primes = [2, 3, 5, 7, 11];
+      const event = pick(["multiple of 3", "prime number"], rng);
+      const favorable = event === "multiple of 3" ? 4 : primes.length;
+      const correct = fractionString(favorable, 12, true);
+      return makeProbabilityQuestion({
+        prompt: `A 12-sided die is labelled 1 to 12. In a mastery question like the worksheet example, what is the probability of rolling a ${event}?`,
+        correct,
+        distractors: [
+          fractionString(12 - favorable, 12, true),
+          fractionString(favorable, 11, true),
+          fractionString(favorable + 1, 12, true)
+        ],
+        hint: "List the outcomes that match the event, then divide by 12.",
+        steps: event === "multiple of 3"
+          ? [
+              "Multiples of 3 from 1 to 12 are 3, 6, 9, and 12.",
+              "That gives 4 favourable outcomes.",
+              "There are 12 possible outcomes on a 12-sided die.",
+              `So the probability is 4/12, which simplifies to ${correct}.`
+            ]
+          : [
+              `Prime numbers from 1 to 12 are ${primes.join(", ")}.`,
+              `That gives ${favorable} favourable outcomes.`,
+              "There are 12 possible outcomes on the die.",
+              `So the probability is ${favorable}/12, which simplifies to ${correct}.`
+            ]
+      });
+    }
+  ],
+  organize: [
+    (rng) => {
+      const moves = ["Sideways", "Backward", "Forward"];
+      const dieFaces = [1, 2, 3, 4];
+      const correct = moves.length * dieFaces.length;
+      return makeProbabilityQuestion({
+        prompt: "A game spinner has Sideways, Backward, and Forward, and then a 4-sided die is rolled. How many outcomes are in the sample space?",
+        correct: String(correct),
+        distractors: [String(moves.length + dieFaces.length), String(dieFaces.length), String(correct - 2)],
+        hint: "Multiply the number of outcomes in the first event by the number of outcomes in the second event.",
+        steps: [
+          `The spinner has ${moves.length} possible outcomes.`,
+          `The die has ${dieFaces.length} possible outcomes.`,
+          `For every spinner result, there are ${dieFaces.length} die results.`,
+          `So the sample space has ${moves.length} × ${dieFaces.length} = ${correct} outcomes.`
+        ],
+        diagram: sampleSpaceTableDiagram("Move", "Die", moves, dieFaces, (move, face) => `${move}-${face}`)
+      });
+    },
+    (rng) => {
+      const supplies = ["p", "e", "c", "r"];
+      const coin = ["H", "T"];
+      const sampleCount = supplies.length * coin.length;
+      return makeProbabilityQuestion({
+        prompt: "A coin is flipped and then one school supply is chosen: pencil (p), eraser (e), calculator (c), or ruler (r). How many outcomes are in the sample space?",
+        correct: String(sampleCount),
+        distractors: [String(supplies.length + coin.length), String(supplies.length), String(sampleCount + 2)],
+        hint: "Count the outcomes for the first event and the second event, then multiply.",
+        steps: [
+          `The coin has ${coin.length} outcomes: H and T.`,
+          `The school-supply choice has ${supplies.length} outcomes: p, e, c, and r.`,
+          `Each coin result can be paired with each supply.`,
+          `So the sample space has ${coin.length} × ${supplies.length} = ${sampleCount} outcomes.`
+        ],
+        diagram: sampleSpaceTableDiagram("Coin", "Supply", coin, supplies, (coinSide, supply) => `${coinSide}${supply}`)
+      });
+    },
+    (rng) => {
+      const colors = ["blue", "yellow", "red"];
+      const numbers = [1, 2, 3, 4, 5];
+      const event = pick([
+        { label: "yellow", favorable: 5 },
+        { label: "blue and 4", favorable: 1 },
+        { label: "a 4", favorable: 3 },
+        { label: "yellow and 3", favorable: 1 }
+      ], rng);
+      const total = colors.length * numbers.length;
+      const correct = fractionString(event.favorable, total, true);
+      return makeProbabilityQuestion({
+        prompt: `Spinner 1 has blue, yellow, and red. Spinner 2 has 1, 2, 3, 4, and 5. What is the probability of landing on ${event.label}?`,
+        correct,
+        distractors: [
+          fractionString(total - event.favorable, total, true),
+          fractionString(event.favorable, numbers.length, true),
+          fractionString(event.favorable + 1, total, true)
+        ],
+        hint: "Count how many ordered pairs match the event, then divide by all possible ordered pairs.",
+        steps: [
+          `There are ${colors.length} × ${numbers.length} = ${total} possible outcomes.`,
+          `Count the favourable outcomes for '${event.label}'. There are ${event.favorable}.`,
+          `Write the probability as ${event.favorable}/${total}.`,
+          `Simplify if possible. The answer is ${correct}.`
+        ],
+        diagram: sampleSpaceTableDiagram("Color", "Number", colors, numbers, (color, numberValue) => `${color}-${numberValue}`)
+      });
+    },
+    (rng) => {
+      const first = ["1", "2", "3", "4"];
+      const second = ["A", "B", "C", "D"];
+      const correctCount = first.length * second.length;
+      return makeProbabilityQuestion({
+        prompt: "One spinner is labelled 1, 2, 3, 4 and another is labelled A, B, C, D. How many possible outcomes are there?",
+        correct: String(correctCount),
+        distractors: [String(first.length + second.length), String(first.length), String(correctCount - 4)],
+        hint: "Every result on the first spinner pairs with every result on the second spinner.",
+        steps: [
+          `The number spinner has ${first.length} outcomes.`,
+          `The letter spinner has ${second.length} outcomes.`,
+          `Multiply to count all ordered pairs.`,
+          `${first.length} × ${second.length} = ${correctCount}, so there are ${correctCount} outcomes.`
+        ],
+        diagram: sampleSpaceTableDiagram("Number", "Letter", first, second, (a, b) => `${a}${b}`)
+      });
+    },
+    (rng) => {
+      const breads = ["white", "whole wheat"];
+      const fillings = ["tuna", "chicken", "ham"];
+      const correct = breads.length * fillings.length;
+      return makeProbabilityQuestion({
+        prompt: "There are two kinds of bread, white and whole wheat, and three fillings: tuna, chicken, and ham. How many different sandwiches can you make?",
+        correct: String(correct),
+        distractors: [String(breads.length + fillings.length), String(fillings.length), String(correct + 1)],
+        hint: "Each bread choice can be matched with each filling choice.",
+        steps: [
+          `There are ${breads.length} bread choices.`,
+          `There are ${fillings.length} filling choices.`,
+          `Multiply the choices to count all combinations.`,
+          `${breads.length} × ${fillings.length} = ${correct}, so there are ${correct} sandwiches.`
+        ],
+        diagram: sampleSpaceTableDiagram("Bread", "Filling", breads, fillings, (bread, filling) => `${bread} + ${filling}`)
+      });
+    },
+    (rng) => {
+      const outcomes = ["On-On", "On-Off", "Off-On", "Off-Off"];
+      return makeProbabilityQuestion({
+        prompt: "Two light switches can each be On or Off. Which set is the complete sample space?",
+        correct: "{On-On, On-Off, Off-On, Off-Off}",
+        distractors: [
+          "{On, Off}",
+          "{On-On, Off-Off}",
+          "{On, On-Off, Off}"
+        ],
+        hint: "The sample space must show every combined outcome for switch 1 and switch 2.",
+        steps: [
+          "Switch 1 can be On or Off.",
+          "Switch 2 can also be On or Off.",
+          "List every ordered pair of these outcomes.",
+          `The complete sample space is {${outcomes.join(", ")}}.`
+        ]
+      });
+    }
+  ],
+  independent: [
+    (rng) => {
+      const meals = ["pizza", "quesadilla", "salad"];
+      const drinks = ["juice", "milk"];
+      const total = meals.length * drinks.length;
+      const correct = fractionString(1, total, true);
+      return makeProbabilityQuestion({
+        prompt: "A lunch menu offers pizza, a chicken wrap, or a garden salad, with either juice or milk. What is the probability of choosing a chicken wrap and milk?",
+        correct,
+        distractors: [fractionString(2, total, true), fractionString(1, meals.length, true), fractionString(1, drinks.length, true)],
+        hint: "There is only one favourable meal-and-drink pair. Divide by all possible meal-and-drink pairs.",
+        steps: [
+          `There are ${meals.length} meal choices and ${drinks.length} drink choices.`,
+          `So there are ${meals.length} × ${drinks.length} = ${total} total outcomes.`,
+          "Only one outcome is 'chicken wrap and milk'.",
+          `So the probability is 1/${total}, which is ${correct}.`
+        ],
+        diagram: sampleSpaceTableDiagram("Meal", "Drink", meals, drinks, (meal, drink) => `${meal} + ${drink}`)
+      });
+    },
+    (rng) => {
+      const homes = ["House", "Apartment", "Condominium"];
+      const cities = ["Victoria", "Vancouver", "Brandon", "Winnipeg", "Edmonton", "Calgary", "Saskatoon", "Regina"];
+      const total = homes.length * cities.length;
+      const correct = fractionString(1, total, true);
+      return makeProbabilityQuestion({
+        prompt: "One spinner shows House, Apartment, Condominium. The other spinner shows eight cities. What is P(apartment, Victoria)?",
+        correct,
+        distractors: [fractionString(1, homes.length, true), fractionString(1, cities.length, true), fractionString(2, total, true)],
+        hint: "One exact ordered pair is favorable. Divide by all possible ordered pairs.",
+        steps: [
+          `The first spinner has ${homes.length} outcomes.`,
+          `The city spinner has ${cities.length} outcomes.`,
+          `So there are ${homes.length} × ${cities.length} = ${total} ordered pairs.`,
+          `Only one of those pairs is (apartment, Victoria), so the probability is 1/${total}.`
+        ],
+        diagram: sampleSpaceTableDiagram("Home", "City", homes, cities, (home, city) => `${home}, ${city}`)
+      });
+    },
+    (rng) => {
+      const drinks = ["juice", "water", "milk"];
+      const snacks = ["apple", "orange", "carrots", "banana"];
+      const total = drinks.length * snacks.length;
+      const event = pick([
+        { label: "include milk", favorable: snacks.length, text: "include milk" },
+        { label: "include juice and an orange", favorable: 1, text: "include juice and an orange" }
+      ], rng);
+      const correct = fractionString(event.favorable, total, true);
+      return makeProbabilityQuestion({
+        prompt: `A student chooses one drink from juice, water, or milk and one snack from apple, orange, carrots, or banana. What is the probability that the choice will ${event.text}?`,
+        correct,
+        distractors: [
+          fractionString(total - event.favorable, total, true),
+          fractionString(event.favorable, snacks.length, true),
+          fractionString(event.favorable + 1, total, true)
+        ],
+        hint: "Count the outcomes that satisfy the event, then divide by all drink-and-snack pairs.",
+        steps: event.favorable === snacks.length
+          ? [
+              `There are ${drinks.length} × ${snacks.length} = ${total} total choices.`,
+              `If the choice must include milk, milk can pair with each of the ${snacks.length} snacks.`,
+              `So there are ${event.favorable} favourable outcomes.`,
+              `The probability is ${event.favorable}/${total}, which simplifies to ${correct}.`
+            ]
+          : [
+              `There are ${drinks.length} × ${snacks.length} = ${total} total choices.`,
+              "Only one pair is 'juice and orange'.",
+              `So there is ${event.favorable} favourable outcome.`,
+              `The probability is ${event.favorable}/${total}, which simplifies to ${correct}.`
+            ],
+        diagram: sampleSpaceTableDiagram("Drink", "Snack", drinks, snacks, (drink, snack) => `${drink} + ${snack}`)
+      });
+    },
+    (rng) => {
+      const chores1 = ["Bathroom", "Dusting", "Vacuum"];
+      const chores2 = ["Dishes", "Windows", "Garbage"];
+      const total = chores1.length * chores2.length;
+      const correct = fractionString(1, total, true);
+      return makeProbabilityQuestion({
+        prompt: "One spinner shows Bathroom, Dusting, Vacuum and another shows Dishes, Windows, Garbage. What is the probability of getting Dusting and Dishes?",
+        correct,
+        distractors: [fractionString(2, total, true), fractionString(1, chores1.length, true), fractionString(1, chores2.length, true)],
+        hint: "Only one ordered pair is 'Dusting and Dishes'. Divide by the total number of ordered pairs.",
+        steps: [
+          `The first spinner has ${chores1.length} outcomes and the second has ${chores2.length}.`,
+          `That gives ${chores1.length} × ${chores2.length} = ${total} total outcomes.`,
+          "Only one outcome matches Dusting and Dishes.",
+          `So the probability is 1/${total}, which is ${correct}.`
+        ],
+        diagram: sampleSpaceTableDiagram("Spinner 1", "Spinner 2", chores1, chores2, (a, b) => `${a} + ${b}`)
+      });
+    },
+    (rng) => {
+      const coin = ["H", "T"];
+      const colors = ["purple", "yellow", "red"];
+      const total = coin.length * colors.length;
+      const event = pick(["Heads and red", "Tail and yellow", "a yellow"], rng);
+      const favorable = event === "a yellow" ? coin.length : 1;
+      const correct = fractionString(favorable, total, true);
+      return makeProbabilityQuestion({
+        prompt: `A coin is tossed and then one color is chosen from purple, yellow, and red. What is the probability of getting ${event}?`,
+        correct,
+        distractors: [
+          fractionString(total - favorable, total, true),
+          fractionString(favorable, colors.length, true),
+          fractionString(favorable + 1, total, true)
+        ],
+        hint: "Build the sample space of all coin-color pairs first.",
+        steps: [
+          `The coin has ${coin.length} outcomes and the color choice has ${colors.length}.`,
+          `So there are ${coin.length} × ${colors.length} = ${total} total outcomes.`,
+          `The event '${event}' has ${favorable} favourable outcome${favorable === 1 ? "" : "s"}.`,
+          `The probability is ${favorable}/${total}, which simplifies to ${correct}.`
+        ],
+        diagram: sampleSpaceTableDiagram("Coin", "Color", coin, colors, (a, b) => `${a}-${b}`)
+      });
+    },
+    (rng) => {
+      const statement = pick([
+        { prompt: "Rolling a die and flipping a coin", correct: "independent" },
+        { prompt: "Choosing one card and then not replacing it before choosing another", correct: "dependent" }
+      ], rng);
+      return makeProbabilityQuestion({
+        prompt: `${statement.prompt} is an example of which kind of events?`,
+        correct: statement.correct,
+        distractors: statement.correct === "independent" ? ["dependent", "impossible", "certain"] : ["independent", "random", "sample space"],
+        hint: "If one event changes the chances of the second event, the events are dependent.",
+        steps: statement.correct === "independent"
+          ? [
+              "The outcome of the die does not change the coin.",
+              "The outcome of the coin does not change the die.",
+              "Because one event has no effect on the other, the events are independent."
+            ]
+          : [
+              "After one card is taken and not replaced, fewer cards remain.",
+              "That changes the probabilities for the second card.",
+              "Because the first event changes the second, the events are dependent."
+            ]
+      });
+    }
+  ]
+};
+
 const questionFactories = {
   numberSense(rng, grade, config, index, difficulty) {
     const min = config.min;
@@ -4180,13 +4961,18 @@ const questionFactories = {
     if (level >= 8 && index % 2 === 0) {
       const a = number(3, difficultyStep(6, difficulty, 18), rng);
       const b = number(4, difficultyStep(7, difficulty, 24), rng);
-      const correct = Math.round(Math.sqrt((a * a) + (b * b)));
-      const { options, answerIndex } = buildOptions(correct, [a + b, Math.abs(a - b), correct + 2], rng);
+      const exact = Math.sqrt((a * a) + (b * b));
+      const correct = (Math.round(exact * 10) / 10).toFixed(1);
+      const { options, answerIndex } = buildOptions(correct, [
+        (Math.round((a + b) * 10) / 10).toFixed(1),
+        (Math.round(Math.abs(a - b) * 10) / 10).toFixed(1),
+        (Math.round((exact + 2) * 10) / 10).toFixed(1)
+      ], rng);
       return {
         prompt: `A right triangle has legs ${a} and ${b}. Which is closest to the hypotenuse length?`,
         options,
         answerIndex,
-        explanation: `Use the Pythagorean theorem: c^2 = ${a}^2 + ${b}^2, so c is about ${correct}.`,
+        explanation: `Step 1: Use the Pythagorean theorem, c^2 = ${a}^2 + ${b}^2.<br>Step 2: Compute ${a * a} + ${b * b} = ${(a * a) + (b * b)}.<br>Step 3: Take the square root: c ≈ ${correct}.`,
         diagram: triangleDiagram(a, b)
       };
     }
@@ -4319,6 +5105,23 @@ const questionFactories = {
   },
 
   statisticsProbability(rng, grade, config, index, difficulty) {
+    if (config.level >= 7 && difficulty >= 4 && index % 3 === 1) {
+      const total = pick([6, 8, 10, 12], rng);
+      const favorable = number(1, total - 1, rng);
+      const correct = fractionString(favorable, total, true);
+      const { options, answerIndex } = buildOptions(correct, [
+        fractionString(total - favorable, total, true),
+        fractionString(favorable, total - 1, true),
+        fractionString(Math.min(total, favorable + 1), total, true)
+      ], rng);
+      return {
+        prompt: `An event has ${favorable} favorable outcomes out of ${total} equally likely outcomes. What is the probability?`,
+        options,
+        answerIndex,
+        explanation: `Step 1: Probability = favorable outcomes / total outcomes.<br>Step 2: Write ${favorable}/${total}.<br>Step 3: Simplify if possible. The probability is ${correct}.`
+      };
+    }
+
     if (index % 2 === 0) {
       const dataLength = difficulty >= 7 ? 5 : 4;
       const dataMax = difficultyStep(8, difficulty, 40);
@@ -4329,19 +5132,30 @@ const questionFactories = {
         prompt: `Which value is the mean rounded to the nearest whole number for ${data.join(", ")}?`,
         options,
         answerIndex,
-        explanation: `Add the values and divide by ${data.length}. The mean is about ${correct}.`
+        explanation: `Step 1: Add the values: ${data.join(" + ")} = ${data.reduce((sum, value) => sum + value, 0)}.<br>Step 2: Divide by ${data.length}.<br>Step 3: Round the result to the nearest whole number. The mean is about ${correct}.`
       };
     }
 
-    const colors = ["red", "blue", "green", "yellow"];
-    const color = pick(colors, rng);
-    const correct = "1/4";
-    const { options, answerIndex } = buildOptions(correct, ["1/2", "3/4", "1/3"], rng);
+    const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+    const totalSections = difficulty >= 7 ? 6 : 4;
+    const activeColors = colors.slice(0, totalSections);
+    const color = pick(activeColors, rng);
+    const repeats = difficulty >= 8 ? number(1, 2, rng) : 1;
+    const labels = Array.from({ length: totalSections }, (_, sectionIndex) =>
+      sectionIndex < repeats ? color : pick(activeColors.filter((item) => item !== color), rng)
+    );
+    const favorable = labels.filter((item) => item === color).length;
+    const correct = fractionString(favorable, totalSections, true);
+    const { options, answerIndex } = buildOptions(correct, [
+      fractionString(totalSections - favorable, totalSections, true),
+      fractionString(favorable, Math.max(1, totalSections - 1), true),
+      fractionString(Math.min(totalSections, favorable + 1), totalSections, true)
+    ], rng);
     return {
-      prompt: `A spinner has 4 equal sections: red, blue, green, and yellow. What is the probability of landing on ${color}?`,
+      prompt: `A spinner has ${totalSections} equal sections labelled ${labels.join(", ")}. What is the probability of landing on ${color}?`,
       options,
       answerIndex,
-      explanation: `There is 1 favorable section out of 4 equal sections, so the probability is 1/4.`
+      explanation: `Step 1: Count the sections labelled ${color}. There are ${favorable}.<br>Step 2: Count the total equal sections. There are ${totalSections}.<br>Step 3: Write the probability as ${favorable}/${totalSections}.<br>Step 4: Simplify if possible. The answer is ${correct}.`
     };
   },
 
@@ -4493,6 +5307,39 @@ const questionFactories = {
       options: options.map((option) => `$${option}`),
       answerIndex,
       explanation: `Simple interest = principal x rate = ${principal} x ${rate}% = $${correct}.`
+    };
+  },
+
+  grade7ProbabilityMastery(rng, grade, config, index, difficulty) {
+    const tabId = config.patTabId || "probability-basics";
+    const groupsByTab = {
+      "probability-basics": [
+        probabilityMasteryGenerators.basics.slice(0, 2),
+        probabilityMasteryGenerators.basics.slice(2, 4),
+        probabilityMasteryGenerators.basics.slice(4)
+      ],
+      "organize-outcomes": [
+        probabilityMasteryGenerators.organize.slice(0, 2),
+        probabilityMasteryGenerators.organize.slice(2, 4),
+        probabilityMasteryGenerators.organize.slice(4)
+      ],
+      "independent-events": [
+        probabilityMasteryGenerators.independent.slice(0, 2),
+        probabilityMasteryGenerators.independent.slice(2, 4),
+        probabilityMasteryGenerators.independent.slice(4)
+      ]
+    };
+    const groups = groupsByTab[tabId] || groupsByTab["probability-basics"];
+    const builder = chooseFromProgressiveGroups(groups, rng, difficulty, index);
+    const built = builder(rng, difficulty, index);
+    const { options, answerIndex } = buildOptions(built.correct, built.distractors, rng);
+    return {
+      prompt: built.prompt,
+      options,
+      answerIndex,
+      explanation: built.explanation,
+      hint: built.hint,
+      diagram: built.diagram
     };
   },
 
