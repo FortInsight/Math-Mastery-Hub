@@ -59,23 +59,23 @@ const curriculum = {
     makeCategory("integers", "Integers & Rational Numbers", "Add, subtract, multiply, and divide signed numbers.", "integersRational", { level: 7 }),
     makeCategory("algebra", "Algebraic Expressions", "Simplify expressions and solve equations.", "algebra", { level: 7 }),
     makeCategory("ratios", "Ratios & Proportions", "Rates, percent, and proportional thinking.", "ratiosProportions", { level: 7 }),
-    makeCategory("geometry", "Geometry", "Angles, circles, and scale drawings.", "geometry", { level: 7 }),
+    makeCategory("geometry", "Geometry", "Angles, circles, scale drawings, and rotational symmetry.", "geometry", { level: 7 }),
     makeCategory("data", "Data & Probability", "Compare samples and experimental probability.", "statisticsProbability", { level: 7 }),
     makeCategory("probability-mastery", "Probability Mastery", "Study Grade 7 worksheet examples, then solve mastery questions with step-by-step solutions and sample-space models.", "grade7ProbabilityMastery", { level: 7, skill: "probability-mastery" }),
-    makeCategory("equations", "Equations & Inequalities", "Solve one-step and multi-step equation problems.", "algebra", { level: 7 }),
+    makeCategory("equations", "Equations & Inequalities", "Solve one-step and multi-step equations and linear inequalities.", "algebra", { level: 7 }),
     makeCategory("percent", "Percent Applications", "Solve tax, discount, and percent change questions.", "ratiosProportions", { level: 7 })
   ],
   8: [
     makeCategory("numbers", "Rational & Irrational Numbers", "Classify numbers and use exponents.", "integersRational", { level: 8 }),
-    makeCategory("algebra", "Linear Equations", "Solve equations and analyze linear relationships.", "algebra", { level: 8 }),
+    makeCategory("algebra", "Linear Equations & Inequalities", "Solve linear equations and inequalities and analyze linear relationships.", "algebra", { level: 8 }),
     makeCategory("functions", "Functions", "Understand input-output rules, tables, and graphs.", "functionsGraphing", { level: 8 }),
-    makeCategory("geometry", "Transformations & Geometry", "Congruence, similarity, and the Pythagorean theorem.", "geometry", { level: 8 }),
+    makeCategory("geometry", "Transformations & Geometry", "Congruence, similarity, rotational symmetry, and the Pythagorean theorem.", "geometry", { level: 8 }),
     makeCategory("data", "Statistics", "Scatter plots, lines of best fit, and probability.", "statisticsProbability", { level: 8 }),
     makeCategory("exponents", "Exponents & Roots", "Work with powers, roots, and scientific notation ideas.", "integersRational", { level: 8 }),
     makeCategory("systems", "Linear Patterns", "Compare patterns in tables, graphs, and equations.", "functionsGraphing", { level: 8.5 })
   ],
   9: [
-    makeCategory("algebra", "Algebra Foundations", "Laws of exponents, factoring, and solving equations.", "algebra", { level: 9 }),
+    makeCategory("algebra", "Algebra Foundations", "Laws of exponents, factoring, solving equations, and linear inequalities.", "algebra", { level: 9 }),
     makeCategory("functions", "Linear Functions", "Slope, intercepts, tables, and graphs.", "functionsGraphing", { level: 9 }),
     makeCategory("geometry", "Geometry", "Triangles, similarity, and coordinate geometry.", "geometry", { level: 9 }),
     makeCategory("statistics", "Statistics & Probability", "Analyze distributions and probability models.", "statisticsProbability", { level: 9 }),
@@ -1239,8 +1239,9 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     return fallbackQuestion;
   });
 
-  questionBankCache.set(cacheKey, bank);
-  return bank;
+  const uniqueBank = enforceUniqueQuestionPrompts(bank);
+  questionBankCache.set(cacheKey, uniqueBank);
+  return uniqueBank;
 }
 
 function renderTopicSearch() {
@@ -1479,6 +1480,25 @@ function uniquifyQuestionPrompt(question, occurrence) {
     ...question,
     prompt: variantBuilder(prompt)
   };
+}
+
+function enforceUniqueQuestionPrompts(bank) {
+  const seen = new Map();
+
+  return bank.map((question) => {
+    let nextQuestion = question;
+    let normalizedPrompt = normalizeQuestionPrompt(nextQuestion.prompt);
+    let occurrence = (seen.get(normalizedPrompt) || 0) + 1;
+
+    while (occurrence > 1) {
+      nextQuestion = uniquifyQuestionPrompt(nextQuestion, occurrence);
+      normalizedPrompt = normalizeQuestionPrompt(nextQuestion.prompt);
+      occurrence = (seen.get(normalizedPrompt) || 0) + 1;
+    }
+
+    seen.set(normalizedPrompt, occurrence);
+    return nextQuestion;
+  });
 }
 
 function ensureQuestionHint(factoryName, question, difficulty, config = {}) {
@@ -2710,7 +2730,7 @@ const englishQuestionPools = {
     { prompt: "Which sentence uses the subjunctive mood correctly?", correct: "If I were the principal, I would change the schedule.", distractors: ["If I was the principal, I would change the schedule.", "If I am the principal, I would change the schedule.", "If I be the principal, I would change the schedule."], hint: "In formal hypothetical statements, 'were' is often used with all subjects.", explanation: "'If I were' is the standard subjunctive form for a hypothetical condition." },
     { prompt: "Which revision fixes the dangling modifier?", correct: "Walking into the room, Maya noticed the broken window.", distractors: ["Walking into the room, the broken window surprised Maya.", "Walking into the room, the window was broken by Maya.", "Walking into the room, there was a broken window."], hint: "The word after the modifier should be the person or thing doing the action.", explanation: "Maya is the one walking into the room, so the modifier is attached correctly." },
     { prompt: "What is the best meaning of 'mitigate'?", correct: "to make less severe", distractors: ["to make official", "to repeat exactly", "to divide equally"], hint: "Think about reducing harm or impact.", explanation: "'Mitigate' means to reduce or make something less severe." },
-    { prompt: "Which sentence uses parallel structure correctly?", correct: "The course requires critical reading, careful note-taking, and clear writing.", distractors: ["The course requires critical reading, to take notes carefully, and clear writing.", "The course requires reading critically, careful note-taking, and to write clearly.", "The course requires critical reading, careful note-taking, and writes clearly."], hint: "Items in a list should match in grammatical form.", explanation: "All three items are balanced noun phrases, so the structure is parallel." },
+    { prompt: "Which sentence shows correct parallel structure in an academic list?", correct: "The course requires critical reading, careful note-taking, and clear writing.", distractors: ["The course requires critical reading, to take notes carefully, and clear writing.", "The course requires reading critically, careful note-taking, and to write clearly.", "The course requires critical reading, careful note-taking, and writes clearly."], hint: "Items in a list should match in grammatical form.", explanation: "All three items are balanced noun phrases, so the structure is parallel." },
     { prompt: "Which sentence uses a colon correctly?", correct: "She brought three things to the interview: a resume, a notebook, and confidence.", distractors: ["She brought: three things to the interview, a resume, a notebook, and confidence.", "She brought three things: to the interview a resume, a notebook, and confidence.", "She brought three things to the interview, a resume: a notebook, and confidence."], hint: "A colon can introduce a list after a complete clause.", explanation: "The clause before the colon is complete, and the colon introduces the list correctly." },
     { prompt: "Which sentence demonstrates precise diction?", correct: "The report revealed a gradual decline in attendance.", distractors: ["The report said stuff about fewer people coming.", "The report had some things about attendance stuff.", "The report was kind of about attendance maybe."], hint: "Precise diction uses exact, formal wording.", explanation: "The sentence uses clear and specific wording instead of vague language." },
     { prompt: "Which sentence uses the apostrophe correctly?", correct: "The authors' notes were attached to the draft.", distractors: ["The author's notes were attached to the draft.", "The authors notes were attached to the draft.", "The authors's notes were attached to the draft."], hint: "If more than one author owns something, the apostrophe usually comes after the plural s.", explanation: "'Authors'' shows plural possession, meaning the notes belong to multiple authors." },
@@ -2900,7 +2920,7 @@ const englishPatPartAPool = [
     explanation: "Strong organization creates a logical flow so the reader can understand how the ideas connect."
   },
   {
-    prompt: "Which revision best improves sentence structure?",
+    prompt: "Which revision best improves sentence structure in this narrative sentence?",
     correct: "Varying sentence length and fixing awkward or incomplete wording",
     distractors: [
       "Making every sentence start in the same way",
@@ -4958,6 +4978,25 @@ const questionFactories = {
       };
     }
 
+    if (level >= 4 && index % 5 === 2) {
+      const symmetrySet = pick([
+        { shape: "an equilateral triangle", order: "3" },
+        { shape: "a square", order: "4" },
+        { shape: "a rectangle", order: "2" },
+        { shape: "a regular pentagon", order: "5" },
+        { shape: "a regular hexagon", order: "6" }
+      ], rng);
+      const correct = symmetrySet.order;
+      const distractors = ["1", "2", "3", "4", "5", "6"].filter((value) => value !== correct).slice(0, 3);
+      const { options, answerIndex } = buildOptions(correct, distractors, rng);
+      return {
+        prompt: `What is the order of rotational symmetry for ${symmetrySet.shape}?`,
+        options,
+        answerIndex,
+        explanation: `${symmetrySet.shape.charAt(0).toUpperCase() + symmetrySet.shape.slice(1)} matches itself ${correct} times in one full turn, so its rotational symmetry order is ${correct}.`
+      };
+    }
+
     if (level >= 8 && index % 2 === 0) {
       const a = number(3, difficultyStep(6, difficulty, 18), rng);
       const b = number(4, difficultyStep(7, difficulty, 24), rng);
@@ -5052,6 +5091,24 @@ const questionFactories = {
     const level = config.level;
 
     if (level <= 7) {
+      if (index % 4 === 2) {
+        const constant = number(2, difficultyStep(4, difficulty, 14), rng);
+        const total = constant + number(2, difficultyStep(5, difficulty, 16), rng);
+        const correctValue = total - constant;
+        const correct = `x > ${correctValue}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `x < ${correctValue}`,
+          `x > ${correctValue - 1}`,
+          `x < ${correctValue + 1}`
+        ], rng);
+        return {
+          prompt: `Solve the linear inequality: x + ${constant} > ${total}`,
+          options,
+          answerIndex,
+          explanation: `Subtract ${constant} from both sides: x + ${constant} - ${constant} > ${total} - ${constant}. So x > ${correctValue}.`
+        };
+      }
+
       const x = number(1, difficultyStep(4, difficulty, 20), rng);
       const n = number(2, difficultyStep(5, difficulty, 25), rng);
       const correct = x + n;
@@ -5065,6 +5122,25 @@ const questionFactories = {
     }
 
     if (level <= 9) {
+      if (index % 4 === 1) {
+        const coefficient = pick([2, 3, 4], rng);
+        const solution = number(2, difficultyStep(4, difficulty, 10), rng);
+        const offset = number(1, difficultyStep(3, difficulty, 8), rng);
+        const total = (coefficient * solution) + offset;
+        const correct = `x <= ${solution}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `x >= ${solution}`,
+          `x <= ${solution + 1}`,
+          `x < ${solution}`
+        ], rng);
+        return {
+          prompt: `Solve the linear inequality: ${coefficient}x + ${offset} <= ${total}`,
+          options,
+          answerIndex,
+          explanation: `Subtract ${offset} from both sides to get ${coefficient}x <= ${total - offset}. Then divide both sides by ${coefficient}. So x <= ${solution}.`
+        };
+      }
+
       const x = number(2, difficultyStep(6, difficulty, 30), rng);
       const constant = number(2, difficultyStep(4, difficulty, 20), rng);
       const total = x + constant;
