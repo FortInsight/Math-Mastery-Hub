@@ -60,6 +60,7 @@ const curriculum = {
     makeCategory("algebra", "Algebraic Expressions", "Simplify expressions and solve equations.", "algebra", { level: 7 }),
     makeCategory("ratios", "Ratios & Proportions", "Rates, percent, and proportional thinking.", "ratiosProportions", { level: 7 }),
     makeCategory("geometry", "Geometry", "Angles, circles, scale drawings, and rotational symmetry.", "geometry", { level: 7 }),
+    makeCategory("coordinates", "Coordinate Graphing", "Plot ordered pairs, read all four quadrants, and describe movement on the coordinate plane.", "functionsGraphing", { level: 7, skill: "coordinateGraphing" }),
     makeCategory("data", "Data & Probability", "Compare samples and experimental probability.", "statisticsProbability", { level: 7 }),
     makeCategory("probability-mastery", "Probability Mastery", "Study Grade 7 worksheet examples, then solve mastery questions with step-by-step solutions and sample-space models.", "grade7ProbabilityMastery", { level: 7, skill: "probability-mastery" }),
     makeCategory("equations", "Equations & Inequalities", "Solve one-step and multi-step equations and linear inequalities.", "algebra", { level: 7 }),
@@ -135,6 +136,8 @@ const state = {
 };
 
 const questionBankCache = new Map();
+const levelQuestionCache = new Map();
+let topicSearchCatalogCache = null;
 const profilesStoreKey = "maths-mastery-profiles-v1";
 const profilesStore = loadProfilesStore();
 const guestStoreKey = "maths-mastery-guest-v1";
@@ -595,6 +598,7 @@ function renderLevels() {
 
   for (let level = 1; level <= 10; level += 1) {
     const button = document.createElement("button");
+    button.type = "button";
     const savedAttempt = getSavedAttempt(state.selectedGrade, activeContext.key, level);
     const isCompleted = Boolean(savedAttempt);
     button.className = `level-card ${isCompleted ? "completed" : "pending"} ${level === state.selectedLevel ? "active" : ""}`;
@@ -617,7 +621,7 @@ function startLevel(level) {
 
   flushStudyTime();
   state.selectedLevel = level;
-  state.currentQuestions = getQuestionBank(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab).slice((level - 1) * 10, level * 10);
+  state.currentQuestions = getQuestionsForLevel(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab, level);
   state.currentIndex = 0;
   state.score = 0;
   state.answered = false;
@@ -1244,6 +1248,59 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
   return uniqueBank;
 }
 
+function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
+  const cacheKey = `${grade}-${categoryId}-${patTabId || "base"}-level-${level}`;
+  if (levelQuestionCache.has(cacheKey)) {
+    return levelQuestionCache.get(cacheKey);
+  }
+
+  const category = curriculum[grade].find((item) => item.id === categoryId);
+  if (!category) {
+    return [];
+  }
+
+  const seedBase = hashCode(cacheKey);
+  const difficulty = level;
+  const seenPrompts = new Set();
+  const promptOccurrences = new Map();
+  const bank = Array.from({ length: 10 }, (_, questionIndex) => {
+    const absoluteIndex = ((level - 1) * 10) + questionIndex;
+
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      const rng = mulberry32(seedBase + questionIndex * 97 + 1 + (attempt * 1009));
+      const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, absoluteIndex + attempt, difficulty);
+      const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
+      const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
+      if (!seenPrompts.has(normalizedPrompt)) {
+        seenPrompts.add(normalizedPrompt);
+        promptOccurrences.set(normalizedPrompt, 1);
+        return question;
+      }
+    }
+
+    const fallbackRng = mulberry32(seedBase + questionIndex * 97 + 1 + 99991);
+    const fallbackRawQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, absoluteIndex + 37, difficulty);
+    let fallbackQuestion = ensureQuestionHint(category.factory, fallbackRawQuestion, difficulty, category.config);
+    let normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
+
+    if (seenPrompts.has(normalizedPrompt)) {
+      const occurrence = (promptOccurrences.get(normalizedPrompt) || 1) + 1;
+      promptOccurrences.set(normalizedPrompt, occurrence);
+      fallbackQuestion = uniquifyQuestionPrompt(fallbackQuestion, occurrence);
+      normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
+    } else {
+      promptOccurrences.set(normalizedPrompt, 1);
+    }
+
+    seenPrompts.add(normalizedPrompt);
+    return fallbackQuestion;
+  });
+
+  const uniqueBank = enforceUniqueQuestionPrompts(bank);
+  levelQuestionCache.set(cacheKey, uniqueBank);
+  return uniqueBank;
+}
+
 function renderTopicSearch() {
   if (!elements.topicSearchResults) {
     return;
@@ -1256,6 +1313,11 @@ function renderTopicSearch() {
 
   if (!query) {
     elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">Search a topic or keyword to see matching courses and question levels.</div>`;
+    return;
+  }
+
+  if (query.length < 2) {
+    elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">Type at least 2 letters to search.</div>`;
     return;
   }
 
@@ -1272,81 +1334,65 @@ function renderTopicSearch() {
       <small>${escapeHtml(result.preview)}</small>
       <div class="topic-search-actions">
         <button type="button" class="secondary-button topic-search-action" data-action="open-topic" data-grade="${result.grade}" data-category-id="${escapeHtml(result.category.id)}">Open Topic</button>
-        ${Number.isFinite(result.level) ? `<button type="button" class="secondary-button topic-search-action" data-action="open-level" data-grade="${result.grade}" data-category-id="${escapeHtml(result.category.id)}" data-pat-tab-id="${escapeHtml(result.patTabId || "")}" data-level="${result.level}">Open Grade ${result.grade} Level ${result.level}</button>` : ""}
       </div>
     </div>
   `).join("");
 }
 
-function searchTopicsForGrade(query, grade) {
-  const categories = curriculum[grade] || [];
-
-  return categories.flatMap((category) => {
-    const tabs = getPatTabDefinitions(category.id, grade);
-    const baseText = normalizeTopicSearchText(`${category.title} ${category.description}`);
-    const matches = [];
-
-    if (tabs.length) {
-      tabs.forEach((tab) => {
-        const bank = getQuestionBank(grade, category.id, tab.id);
-        const questionIndex = bank.findIndex((question) => {
-          const promptParts = splitQuestionPrompt(question.prompt);
-          const searchable = [
-            category.title,
-            category.description,
-            tab.label,
-            tab.description,
-            promptParts.instruction,
-            promptParts.body,
-            question.hint || "",
-            question.explanation || ""
-          ].join(" ");
-          return normalizeTopicSearchText(searchable).includes(query);
-        });
-        const tabText = normalizeTopicSearchText(`${tab.label} ${tab.description}`);
-        if (baseText.includes(query) || tabText.includes(query) || questionIndex >= 0) {
-          matches.push({
-            category,
-            patTabId: tab.id,
-            trackLabel: `${category.id.startsWith("english-") ? "English" : "Maths"} | ${tab.label}`,
-            level: questionIndex >= 0 ? Math.floor(questionIndex / 10) + 1 : null,
-            preview: questionIndex >= 0 ? buildQuestionPreview(bank[questionIndex].prompt) : tab.description
-          });
-        }
-      });
-      return matches;
-    }
-
-    const bank = getQuestionBank(grade, category.id, null);
-    const questionIndex = bank.findIndex((question) => {
-      const promptParts = splitQuestionPrompt(question.prompt);
-      const searchable = [
-        category.title,
-        category.description,
-        promptParts.instruction,
-        promptParts.body,
-        question.hint || "",
-        question.explanation || ""
-      ].join(" ");
-      return normalizeTopicSearchText(searchable).includes(query);
-    });
-
-    if (baseText.includes(query) || questionIndex >= 0) {
-      return [{
+function buildTopicSearchCatalog() {
+  return grades.flatMap((grade) => {
+    const categories = curriculum[grade] || [];
+    return categories.flatMap((category) => {
+      const tabs = getPatTabDefinitions(category.id, grade);
+      const baseEntry = {
+        grade,
         category,
         patTabId: null,
+        searchableText: normalizeTopicSearchText(`${category.title} ${category.description}`),
+        titleText: normalizeTopicSearchText(category.title),
         trackLabel: category.id.startsWith("english-") ? "English" : "Maths",
-        level: questionIndex >= 0 ? Math.floor(questionIndex / 10) + 1 : null,
-        preview: questionIndex >= 0 ? buildQuestionPreview(bank[questionIndex].prompt) : category.description
-      }];
-    }
+        preview: category.description
+      };
 
-    return [];
-  }).sort((a, b) => {
-    const aStarts = normalizeTopicSearchText(a.category.title).startsWith(query) ? 0 : 1;
-    const bStarts = normalizeTopicSearchText(b.category.title).startsWith(query) ? 0 : 1;
-    return aStarts - bStarts || a.category.title.localeCompare(b.category.title);
+      if (!tabs.length) {
+        return [baseEntry];
+      }
+
+      return tabs.map((tab) => ({
+        ...baseEntry,
+        patTabId: tab.id,
+        searchableText: normalizeTopicSearchText(`${category.title} ${category.description} ${tab.label} ${tab.description}`),
+        titleText: normalizeTopicSearchText(`${category.title} ${tab.label}`),
+        trackLabel: `${category.id.startsWith("english-") ? "English" : "Maths"} | ${tab.label}`,
+        preview: tab.description
+      }));
+    });
   });
+}
+
+function getTopicSearchCatalog() {
+  if (!topicSearchCatalogCache) {
+    topicSearchCatalogCache = buildTopicSearchCatalog();
+  }
+  return topicSearchCatalogCache;
+}
+
+function searchTopicsForGrade(query, grade) {
+  return getTopicSearchCatalog()
+    .filter((entry) => entry.grade === grade && entry.searchableText.includes(query))
+    .map((entry) => ({
+      category: entry.category,
+      patTabId: entry.patTabId,
+      trackLabel: entry.trackLabel,
+      level: null,
+      preview: entry.preview,
+      titleText: entry.titleText
+    }))
+    .sort((a, b) => {
+      const aStarts = a.titleText.startsWith(query) ? 0 : 1;
+      const bStarts = b.titleText.startsWith(query) ? 0 : 1;
+      return aStarts - bStarts || a.category.title.localeCompare(b.category.title);
+    });
 }
 
 function searchTopicsAcrossGrades(query) {
@@ -1356,8 +1402,8 @@ function searchTopicsAcrossGrades(query) {
       grade
     }))
   ).sort((a, b) => {
-    const aStarts = normalizeTopicSearchText(a.category.title).startsWith(query) ? 0 : 1;
-    const bStarts = normalizeTopicSearchText(b.category.title).startsWith(query) ? 0 : 1;
+    const aStarts = (a.titleText || normalizeTopicSearchText(a.category.title)).startsWith(query) ? 0 : 1;
+    const bStarts = (b.titleText || normalizeTopicSearchText(b.category.title)).startsWith(query) ? 0 : 1;
     return aStarts - bStarts || a.grade - b.grade || a.category.title.localeCompare(b.category.title);
   });
 }
@@ -5265,6 +5311,62 @@ const questionFactories = {
 
   functionsGraphing(rng, grade, config, index, difficulty) {
     const level = config.level;
+
+    if (config.skill === "coordinateGraphing") {
+      if (index % 3 === 0) {
+        const x = pick([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6], rng);
+        const y = pick([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6], rng);
+        let correct = "Quadrant I";
+        if (x < 0 && y > 0) {
+          correct = "Quadrant II";
+        } else if (x < 0 && y < 0) {
+          correct = "Quadrant III";
+        } else if (x > 0 && y < 0) {
+          correct = "Quadrant IV";
+        }
+        const { options, answerIndex } = buildOptions(correct, ["Quadrant I", "Quadrant II", "Quadrant III", "Quadrant IV"].filter((item) => item !== correct), rng);
+        return {
+          prompt: `Which quadrant contains the point (${x}, ${y})?`,
+          options,
+          answerIndex,
+          explanation: `The x-value is ${x < 0 ? "negative" : "positive"} and the y-value is ${y < 0 ? "negative" : "positive"}, so the point (${x}, ${y}) is in ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const startX = number(-4, 4, rng);
+        const startY = number(-4, 4, rng);
+        const right = number(1, difficulty <= 5 ? 3 : 5, rng);
+        const up = number(1, difficulty <= 5 ? 3 : 5, rng);
+        const correct = `(${startX + right}, ${startY + up})`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `(${startX - right}, ${startY + up})`,
+          `(${startX + right}, ${startY - up})`,
+          `(${startX - right}, ${startY - up})`
+        ], rng);
+        return {
+          prompt: `Start at (${startX}, ${startY}). Move ${right} units right and ${up} units up. Where do you land?`,
+          options,
+          answerIndex,
+          explanation: `Moving right adds ${right} to x, so x becomes ${startX + right}. Moving up adds ${up} to y, so y becomes ${startY + up}. The new point is ${correct}.`
+        };
+      }
+
+      const x = number(-6, 6, rng);
+      const y = number(-6, 6, rng);
+      const correct = `(${x}, ${y})`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `(${y}, ${x})`,
+        `(${x}, ${-y})`,
+        `(${-x}, ${y})`
+      ], rng);
+      return {
+        prompt: `Which ordered pair has x-coordinate ${x} and y-coordinate ${y}?`,
+        options,
+        answerIndex,
+        explanation: `In an ordered pair, the x-coordinate comes first and the y-coordinate comes second, so the correct point is ${correct}.`
+      };
+    }
 
     if (level <= 9) {
       const x = number(1, difficultyStep(3, difficulty, 12), rng);
