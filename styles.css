@@ -287,6 +287,11 @@ h1 {
   padding: 1.5rem;
 }
 
+#level-section {
+  position: relative;
+  z-index: 6;
+}
+
 .section-heading {
   margin-bottom: 1rem;
 }
@@ -390,12 +395,24 @@ h1 {
 
 .level-grid {
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  position: relative;
+  z-index: 2;
+}
+
+.level-grid[aria-busy="true"] {
+  opacity: 0.72;
+}
+
+.level-grid[aria-busy="true"] .level-card {
+  cursor: progress;
 }
 
 .level-actions {
   margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  position: relative;
+  z-index: 1;
 }
 
 .grade-button,
@@ -428,6 +445,13 @@ h1 {
   display: grid;
   gap: 0.22rem;
   text-align: left;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .level-card strong {
@@ -450,7 +474,7 @@ h1 {
 
 .topic-select-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 

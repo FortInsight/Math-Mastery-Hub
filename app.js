@@ -57,6 +57,7 @@ const curriculum = {
   ],
   7: [
     makeCategory("integers", "Integers & Rational Numbers", "Add, subtract, multiply, and divide signed numbers.", "integersRational", { level: 7 }),
+    makeCategory("fractions", "Fractions & Decimals", "Convert, compare, add, and subtract fractions and decimals.", "fractionsDecimalsPercent", { stage: "middleSchoolStart" }),
     makeCategory("algebra", "Algebraic Expressions", "Simplify expressions and solve equations.", "algebra", { level: 7 }),
     makeCategory("ratios", "Ratios & Proportions", "Rates, percent, and proportional thinking.", "ratiosProportions", { level: 7 }),
     makeCategory("geometry", "Geometry", "Angles, circles, scale drawings, and rotational symmetry.", "geometry", { level: 7 }),
@@ -117,6 +118,8 @@ grades.forEach((grade) => {
   curriculum[grade].push(...makeEnglishCategories(grade));
 });
 
+const masteryTracks = [];
+
 const state = {
   selectedGrade: 1,
   selectedCategoryId: null,
@@ -132,7 +135,8 @@ const state = {
   questionResults: [],
   currentProfileId: null,
   studyTimerId: null,
-  lastStudyTickAt: 0
+  lastStudyTickAt: 0,
+  isStartingLevel: false
 };
 
 const questionBankCache = new Map();
@@ -143,6 +147,9 @@ const profilesStore = loadProfilesStore();
 const guestStoreKey = "maths-mastery-guest-v1";
 const guestStore = loadGuestStore();
 const studyTickMs = 1000;
+const LEVEL_COUNT = 5;
+const QUESTIONS_PER_LEVEL = 10;
+const QUESTIONS_PER_TOPIC = LEVEL_COUNT * QUESTIONS_PER_LEVEL;
 
 const elements = {
   profileNameLabel: document.getElementById("profile-name-label"),
@@ -251,6 +258,7 @@ function attachEvents() {
   elements.hintButton?.addEventListener("click", toggleHint);
   elements.mathCategorySelect?.addEventListener("change", (event) => handleCategorySelect(event, "maths"));
   elements.englishCategorySelect?.addEventListener("change", (event) => handleCategorySelect(event, "english"));
+  elements.levelGrid?.addEventListener("click", handleLevelGridClick);
   elements.topicSearchInput?.addEventListener("input", (event) => {
     state.searchQuery = event.target.value;
     renderTopicSearch();
@@ -382,7 +390,7 @@ function renderCategorySelector(categories) {
     elements.englishCategorySelect.value = "";
   }
 
-  const selectedCategory = categories.find((category) => category.id === state.selectedCategoryId);
+  const selectedCategory = getSelectedCategory();
   if (!selectedCategory) {
     elements.categoryCurrentCard?.classList.add("hidden");
     elements.patTabSection?.classList.add("hidden");
@@ -397,9 +405,9 @@ function renderCategorySelector(categories) {
   if (elements.categoryCurrentCard) {
     elements.categoryCurrentCard.classList.remove("hidden");
     elements.categoryCurrentCard.innerHTML = `
-      <h3>${selectedCategory.title}</h3>
+      <h3>${getContextDisplayTitle(selectedCategory)}</h3>
       <p>${selectedCategory.description}</p>
-      <small>100 questions | 10 levels</small>
+      <small>${QUESTIONS_PER_TOPIC} questions | ${LEVEL_COUNT} levels</small>
     `;
   }
 
@@ -596,56 +604,125 @@ function renderLevels() {
   elements.levelSection.classList.remove("hidden");
   elements.selectedCategoryLabel.textContent = activeContext.title;
 
-  for (let level = 1; level <= 10; level += 1) {
+  for (let level = 1; level <= LEVEL_COUNT; level += 1) {
     const button = document.createElement("button");
     button.type = "button";
+    button.dataset.level = String(level);
     const savedAttempt = getSavedAttempt(state.selectedGrade, activeContext.key, level);
     const isCompleted = Boolean(savedAttempt);
     button.className = `level-card ${isCompleted ? "completed" : "pending"} ${level === state.selectedLevel ? "active" : ""}`;
     button.innerHTML = `
       <strong>Level ${level}</strong>
-      <span>${isCompleted ? `Completed | Best ${savedAttempt.score}/10` : "Not completed yet"}</span>
+      <span>${isCompleted ? `Completed | Best ${savedAttempt.score}/${QUESTIONS_PER_LEVEL}` : "Not completed yet"}</span>
     `;
-    button.addEventListener("click", () => startLevel(level));
     elements.levelGrid.appendChild(button);
   }
 
   renderResetTopicButton();
 }
 
-function startLevel(level) {
-  if (isProbabilityMasteryCategory() && state.selectedProbabilityMode !== "mastery") {
-    state.selectedProbabilityMode = "mastery";
-    renderProbabilityModeTabs(getSelectedCategory());
+function handleLevelGridClick(event) {
+  const button = event.target.closest(".level-card");
+  if (!button) {
+    return;
   }
 
-  flushStudyTime();
-  state.selectedLevel = level;
-  state.currentQuestions = getQuestionsForLevel(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab, level);
-  state.currentIndex = 0;
-  state.score = 0;
-  state.answered = false;
-  state.lastResults = [];
-  state.questionResults = Array.from({ length: state.currentQuestions.length }, () => null);
+  const level = Number(button.dataset.level);
+  if (!Number.isInteger(level) || level < 1 || level > LEVEL_COUNT) {
+    return;
+  }
 
-  elements.resultsSection.classList.add("hidden");
-  elements.quizSection.classList.remove("hidden");
-  elements.reviewSection?.classList.add("hidden");
-  renderLevels();
-  renderQuestion();
-  renderStudyTime();
-  elements.quizSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  openLevel(level);
+}
+
+function openLevel(level) {
+  if (state.isStartingLevel) {
+    return;
+  }
+
+  if (!Number.isInteger(level) || level < 1 || level > LEVEL_COUNT) {
+    return;
+  }
+
+  state.isStartingLevel = true;
+  if (elements.levelGrid) {
+    elements.levelGrid.setAttribute("aria-busy", "true");
+  }
+
+  try {
+    startLevel(level);
+  } finally {
+    state.isStartingLevel = false;
+    elements.levelGrid?.removeAttribute("aria-busy");
+  }
+}
+
+function startLevel(level) {
+  try {
+    if (isProbabilityMasteryCategory() && state.selectedProbabilityMode !== "mastery") {
+      state.selectedProbabilityMode = "mastery";
+      renderProbabilityModeTabs(getSelectedCategory());
+    }
+
+    flushStudyTime();
+    state.selectedLevel = level;
+    state.currentQuestions = getQuestionsForLevel(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab, level);
+    if (!state.currentQuestions.length) {
+      const category = getSelectedCategory();
+      state.currentQuestions = category ? [buildEmergencyQuestion(category, state.selectedGrade, level, level)] : [];
+    }
+    state.currentIndex = 0;
+    state.score = 0;
+    state.answered = false;
+    state.lastResults = [];
+    state.questionResults = Array.from({ length: state.currentQuestions.length }, () => null);
+
+    elements.resultsSection.classList.add("hidden");
+    elements.quizSection.classList.remove("hidden");
+    elements.reviewSection?.classList.add("hidden");
+    renderLevels();
+    if (state.currentQuestions.length) {
+      renderQuestion();
+    }
+    renderStudyTime();
+    elements.quizSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    console.error("Level start failed", error);
+    const category = getSelectedCategory();
+    state.selectedLevel = level;
+    state.currentQuestions = category ? [buildEmergencyQuestion(category, state.selectedGrade, level, level)] : [];
+    state.currentIndex = 0;
+    state.score = 0;
+    state.answered = false;
+    state.lastResults = [];
+    state.questionResults = Array.from({ length: state.currentQuestions.length }, () => null);
+    elements.resultsSection.classList.add("hidden");
+    elements.quizSection.classList.remove("hidden");
+    elements.reviewSection?.classList.add("hidden");
+    renderLevels();
+    if (state.currentQuestions.length) {
+      renderQuestion();
+    }
+    renderStudyTime();
+    elements.quizSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function renderQuestion() {
   const question = state.currentQuestions[state.currentIndex];
+  if (!question) {
+    return;
+  }
   const questionNumber = state.currentIndex + 1;
   const existingResult = state.questionResults[state.currentIndex];
   const answeredCount = getAnsweredCount();
   const promptParts = splitQuestionPrompt(question.prompt);
 
-  elements.quizMeta.textContent = `Grade ${state.selectedGrade} | ${getActiveCategoryContext().title} | Level ${state.selectedLevel}`;
-  elements.questionTitle.textContent = `Question ${questionNumber} of 10`;
+  const categoryPrefix = isMasteryCategory(getActiveCategoryContext().category)
+    ? `Cross-Grade Mastery`
+    : `Grade ${state.selectedGrade}`;
+  elements.quizMeta.textContent = `${categoryPrefix} | ${getActiveCategoryContext().title} | Level ${state.selectedLevel}`;
+  elements.questionTitle.textContent = `Question ${questionNumber} of ${QUESTIONS_PER_LEVEL}`;
   elements.questionInstruction.textContent = promptParts.instruction;
   elements.questionInstruction.classList.toggle("hidden", !promptParts.instruction);
   elements.questionText.textContent = promptParts.body;
@@ -885,7 +962,10 @@ function completeLevel() {
       ? `Saved to ${currentProfile.name}'s profile.`
       : "Saved in this browser for guest progress."
     : "Create or log in to a profile to save this progress.";
-  elements.resultsSummary.textContent = `You scored ${state.score} out of 10 in Grade ${state.selectedGrade} ${activeContext.title}, Level ${state.selectedLevel} (${percentage}%). ${saveMessage}`;
+  const resultPrefix = isMasteryCategory(activeContext.category)
+    ? `Cross-grade mastery`
+    : `Grade ${state.selectedGrade}`;
+  elements.resultsSummary.textContent = `You scored ${state.score} out of ${QUESTIONS_PER_LEVEL} in ${resultPrefix} ${activeContext.title}, Level ${state.selectedLevel} (${percentage}%). ${saveMessage}`;
   elements.resultsBreakdown.innerHTML = state.lastResults
     .map((result, index) => renderResultItem(result, index))
     .join("");
@@ -1062,7 +1142,7 @@ function renderReviewOptions() {
   elements.reviewLevelSelect.disabled = false;
   elements.openReviewButton.disabled = false;
   elements.reviewLevelSelect.innerHTML = attempts
-    .map((attempt) => `<option value="${attempt.level}">Level ${attempt.level} | Score ${attempt.score}/10</option>`)
+    .map((attempt) => `<option value="${attempt.level}">Level ${attempt.level} | Score ${attempt.score}/${QUESTIONS_PER_LEVEL}</option>`)
     .join("");
   elements.reviewEmpty.classList.add("hidden");
 }
@@ -1159,7 +1239,8 @@ function openSelectedReview() {
   }
 
   elements.reviewDetails.classList.remove("hidden");
-  elements.reviewSummary.textContent = `Grade ${state.selectedGrade} | ${activeContext.title} | Level ${level} | Score ${attempt.score}/10`;
+  const reviewPrefix = isMasteryCategory(activeContext.category) ? "Cross-Grade Mastery" : `Grade ${state.selectedGrade}`;
+  elements.reviewSummary.textContent = `${reviewPrefix} | ${activeContext.title} | Level ${level} | Score ${attempt.score}/${QUESTIONS_PER_LEVEL}`;
   elements.reviewBreakdown.innerHTML = attempt.results
     .map((result, index) => renderResultItem(result, index))
     .join("");
@@ -1178,7 +1259,7 @@ function renderResultItem(result, index) {
 }
 
 function getSelectedCategory() {
-  return curriculum[state.selectedGrade].find((category) => category.id === state.selectedCategoryId);
+  return getCategoryById(state.selectedCategoryId, state.selectedGrade);
 }
 
 function getActiveCategoryContext() {
@@ -1186,6 +1267,15 @@ function getActiveCategoryContext() {
   const tab = getSelectedPatTabDefinition();
   if (!category) {
     return { key: "", title: "", category: null, tab: null };
+  }
+
+  if (isMasteryCategory(category)) {
+    return {
+      key: `${category.id}::from-grade-${state.selectedGrade}`,
+      title: getContextDisplayTitle(category),
+      category,
+      tab: null
+    };
   }
 
   if (!tab) {
@@ -1206,17 +1296,22 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     return questionBankCache.get(cacheKey);
   }
 
-  const category = curriculum[grade].find((item) => item.id === categoryId);
+  const category = getCategoryById(categoryId, grade);
+  if (!category || !questionFactories[category.factory]) {
+    return [];
+  }
   const seedBase = hashCode(cacheKey);
   const seenPrompts = new Set();
   const promptOccurrences = new Map();
-  const bank = Array.from({ length: 100 }, (_, index) => {
-    const difficulty = Math.floor(index / 10) + 1;
+  const bank = Array.from({ length: QUESTIONS_PER_TOPIC }, (_, index) => {
+    const difficulty = Math.floor(index / QUESTIONS_PER_LEVEL) + 1;
 
     for (let attempt = 0; attempt < 60; attempt += 1) {
       const rng = mulberry32(seedBase + index * 97 + 1 + (attempt * 1009));
-      const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index + attempt, difficulty);
-      const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
+      const question = safeGenerateQuestion(category, rng, grade, patTabId, index + attempt, difficulty);
+      if (!question) {
+        continue;
+      }
       const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
       if (!seenPrompts.has(normalizedPrompt)) {
         seenPrompts.add(normalizedPrompt);
@@ -1226,8 +1321,8 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     }
 
     const fallbackRng = mulberry32(seedBase + index * 97 + 1 + 99991);
-    const fallbackRawQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, index + 37, difficulty);
-    let fallbackQuestion = ensureQuestionHint(category.factory, fallbackRawQuestion, difficulty, category.config);
+    let fallbackQuestion = safeGenerateQuestion(category, fallbackRng, grade, patTabId, index + 37, difficulty)
+      || buildEmergencyQuestion(category, grade, difficulty, index);
     let normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
 
     if (seenPrompts.has(normalizedPrompt)) {
@@ -1254,8 +1349,8 @@ function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
     return levelQuestionCache.get(cacheKey);
   }
 
-  const category = curriculum[grade].find((item) => item.id === categoryId);
-  if (!category) {
+  const category = getCategoryById(categoryId, grade);
+  if (!category || !questionFactories[category.factory]) {
     return [];
   }
 
@@ -1263,13 +1358,15 @@ function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
   const difficulty = level;
   const seenPrompts = new Set();
   const promptOccurrences = new Map();
-  const bank = Array.from({ length: 10 }, (_, questionIndex) => {
-    const absoluteIndex = ((level - 1) * 10) + questionIndex;
+  const bank = Array.from({ length: QUESTIONS_PER_LEVEL }, (_, questionIndex) => {
+    const absoluteIndex = ((level - 1) * QUESTIONS_PER_LEVEL) + questionIndex;
 
     for (let attempt = 0; attempt < 60; attempt += 1) {
       const rng = mulberry32(seedBase + questionIndex * 97 + 1 + (attempt * 1009));
-      const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, absoluteIndex + attempt, difficulty);
-      const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
+      const question = safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex + attempt, difficulty);
+      if (!question) {
+        continue;
+      }
       const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
       if (!seenPrompts.has(normalizedPrompt)) {
         seenPrompts.add(normalizedPrompt);
@@ -1279,8 +1376,8 @@ function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
     }
 
     const fallbackRng = mulberry32(seedBase + questionIndex * 97 + 1 + 99991);
-    const fallbackRawQuestion = questionFactories[category.factory](fallbackRng, grade, { ...category.config, patTabId }, absoluteIndex + 37, difficulty);
-    let fallbackQuestion = ensureQuestionHint(category.factory, fallbackRawQuestion, difficulty, category.config);
+    let fallbackQuestion = safeGenerateQuestion(category, fallbackRng, grade, patTabId, absoluteIndex + 37, difficulty)
+      || buildEmergencyQuestion(category, grade, difficulty, absoluteIndex);
     let normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
 
     if (seenPrompts.has(normalizedPrompt)) {
@@ -1330,7 +1427,7 @@ function renderTopicSearch() {
   elements.topicSearchResults.innerHTML = results.map((result) => `
     <div class="topic-search-result">
       <strong>${escapeHtml(result.category.title)}</strong>
-      <span>${escapeHtml(result.trackLabel)} | Grade ${result.grade}</span>
+      <span>${escapeHtml(result.trackLabel)} | ${escapeHtml(formatSearchGradeLabel(result))}</span>
       <small>${escapeHtml(result.preview)}</small>
       <div class="topic-search-actions">
         <button type="button" class="secondary-button topic-search-action" data-action="open-topic" data-grade="${result.grade}" data-category-id="${escapeHtml(result.category.id)}">Open Topic</button>
@@ -1340,7 +1437,7 @@ function renderTopicSearch() {
 }
 
 function buildTopicSearchCatalog() {
-  return grades.flatMap((grade) => {
+  const gradeEntries = grades.flatMap((grade) => {
     const categories = curriculum[grade] || [];
     return categories.flatMap((category) => {
       const tabs = getPatTabDefinitions(category.id, grade);
@@ -1368,6 +1465,26 @@ function buildTopicSearchCatalog() {
       }));
     });
   });
+
+  const masteryEntries = grades.flatMap((grade) =>
+    masteryTracks
+      .filter((category) => {
+        const minGrade = category.config?.minGrade || 1;
+        const maxGrade = category.config?.maxGrade || 12;
+        return grade >= minGrade && grade <= maxGrade;
+      })
+      .map((category) => ({
+        grade,
+        category,
+        patTabId: null,
+        searchableText: normalizeTopicSearchText(`${category.title} ${category.description} mastery across grades`),
+        titleText: normalizeTopicSearchText(category.title),
+        trackLabel: "Topic Mastery",
+        preview: `${category.description} Starts from Grade ${grade}.`
+      }))
+  );
+
+  return [...gradeEntries, ...masteryEntries];
 }
 
 function getTopicSearchCatalog() {
@@ -1375,6 +1492,13 @@ function getTopicSearchCatalog() {
     topicSearchCatalogCache = buildTopicSearchCatalog();
   }
   return topicSearchCatalogCache;
+}
+
+function formatSearchGradeLabel(result) {
+  if (isMasteryCategory(result.category)) {
+    return `Starts at Grade ${result.grade}`;
+  }
+  return `Grade ${result.grade}`;
 }
 
 function searchTopicsForGrade(query, grade) {
@@ -1440,12 +1564,25 @@ function handleTopicSearchJump(event) {
   state.currentQuestions = [];
   hideQuizViews();
 
-  if (categoryId.startsWith("english-")) {
+  if (isMasteryCategoryId(categoryId)) {
+    if (elements.masteryCategorySelect) {
+      elements.masteryCategorySelect.value = categoryId;
+    }
+    if (elements.mathCategorySelect) {
+      elements.mathCategorySelect.value = "";
+    }
+    if (elements.englishCategorySelect) {
+      elements.englishCategorySelect.value = "";
+    }
+  } else if (categoryId.startsWith("english-")) {
     if (elements.englishCategorySelect) {
       elements.englishCategorySelect.value = categoryId;
     }
     if (elements.mathCategorySelect) {
       elements.mathCategorySelect.value = "";
+    }
+    if (elements.masteryCategorySelect) {
+      elements.masteryCategorySelect.value = "";
     }
   } else {
     if (elements.mathCategorySelect) {
@@ -1453,6 +1590,9 @@ function handleTopicSearchJump(event) {
     }
     if (elements.englishCategorySelect) {
       elements.englishCategorySelect.value = "";
+    }
+    if (elements.masteryCategorySelect) {
+      elements.masteryCategorySelect.value = "";
     }
   }
 
@@ -1465,7 +1605,7 @@ function handleTopicSearchJump(event) {
 
   if (button.dataset.action === "open-level") {
     const level = Number(button.dataset.level);
-    if (level >= 1 && level <= 10) {
+    if (level >= 1 && level <= LEVEL_COUNT) {
       startLevel(level);
     }
     return;
@@ -1504,6 +1644,214 @@ function normalizeQuestionPrompt(prompt) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+function isValidQuestion(question) {
+  if (!question || typeof question.prompt !== "string" || !question.prompt.trim()) {
+    return false;
+  }
+
+  if (question.type === "writing") {
+    return true;
+  }
+
+  return Array.isArray(question.options)
+    && question.options.length >= 2
+    && Number.isInteger(question.answerIndex)
+    && question.answerIndex >= 0
+    && question.answerIndex < question.options.length;
+}
+
+function buildEmergencyQuestion(category, grade, difficulty, index) {
+  const baseA = Math.max(2, grade + difficulty + (index % 4));
+  const baseB = baseA + 2;
+  const correct = String(baseB);
+  const distractors = [String(baseA), String(baseB + 2), String(Math.max(1, baseA - 1))];
+  const { options, answerIndex } = buildOptions(correct, distractors, mulberry32(hashCode(`${category.id}-${grade}-${difficulty}-${index}`)));
+  return {
+    prompt: `Quick practice for ${category.title}: which number is greatest?`,
+    options,
+    answerIndex,
+    explanation: `${baseB} is greater than ${baseA}, ${baseB + 2 - 2}, and ${Math.max(1, baseA - 1)}.`,
+    hint: "Compare the numbers and choose the largest one."
+  };
+}
+
+function getFractionsMasteryRoadmap(startGrade) {
+  const masteryConfig = masteryTracks.find((track) => track.id === "mastery-fractions")?.config || {};
+  const startFloor = masteryConfig.startGradeFloor || 2;
+  const startCap = masteryConfig.startGradeCap || 7;
+  const effectiveStartGrade = Math.max(startFloor, Math.min(startGrade, startCap));
+  const roadmap = [
+    { grade: 2, config: { stage: "basicFractions" } },
+    { grade: 3, config: { stage: "basicFractions" } },
+    { grade: 4, config: { stage: "fractionDecimalBridge" } },
+    { grade: 5, config: { stage: "upperElementary" } },
+    { grade: 6, config: { stage: "middleSchoolStart" } },
+    { grade: 7, config: { stage: "middleSchoolStart" } }
+  ].filter((step) => step.grade >= effectiveStartGrade);
+
+  if (!roadmap.length) {
+    return Array.from({ length: LEVEL_COUNT }, () => ({ grade: 7, config: { stage: "middleSchoolStart" } }));
+  }
+
+  while (roadmap.length < LEVEL_COUNT) {
+    roadmap.push(roadmap[roadmap.length - 1]);
+  }
+
+  return roadmap.slice(0, LEVEL_COUNT);
+}
+
+function getMasteryRoadmapByTrack(trackId, startGrade, steps) {
+  const masteryConfig = masteryTracks.find((track) => track.id === trackId)?.config || {};
+  const startFloor = masteryConfig.startGradeFloor || 1;
+  const startCap = masteryConfig.startGradeCap || 12;
+  const effectiveStartGrade = Math.max(startFloor, Math.min(startGrade, startCap));
+  const roadmap = steps.filter((step) => step.grade >= effectiveStartGrade);
+
+  if (!roadmap.length) {
+    return Array.from({ length: LEVEL_COUNT }, () => steps[steps.length - 1]);
+  }
+
+  while (roadmap.length < LEVEL_COUNT) {
+    roadmap.push(roadmap[roadmap.length - 1]);
+  }
+
+  return roadmap.slice(0, LEVEL_COUNT);
+}
+
+function getNumbersMasteryRoadmap(startGrade) {
+  return getMasteryRoadmapByTrack("mastery-numbers", startGrade, [
+    { grade: 1, config: { min: 0, max: 100 } },
+    { grade: 2, config: { min: 10, max: 1000 } },
+    { grade: 3, config: { min: 100, max: 10000 } },
+    { grade: 4, config: { min: 100, max: 100000 } },
+    { grade: 5, config: { min: 1000, max: 1000000 } }
+  ]);
+}
+
+function getMeasurementMasteryRoadmap(startGrade) {
+  return getMasteryRoadmapByTrack("mastery-measurement", startGrade, [
+    { grade: 1, config: { level: 1 } },
+    { grade: 3, config: { level: 3 } },
+    { grade: 5, config: { level: 5 } },
+    { grade: 7, config: { level: 7 } },
+    { grade: 10, config: { level: 10 } }
+  ]);
+}
+
+function getGeometryMasteryRoadmap(startGrade) {
+  return getMasteryRoadmapByTrack("mastery-geometry", startGrade, [
+    { grade: 2, config: { level: 2 } },
+    { grade: 4, config: { level: 4 } },
+    { grade: 6, config: { level: 6 } },
+    { grade: 8, config: { level: 8 } },
+    { grade: 10, config: { level: 10 } }
+  ]);
+}
+
+function getAlgebraMasteryRoadmap(startGrade) {
+  return getMasteryRoadmapByTrack("mastery-algebra", startGrade, [
+    { grade: 6, config: { level: 6 } },
+    { grade: 7, config: { level: 7 } },
+    { grade: 8, config: { level: 8 } },
+    { grade: 10, config: { level: 10 } },
+    { grade: 12, config: { level: 12 } }
+  ]);
+}
+
+function getDataMasteryRoadmap(startGrade) {
+  return getMasteryRoadmapByTrack("mastery-data", startGrade, [
+    { grade: 6, config: { level: 6 } },
+    { grade: 7, config: { level: 7 } },
+    { grade: 8, config: { level: 8 } },
+    { grade: 10, config: { level: 10 } },
+    { grade: 12, config: { level: 12 } }
+  ]);
+}
+
+function getEnglishMasteryRoadmap(trackId, startGrade) {
+  return getMasteryRoadmapByTrack(trackId, startGrade, [
+    { grade: 1, config: {} },
+    { grade: 4, config: {} },
+    { grade: 7, config: {} },
+    { grade: 9, config: {} },
+    { grade: 12, config: {} }
+  ]);
+}
+
+function buildCrossGradeMasteryQuestion(domain, rng, grade, index, difficulty) {
+  if (domain === "fractions") {
+    const roadmap = getFractionsMasteryRoadmap(grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    const localDifficulty = Math.min(10, Math.max(1, difficulty + Math.max(0, targetStep.grade - grade)));
+    return questionFactories.fractionsDecimalsPercent(rng, targetStep.grade, targetStep.config, index, localDifficulty);
+  }
+
+  if (domain === "numbers") {
+    const roadmap = getNumbersMasteryRoadmap(grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    const localDifficulty = Math.min(10, Math.max(1, difficulty + Math.max(0, targetStep.grade - grade)));
+    return questionFactories.numberSense(rng, targetStep.grade, targetStep.config, index, localDifficulty);
+  }
+
+  if (domain === "measurement") {
+    const roadmap = getMeasurementMasteryRoadmap(grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    const localDifficulty = Math.min(10, Math.max(1, difficulty + Math.max(0, targetStep.grade - grade)));
+    return questionFactories.measurement(rng, targetStep.grade, targetStep.config, index, localDifficulty);
+  }
+
+  if (domain === "geometry") {
+    const roadmap = getGeometryMasteryRoadmap(grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    const localDifficulty = Math.min(10, Math.max(1, difficulty + Math.max(0, targetStep.grade - grade)));
+    return questionFactories.geometry(rng, targetStep.grade, targetStep.config, index, localDifficulty);
+  }
+
+  if (domain === "algebra") {
+    const roadmap = getAlgebraMasteryRoadmap(grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    const localDifficulty = Math.min(10, Math.max(1, difficulty + Math.max(0, targetStep.grade - grade)));
+    return questionFactories.algebra(rng, targetStep.grade, targetStep.config, index, localDifficulty);
+  }
+
+  if (domain === "data") {
+    const roadmap = getDataMasteryRoadmap(grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    const localDifficulty = Math.min(10, Math.max(1, difficulty + Math.max(0, targetStep.grade - grade)));
+    return questionFactories.statisticsProbability(rng, targetStep.grade, targetStep.config, index, localDifficulty);
+  }
+
+  if (domain === "grammar") {
+    const roadmap = getEnglishMasteryRoadmap("mastery-grammar", grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    return questionFactories.englishGrammar(rng, targetStep.grade, targetStep.config, index, Math.min(10, difficulty + Math.max(0, Math.floor((targetStep.grade - grade) / 2))));
+  }
+
+  if (domain === "vocabulary") {
+    const roadmap = getEnglishMasteryRoadmap("mastery-vocabulary", grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    return questionFactories.englishVocabulary(rng, targetStep.grade, targetStep.config, index, Math.min(10, difficulty + Math.max(0, Math.floor((targetStep.grade - grade) / 2))));
+  }
+
+  if (domain === "writing") {
+    const roadmap = getEnglishMasteryRoadmap("mastery-writing", grade);
+    const targetStep = roadmap[Math.max(0, Math.min(roadmap.length - 1, difficulty - 1))];
+    return questionFactories.englishWriting(rng, targetStep.grade, targetStep.config, index, Math.min(10, difficulty + Math.max(0, Math.floor((targetStep.grade - grade) / 2))));
+  }
+
+  return null;
+}
+
+function safeGenerateQuestion(category, rng, grade, patTabId, index, difficulty) {
+  try {
+    const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index, difficulty);
+    const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
+    return isValidQuestion(question) ? question : null;
+  } catch (error) {
+    return null;
+  }
 }
 
 function uniquifyQuestionPrompt(question, occurrence) {
@@ -1934,7 +2282,7 @@ function renderScoreHistory() {
     .map((entry) => `
       <div class="history-item">
         <strong>Grade ${entry.grade} | ${entry.categoryTitle}</strong>
-        <span>Level ${entry.level} | Score ${entry.score}/10 (${entry.percentage}%)</span>
+        <span>Level ${entry.level} | Score ${entry.score}/${QUESTIONS_PER_LEVEL} (${entry.percentage}%)</span>
         <small>${formatDateTime(entry.completedAt)}</small>
       </div>
     `)
@@ -2254,6 +2602,38 @@ function formatCompactStudyTime(totalSeconds) {
 
 function makeCategory(id, title, description, factory, config) {
   return { id, title, description, factory, config };
+}
+
+function getAvailableMasteryTracks(grade = state.selectedGrade) {
+  return masteryTracks.filter((category) => {
+    const minGrade = category.config?.minGrade || 1;
+    const maxGrade = category.config?.maxGrade || 12;
+    return grade >= minGrade && grade <= maxGrade;
+  });
+}
+
+function isMasteryCategoryId(categoryId) {
+  return masteryTracks.some((category) => category.id === categoryId);
+}
+
+function isMasteryCategory(category) {
+  return Boolean(category && isMasteryCategoryId(category.id));
+}
+
+function getCategoryById(categoryId, grade = state.selectedGrade) {
+  if (!categoryId) {
+    return null;
+  }
+
+  return [...(curriculum[grade] || []), ...getAvailableMasteryTracks(grade)]
+    .find((category) => category.id === categoryId) || null;
+}
+
+function getContextDisplayTitle(category, grade = state.selectedGrade) {
+  if (!isMasteryCategory(category)) {
+    return category?.title || "";
+  }
+  return `${category.title} (from Grade ${grade})`;
 }
 
 function makeEnglishCategories(grade) {
@@ -4890,7 +5270,7 @@ const questionFactories = {
       const denominatorSets = [
         [2, 3, 4],
         [2, 3, 4, 5, 6],
-        [2, 3, 4, 6, 8, 10]
+        [2, 3, 4, 5, 6, 8, 10, 12]
       ];
       const denominator = pick(denominatorSets[Math.min(2, Math.floor((difficulty - 1) / 3))], rng);
       const numerator = number(1, denominator - 1, rng);
@@ -4909,21 +5289,197 @@ const questionFactories = {
     }
 
     if (stage === "fractionDecimalBridge") {
-      const useHundredths = difficulty >= 6;
-      const placeValue = useHundredths ? 100 : 10;
-      const pieces = number(1, useHundredths ? 99 : 9, rng);
-      const correct = `${pieces / placeValue}`;
-      const { options, answerIndex } = buildOptions(correct, [`${(pieces + 1) / placeValue}`, `${Math.max(0, pieces - 1) / placeValue}`, `${pieces}`], rng);
+      if (index % 2 === 1) {
+        const decimalOptions = [
+          { decimal: "0.5", fraction: "1/2" },
+          { decimal: "0.25", fraction: "1/4" },
+          { decimal: "0.75", fraction: "3/4" },
+          { decimal: "0.2", fraction: "1/5" },
+          { decimal: "0.4", fraction: "2/5" },
+          { decimal: "0.8", fraction: "4/5" },
+          { decimal: "0.125", fraction: "1/8" },
+          { decimal: "0.6", fraction: "3/5" }
+        ];
+        const selected = pick(decimalOptions, rng);
+        const { options, answerIndex } = buildOptions(selected.fraction, decimalOptions.filter((item) => item.fraction !== selected.fraction).slice(0, 3).map((item) => item.fraction), rng);
+        return {
+          prompt: `Write ${selected.decimal} as a fraction in simplest form.`,
+          options,
+          answerIndex,
+          explanation: `${selected.decimal} means ${selected.fraction} in simplest form.`
+        };
+      }
+
+      const conversionPool = difficulty >= 6
+        ? [
+            { fraction: "3/4", decimal: "0.75" },
+            { fraction: "1/8", decimal: "0.125" },
+            { fraction: "5/8", decimal: "0.625" },
+            { fraction: "7/10", decimal: "0.7" },
+            { fraction: "9/20", decimal: "0.45" }
+          ]
+        : [
+            { fraction: "1/2", decimal: "0.5" },
+            { fraction: "1/4", decimal: "0.25" },
+            { fraction: "3/4", decimal: "0.75" },
+            { fraction: "1/5", decimal: "0.2" },
+            { fraction: "2/5", decimal: "0.4" },
+            { fraction: "4/5", decimal: "0.8" }
+          ];
+      const selected = pick(conversionPool, rng);
+      const { options, answerIndex } = buildOptions(selected.decimal, conversionPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal), rng);
       return {
-        prompt: `What decimal is equal to ${pieces}/${placeValue}?`,
+        prompt: `What decimal is equal to ${selected.fraction}?`,
         options,
         answerIndex,
-        explanation: `${pieces}/${placeValue} means ${pieces} part(s) out of ${placeValue}, which is ${correct}.`
+        explanation: `${selected.fraction} is equal to ${selected.decimal} as a decimal.`
       };
     }
 
     if (stage === "upperElementary" || stage === "middleSchoolStart") {
-      const percentPool = difficulty <= 4 ? [10, 20, 25, 50] : difficulty <= 7 ? [5, 10, 20, 25, 40, 50, 75] : [5, 12, 15, 18, 20, 25, 40, 62, 75, 85];
+      if (difficulty <= 2) {
+        if (index % 2 === 0) {
+          const denominator = pick([2, 4, 5, 8, 10], rng);
+          const firstNumerator = number(1, denominator - 1, rng);
+          const secondNumerator = number(1, denominator - firstNumerator, rng);
+          const sum = firstNumerator + secondNumerator;
+          const simplified = simplifyFraction(sum, denominator);
+          const correct = `${simplified.numerator}/${simplified.denominator}`;
+          const distractors = [
+            `${sum}/${denominator}`,
+            `${Math.max(1, sum - 1)}/${denominator}`,
+            `${simplified.denominator}/${simplified.numerator}`
+          ];
+          const { options, answerIndex } = buildOptions(correct, distractors, rng);
+          return {
+            prompt: `What is ${firstNumerator}/${denominator} + ${secondNumerator}/${denominator}?`,
+            options,
+            answerIndex,
+            explanation: `Add the numerators because the denominators are the same: ${firstNumerator} + ${secondNumerator} = ${sum}. That gives ${sum}/${denominator}, which simplifies to ${correct}.`
+          };
+        }
+
+        const basicConversionPool = [
+          { fraction: "1/2", decimal: "0.5" },
+          { fraction: "1/4", decimal: "0.25" },
+          { fraction: "3/4", decimal: "0.75" },
+          { fraction: "1/5", decimal: "0.2" },
+          { fraction: "2/5", decimal: "0.4" },
+          { fraction: "4/5", decimal: "0.8" }
+        ];
+        const selected = pick(basicConversionPool, rng);
+        const { options, answerIndex } = buildOptions(selected.decimal, basicConversionPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal), rng);
+        return {
+          prompt: `What decimal is equal to ${selected.fraction}?`,
+          options,
+          answerIndex,
+          explanation: `${selected.fraction} is equal to ${selected.decimal} as a decimal.`
+        };
+      }
+
+      if (difficulty <= 4) {
+        if (index % 3 === 0) {
+          const pair = pick([
+            { a: [1, 2], b: [1, 4], total: [3, 4] },
+            { a: [1, 3], b: [1, 6], total: [1, 2] },
+            { a: [2, 5], b: [1, 10], total: [1, 2] },
+            { a: [3, 4], b: [1, 8], total: [7, 8] }
+          ], rng);
+          const correct = `${pair.total[0]}/${pair.total[1]}`;
+          const { options, answerIndex } = buildOptions(correct, [
+            `${pair.a[0] + pair.b[0]}/${pair.a[1]}`,
+            `${pair.total[0] + 1}/${pair.total[1]}`,
+            `${pair.total[1]}/${pair.total[0]}`
+          ], rng);
+          return {
+            prompt: `What is ${pair.a[0]}/${pair.a[1]} + ${pair.b[0]}/${pair.b[1]}?`,
+            options,
+            answerIndex,
+            explanation: `Rename the fractions with a common denominator, then add. The total is ${correct}.`
+          };
+        }
+
+        if (index % 3 === 1) {
+          const pair = pick([
+            { a: [3, 4], b: [1, 2], total: [1, 4] },
+            { a: [5, 6], b: [1, 3], total: [1, 2] },
+            { a: [7, 8], b: [1, 4], total: [5, 8] },
+            { a: [9, 10], b: [2, 5], total: [1, 2] }
+          ], rng);
+          const correct = `${pair.total[0]}/${pair.total[1]}`;
+          const { options, answerIndex } = buildOptions(correct, [
+            `${pair.a[0] - pair.b[0]}/${pair.a[1]}`,
+            `${pair.total[0] + 1}/${pair.total[1]}`,
+            `${pair.total[1]}/${pair.total[0]}`
+          ], rng);
+          return {
+            prompt: `What is ${pair.a[0]}/${pair.a[1]} - ${pair.b[0]}/${pair.b[1]}?`,
+            options,
+            answerIndex,
+            explanation: `Rename the fractions with a common denominator, then subtract. The difference is ${correct}.`
+          };
+        }
+
+        const conversionPool = [
+          { fraction: "1/8", decimal: "0.125" },
+          { fraction: "3/5", decimal: "0.6" },
+          { fraction: "5/8", decimal: "0.625" },
+          { fraction: "7/10", decimal: "0.7" },
+          { fraction: "9/20", decimal: "0.45" }
+        ];
+        const selected = pick(conversionPool, rng);
+        const { options, answerIndex } = buildOptions(selected.decimal, conversionPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal), rng);
+        return {
+          prompt: `What decimal is equal to ${selected.fraction}?`,
+          options,
+          answerIndex,
+          explanation: `${selected.fraction} is equal to ${selected.decimal} as a decimal.`
+        };
+      }
+
+      if (index % 3 === 0) {
+        const hundredths = pick([
+          [0.35, 0.27],
+          [0.48, 0.16],
+          [0.62, 0.19],
+          [0.75, 0.08]
+        ], rng);
+        const total = (hundredths[0] + hundredths[1]).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        const { options, answerIndex } = buildOptions(total, [
+          (hundredths[0] - hundredths[1]).toFixed(2).replace(/0+$/, "").replace(/\.$/, ""),
+          (hundredths[0] + hundredths[1] + 0.1).toFixed(2).replace(/0+$/, "").replace(/\.$/, ""),
+          (hundredths[0] + hundredths[1] - 0.1).toFixed(2).replace(/0+$/, "").replace(/\.$/, "")
+        ], rng);
+        return {
+          prompt: `What is ${hundredths[0]} + ${hundredths[1]}?`,
+          options,
+          answerIndex,
+          explanation: `Line up the decimal points and add: ${hundredths[0]} + ${hundredths[1]} = ${total}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const pair = pick([
+          { a: [5, 6], b: [1, 4], total: [7, 12] },
+          { a: [7, 8], b: [1, 3], total: [13, 24] },
+          { a: [3, 5], b: [1, 4], total: [7, 20] },
+          { a: [11, 12], b: [1, 6], total: [3, 4] }
+        ], rng);
+        const correct = `${pair.total[0]}/${pair.total[1]}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${pair.total[0] + 1}/${pair.total[1]}`,
+          `${pair.total[1]}/${pair.total[0]}`,
+          `${Math.max(1, pair.total[0] - 1)}/${pair.total[1]}`
+        ], rng);
+        return {
+          prompt: `What is ${pair.a[0]}/${pair.a[1]} - ${pair.b[0]}/${pair.b[1]}?`,
+          options,
+          answerIndex,
+          explanation: `Use a common denominator and simplify. The answer is ${correct}.`
+        };
+      }
+
+      const percentPool = difficulty <= 7 ? [5, 10, 20, 25, 40, 50, 75] : [5, 12, 15, 18, 20, 25, 40, 62, 75, 85];
       const percent = pick(percentPool, rng);
       const correct = percent / 100;
       const { options, answerIndex } = buildOptions(correct.toFixed(2), [
@@ -5519,6 +6075,23 @@ const questionFactories = {
       hint: built.hint,
       diagram: built.diagram
     };
+  },
+
+  crossGradeMastery(rng, grade, config, index, difficulty) {
+    const built = buildCrossGradeMasteryQuestion(config.domain, rng, grade, index, difficulty);
+    if (built) {
+      return {
+        ...built,
+        hint: built.hint || "Start with the fraction or decimal form you already know, then convert or solve step by step."
+      };
+    }
+
+    return buildEmergencyQuestion(
+      makeCategory("mastery-fallback", "Topic Mastery", "Cross-grade mastery practice.", "numberSense", {}),
+      grade,
+      difficulty,
+      index
+    );
   },
 
   englishGrammar(rng, grade, config, index, difficulty) {
