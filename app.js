@@ -649,12 +649,37 @@ function openLevel(level) {
     elements.levelGrid.setAttribute("aria-busy", "true");
   }
 
-  try {
-    startLevel(level);
-  } finally {
-    state.isStartingLevel = false;
-    elements.levelGrid?.removeAttribute("aria-busy");
-  }
+  renderLevelLoading(level);
+
+  window.setTimeout(() => {
+    try {
+      startLevel(level);
+    } finally {
+      state.isStartingLevel = false;
+      elements.levelGrid?.removeAttribute("aria-busy");
+    }
+  }, 0);
+}
+
+function renderLevelLoading(level) {
+  state.selectedLevel = level;
+  elements.resultsSection.classList.add("hidden");
+  elements.reviewSection?.classList.add("hidden");
+  elements.quizSection.classList.remove("hidden");
+  elements.quizMeta.textContent = `Grade ${state.selectedGrade} | Preparing Level ${level}`;
+  elements.questionTitle.textContent = "Loading questions...";
+  elements.questionInstruction.textContent = "";
+  elements.questionInstruction.classList.add("hidden");
+  elements.questionText.textContent = "Please wait a moment while the quiz opens.";
+  elements.questionDiagram.classList.add("hidden");
+  elements.optionsList.innerHTML = "";
+  elements.feedbackBox.className = "feedback-box hidden";
+  elements.hintButton?.classList.add("hidden");
+  elements.hintBox?.classList.add("hidden");
+  elements.previousButton.classList.add("hidden");
+  elements.nextButton.classList.add("hidden");
+  elements.progressBar.style.width = "0%";
+  elements.liveScore.textContent = "0 / 0";
 }
 
 function startLevel(level) {
@@ -1306,7 +1331,7 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
   const bank = Array.from({ length: QUESTIONS_PER_TOPIC }, (_, index) => {
     const difficulty = Math.floor(index / QUESTIONS_PER_LEVEL) + 1;
 
-    for (let attempt = 0; attempt < 60; attempt += 1) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
       const rng = mulberry32(seedBase + index * 97 + 1 + (attempt * 1009));
       const question = safeGenerateQuestion(category, rng, grade, patTabId, index + attempt, difficulty);
       if (!question) {
@@ -1361,7 +1386,7 @@ function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
   const bank = Array.from({ length: QUESTIONS_PER_LEVEL }, (_, questionIndex) => {
     const absoluteIndex = ((level - 1) * QUESTIONS_PER_LEVEL) + questionIndex;
 
-    for (let attempt = 0; attempt < 60; attempt += 1) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
       const rng = mulberry32(seedBase + questionIndex * 97 + 1 + (attempt * 1009));
       const question = safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex + attempt, difficulty);
       if (!question) {
