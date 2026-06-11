@@ -1326,41 +1326,11 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     return [];
   }
   const seedBase = hashCode(cacheKey);
-  const seenPrompts = new Set();
-  const promptOccurrences = new Map();
   const bank = Array.from({ length: QUESTIONS_PER_TOPIC }, (_, index) => {
     const difficulty = Math.floor(index / QUESTIONS_PER_LEVEL) + 1;
-
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      const rng = mulberry32(seedBase + index * 97 + 1 + (attempt * 1009));
-      const question = safeGenerateQuestion(category, rng, grade, patTabId, index + attempt, difficulty);
-      if (!question) {
-        continue;
-      }
-      const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
-      if (!seenPrompts.has(normalizedPrompt)) {
-        seenPrompts.add(normalizedPrompt);
-        promptOccurrences.set(normalizedPrompt, 1);
-        return question;
-      }
-    }
-
-    const fallbackRng = mulberry32(seedBase + index * 97 + 1 + 99991);
-    let fallbackQuestion = safeGenerateQuestion(category, fallbackRng, grade, patTabId, index + 37, difficulty)
+    const rng = mulberry32(seedBase + index * 97 + 1);
+    return safeGenerateQuestion(category, rng, grade, patTabId, index, difficulty)
       || buildEmergencyQuestion(category, grade, difficulty, index);
-    let normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
-
-    if (seenPrompts.has(normalizedPrompt)) {
-      const occurrence = (promptOccurrences.get(normalizedPrompt) || 1) + 1;
-      promptOccurrences.set(normalizedPrompt, occurrence);
-      fallbackQuestion = uniquifyQuestionPrompt(fallbackQuestion, occurrence);
-      normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
-    } else {
-      promptOccurrences.set(normalizedPrompt, 1);
-    }
-
-    seenPrompts.add(normalizedPrompt);
-    return fallbackQuestion;
   });
 
   const uniqueBank = enforceUniqueQuestionPrompts(bank);
@@ -1381,41 +1351,11 @@ function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
 
   const seedBase = hashCode(cacheKey);
   const difficulty = level;
-  const seenPrompts = new Set();
-  const promptOccurrences = new Map();
   const bank = Array.from({ length: QUESTIONS_PER_LEVEL }, (_, questionIndex) => {
     const absoluteIndex = ((level - 1) * QUESTIONS_PER_LEVEL) + questionIndex;
-
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      const rng = mulberry32(seedBase + questionIndex * 97 + 1 + (attempt * 1009));
-      const question = safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex + attempt, difficulty);
-      if (!question) {
-        continue;
-      }
-      const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
-      if (!seenPrompts.has(normalizedPrompt)) {
-        seenPrompts.add(normalizedPrompt);
-        promptOccurrences.set(normalizedPrompt, 1);
-        return question;
-      }
-    }
-
-    const fallbackRng = mulberry32(seedBase + questionIndex * 97 + 1 + 99991);
-    let fallbackQuestion = safeGenerateQuestion(category, fallbackRng, grade, patTabId, absoluteIndex + 37, difficulty)
+    const rng = mulberry32(seedBase + questionIndex * 97 + 1);
+    return safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex, difficulty)
       || buildEmergencyQuestion(category, grade, difficulty, absoluteIndex);
-    let normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
-
-    if (seenPrompts.has(normalizedPrompt)) {
-      const occurrence = (promptOccurrences.get(normalizedPrompt) || 1) + 1;
-      promptOccurrences.set(normalizedPrompt, occurrence);
-      fallbackQuestion = uniquifyQuestionPrompt(fallbackQuestion, occurrence);
-      normalizedPrompt = normalizeQuestionPrompt(fallbackQuestion.prompt);
-    } else {
-      promptOccurrences.set(normalizedPrompt, 1);
-    }
-
-    seenPrompts.add(normalizedPrompt);
-    return fallbackQuestion;
   });
 
   const uniqueBank = enforceUniqueQuestionPrompts(bank);
