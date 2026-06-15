@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner Login | Grammar & Maths Mastery Hub</title>
+  <meta name="theme-color" content="#12386f" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="auth-body">
+  <div class="auth-shell">
+    <section class="hero auth-card">
+      <div class="auth-copy">
+        <p class="eyebrow">Grammar & Maths Mastery Hub</p>
+        <h1>Learner Login</h1>
+        <p class="hero-text">
+          Learners can sign in with their own email and password.
+        </p>
+        <p class="hero-text">
+          After a parent links your email in the dashboard, they can still view your learning progress and performance.
+        </p>
+      </div>
+
+      <form id="learnerLoginForm" class="profile-form auth-form">
+        <div class="two-up auth-input-grid">
+          <label>
+            Email
+            <input type="email" id="learnerEmail" placeholder="Enter your email" autocomplete="email" />
+          </label>
+          <label>
+            Password
+            <input type="password" id="learnerPassword" placeholder="Enter your password" autocomplete="current-password" />
+          </label>
+        </div>
+
+        <p class="hero-text">
+          If you are new, create your learner account from the main login page, then ask your parent to link your email inside the dashboard.
+        </p>
+
+        <div class="auth-actions">
+          <button id="learnerLoginButton" type="submit" class="primary-button">Open Learner Hub</button>
+          <button id="learnerForgotPasswordButton" type="button" class="secondary-button">Forgot Password?</button>
+          <a href="login.html" class="secondary-button auth-back-link">Parent Login</a>
+          <a href="index.html" class="secondary-button auth-back-link">Back to app</a>
+        </div>
+
+        <p id="learnerAuthMessage" class="auth-message"></p>
+      </form>
+    </section>
+  </div>
+
+  <script src="learner-login.js"></script>
+</body>
+</html>

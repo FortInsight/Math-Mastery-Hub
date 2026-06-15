@@ -1,4 +1,5 @@
 const grades = Array.from({ length: 12 }, (_, index) => index + 1);
+const ENABLE_PAT_PRACTICE = true;
 
 const curriculum = {
   1: [
@@ -56,16 +57,19 @@ const curriculum = {
     makeCategory("integers", "Integers Intro", "Prepare for signed number thinking with ordered values.", "integersRational", { level: 6 })
   ],
   7: [
-    makeCategory("integers", "Integers & Rational Numbers", "Add, subtract, multiply, and divide signed numbers.", "integersRational", { level: 7 }),
-    makeCategory("fractions", "Fractions & Decimals", "Convert, compare, add, and subtract fractions and decimals.", "fractionsDecimalsPercent", { stage: "middleSchoolStart" }),
-    makeCategory("algebra", "Algebraic Expressions", "Simplify expressions and solve equations.", "algebra", { level: 7 }),
-    makeCategory("ratios", "Ratios & Proportions", "Rates, percent, and proportional thinking.", "ratiosProportions", { level: 7 }),
-    makeCategory("geometry", "Geometry", "Angles, circles, scale drawings, and rotational symmetry.", "geometry", { level: 7 }),
-    makeCategory("coordinates", "Coordinate Graphing", "Plot ordered pairs, read all four quadrants, and describe movement on the coordinate plane.", "functionsGraphing", { level: 7, skill: "coordinateGraphing" }),
-    makeCategory("data", "Data & Probability", "Compare samples and experimental probability.", "statisticsProbability", { level: 7 }),
+    makeCategory("integers", "Integers", "Add, subtract, multiply, and divide signed numbers.", "integersRational", { level: 7 }),
+    makeCategory("fractions", "Fractions", "Compare, convert, add, and subtract fractions with growing complexity.", "fractionsDecimalsPercent", { stage: "grade7Fractions" }),
+    makeCategory("decimals", "Decimals", "Order, add, subtract, multiply, and divide decimals.", "fractionsDecimalsPercent", { stage: "grade7Decimals" }),
+    makeCategory("percents", "Percents & Decimals", "Connect percents, decimals, fractions, discounts, and percent of a quantity.", "fractionsDecimalsPercent", { stage: "grade7Percents" }),
+    makeCategory("patterns", "Patterns & Expressions", "Extend patterns, write expressions, and connect tables to rules.", "algebra", { level: 7, skill: "grade7PatternsExpressions" }),
+    makeCategory("algebra", "Algebra", "Evaluate expressions and solve equations and inequalities.", "algebra", { level: 7, skill: "grade7Algebra" }),
+    makeCategory("coordinates", "Coordinates & Transformations", "Plot points in four quadrants and describe translations and reflections.", "functionsGraphing", { level: 7, skill: "grade7CoordinatesTransformations" }),
+    makeCategory("geometry", "Geometry & Measurement", "Work with angles, area, perimeter, volume, and rotational symmetry.", "geometry", { level: 7, skill: "grade7GeometryMeasurement" }),
+    makeCategory("circles", "Circles", "Use radius, diameter, circumference, and circle relationships.", "geometry", { level: 7, skill: "grade7Circles" }),
+    makeCategory("data", "Data (Central Tendency)", "Use mean, median, mode, and simple data comparisons.", "statisticsProbability", { level: 7, skill: "grade7CentralTendency" }),
+    makeCategory("probability", "Probability", "Compare theoretical and experimental probability and interpret outcomes.", "statisticsProbability", { level: 7, skill: "grade7Probability" }),
     makeCategory("probability-mastery", "Probability Mastery", "Study Grade 7 worksheet examples, then solve mastery questions with step-by-step solutions and sample-space models.", "grade7ProbabilityMastery", { level: 7, skill: "probability-mastery" }),
-    makeCategory("equations", "Equations & Inequalities", "Solve one-step and multi-step equations and linear inequalities.", "algebra", { level: 7 }),
-    makeCategory("percent", "Percent Applications", "Solve tax, discount, and percent change questions.", "ratiosProportions", { level: 7 })
+    makeCategory("ratios", "Ratios & Proportions", "Use rates, ratios, and proportional reasoning in context.", "ratiosProportions", { level: 7 })
   ],
   8: [
     makeCategory("numbers", "Rational & Irrational Numbers", "Classify numbers and use exponents.", "integersRational", { level: 8 }),
@@ -136,7 +140,10 @@ const state = {
   currentProfileId: null,
   studyTimerId: null,
   lastStudyTickAt: 0,
-  isStartingLevel: false
+  isStartingLevel: false,
+  supabaseUserId: null,
+  supabaseUserEmail: "",
+  supabaseHydrating: false
 };
 
 const questionBankCache = new Map();
@@ -146,21 +153,606 @@ const profilesStoreKey = "maths-mastery-profiles-v1";
 const profilesStore = loadProfilesStore();
 const guestStoreKey = "maths-mastery-guest-v1";
 const guestStore = loadGuestStore();
+const learnerSessionKey = "maths-mastery-learner-session-v1";
 const studyTickMs = 1000;
 const LEVEL_COUNT = 5;
 const QUESTIONS_PER_LEVEL = 10;
 const QUESTIONS_PER_TOPIC = LEVEL_COUNT * QUESTIONS_PER_LEVEL;
+let supabaseWriteQueue = Promise.resolve();
+
+function getSupabaseClient() {
+  return window.masterySupabase?.client || null;
+}
+
+function isSupabaseProfileId(profileId) {
+  return typeof profileId === "string" && profileId.startsWith("supabase:");
+}
+
+function hasSupabasePersistence() {
+  return Boolean(getSupabaseClient() && state.supabaseUserId && isSupabaseProfileId(state.currentProfileId));
+}
+
+function queueSupabaseWrite(task) {
+  if (!hasSupabasePersistence() || state.supabaseHydrating) {
+    return Promise.resolve(null);
+  }
+
+  supabaseWriteQueue = supabaseWriteQueue
+    .then(() => task(getSupabaseClient(), state.supabaseUserId))
+    .catch((error) => {
+      console.error("Supabase sync error", error);
+    });
+
+  return supabaseWriteQueue;
+}
+
+function normalizeSupabaseResults(results) {
+  return Array.isArray(results) ? results : [];
+}
+
+function createProgressBundle() {
+  return {
+    progress: {},
+    scoreHistory: [],
+    studyTime: createEmptyStudyTime()
+  };
+}
+
+function addRemoteRowToBundle(bundle, row) {
+  const grade = Number(row.grade);
+  const categoryId = row.category_id;
+  const level = Number(row.level);
+  const completedAt = row.completed_at || new Date().toISOString();
+  const score = Number(row.score || 0);
+  const percentage = Number(row.percentage || 0);
+
+  if (!bundle.progress[grade]) {
+    bundle.progress[grade] = {};
+  }
+  if (!bundle.progress[grade][categoryId]) {
+    bundle.progress[grade][categoryId] = {};
+  }
+
+  bundle.progress[grade][categoryId][level] = {
+    score,
+    completedAt,
+    results: normalizeSupabaseResults(row.results),
+    recordId: row.id
+  };
+
+  bundle.scoreHistory.push({
+    grade,
+    categoryId,
+    categoryTitle: row.category_title,
+    level,
+    score,
+    percentage,
+    completedAt
+  });
+
+  ensureStudyTimeShape(bundle.studyTime);
+  bundle.studyTime.byCourse[categoryId] = (bundle.studyTime.byCourse[categoryId] || 0) + Number(row.study_time_seconds || 0);
+  const dayKey = String(completedAt).slice(0, 10);
+  bundle.studyTime.byDay[dayKey] = (bundle.studyTime.byDay[dayKey] || 0) + Number(row.study_time_seconds || 0);
+}
+
+function buildBundleFromProgressRows(rows) {
+  const bundle = createProgressBundle();
+  const orderedRows = [...rows].sort((left, right) => {
+    const leftTime = new Date(left.completed_at || 0).getTime();
+    const rightTime = new Date(right.completed_at || 0).getTime();
+    return rightTime - leftTime;
+  });
+
+  orderedRows.forEach((row) => addRemoteRowToBundle(bundle, row));
+  bundle.scoreHistory = bundle.scoreHistory.slice(0, 30);
+  return bundle;
+}
+
+function resolveCategoryTitle(grade, categoryId, fallbackTitle = "") {
+  const category = getCategoryById(categoryId, grade);
+  return category?.title || fallbackTitle || categoryId;
+}
+
+async function ensureSupabaseProfileRow(account, user) {
+  const client = getSupabaseClient();
+  if (!client || !user?.id || !account) {
+    return;
+  }
+
+  const profilePayload = {
+    id: user.id,
+    email: user.email || state.supabaseUserEmail || null,
+    display_name: account.name,
+    account_type: account.type === "parent" ? "parent" : "learner",
+    grade: account.type === "learner" ? Number(account.grade || state.selectedGrade || 1) : null,
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await client.from("mastery_profiles").upsert(profilePayload, { onConflict: "id" });
+  if (error) {
+    throw error;
+  }
+}
+
+async function syncSupabaseChildren(account, ownerId) {
+  const client = getSupabaseClient();
+  if (!client || !ownerId || account?.type !== "parent") {
+    return [];
+  }
+
+  const { data: existingRows, error } = await client
+    .from("mastery_children")
+    .select("id, child_name, child_email, linked_profile_id, avatar_data_url, grade")
+    .eq("parent_id", ownerId);
+
+  if (error) {
+    throw error;
+  }
+
+  const existingById = new Map((existingRows || []).map((row) => [row.id, row]));
+  const existingByName = new Map((existingRows || []).map((row) => [row.child_name.trim().toLowerCase(), row]));
+  const activeChildIds = new Set();
+
+  for (const child of Object.values(account.children || {})) {
+    const normalizedName = child.name.trim().toLowerCase();
+    const payload = {
+      child_name: child.name,
+      child_email: child.childEmail || null,
+      linked_profile_id: child.linkedProfileId || null,
+      avatar_data_url: child.avatarDataUrl || null,
+      grade: Number(child.grade)
+    };
+    const existing = child.supabaseChildId
+      ? existingById.get(child.supabaseChildId) || existingByName.get(normalizedName)
+      : existingByName.get(normalizedName);
+
+    if (existing) {
+      child.supabaseChildId = existing.id;
+      activeChildIds.add(existing.id);
+      if (
+        existing.child_name !== child.name ||
+        existing.child_email !== (child.childEmail || null) ||
+        existing.linked_profile_id !== (child.linkedProfileId || null) ||
+        existing.avatar_data_url !== (child.avatarDataUrl || null) ||
+        Number(existing.grade) !== Number(child.grade)
+      ) {
+        const { error: updateError } = await client
+          .from("mastery_children")
+          .update(payload)
+          .eq("id", existing.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+      continue;
+    }
+
+    const { data: insertedChild, error: insertError } = await client
+      .from("mastery_children")
+      .insert({
+        parent_id: ownerId,
+        ...payload
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    child.supabaseChildId = insertedChild.id;
+    activeChildIds.add(insertedChild.id);
+  }
+
+  const staleRows = (existingRows || []).filter((row) => !activeChildIds.has(row.id));
+  if (staleRows.length) {
+    const { error: deleteError } = await client
+      .from("mastery_children")
+      .delete()
+      .in("id", staleRows.map((row) => row.id));
+
+    if (deleteError) {
+      throw deleteError;
+    }
+  }
+
+  return existingRows || [];
+}
+
+function applyChildFilter(query, childId) {
+  return childId ? query.eq("child_id", childId) : query.is("child_id", null);
+}
+
+async function upsertSupabaseProgressEntry(ownerId, childId, entry) {
+  const client = getSupabaseClient();
+  if (!client || !ownerId || !entry) {
+    return null;
+  }
+
+  const payload = {
+    owner_id: ownerId,
+    child_id: childId || null,
+    grade: Number(entry.grade),
+    category_id: entry.categoryId,
+    category_title: entry.categoryTitle,
+    level: Number(entry.level),
+    score: Number(entry.attempt.score || 0),
+    percentage: Number(entry.percentage || 0),
+    results: normalizeSupabaseResults(entry.attempt.results),
+    study_time_seconds: Number(entry.studyTimeSeconds || 0),
+    completed_at: entry.attempt.completedAt || new Date().toISOString()
+  };
+
+  if (entry.attempt.recordId) {
+    const { error: updateError } = await client
+      .from("mastery_progress")
+      .update(payload)
+      .eq("id", entry.attempt.recordId);
+
+    if (updateError) {
+      throw updateError;
+    }
+    return entry.attempt.recordId;
+  }
+
+  let existingQuery = client
+    .from("mastery_progress")
+    .select("id")
+    .eq("owner_id", ownerId)
+    .eq("grade", payload.grade)
+    .eq("category_id", payload.category_id)
+    .eq("level", payload.level)
+    .limit(1);
+
+  existingQuery = applyChildFilter(existingQuery, childId);
+  const { data: existingRows, error: lookupError } = await existingQuery;
+  if (lookupError) {
+    throw lookupError;
+  }
+
+  const existingId = existingRows?.[0]?.id || null;
+  if (existingId) {
+    const { error: updateError } = await client
+      .from("mastery_progress")
+      .update(payload)
+      .eq("id", existingId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    entry.attempt.recordId = existingId;
+    return existingId;
+  }
+
+  const { data: insertedRow, error: insertError } = await client
+    .from("mastery_progress")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  if (insertError) {
+    throw insertError;
+  }
+
+  entry.attempt.recordId = insertedRow.id;
+  return insertedRow.id;
+}
+
+function getStudySecondsForCategory(profile, categoryId) {
+  const studyTime = profile?.studyTime;
+  if (!studyTime || typeof studyTime !== "object") {
+    return 0;
+  }
+
+  ensureStudyTimeShape(studyTime);
+  return Number(studyTime.byCourse?.[categoryId] || 0);
+}
+
+function getSupabaseProgressOwnerId(account, profile, fallbackOwnerId) {
+  if (account?.type === "parent" && profile?.linkedProfileId) {
+    return profile.linkedProfileId;
+  }
+  return fallbackOwnerId;
+}
+
+async function syncLearnerProgressEntries(profile, ownerId, childId = null) {
+  for (const [gradeKey, gradeProgress] of Object.entries(profile.progress || {})) {
+    for (const [categoryId, levelEntries] of Object.entries(gradeProgress || {})) {
+      for (const [levelKey, attempt] of Object.entries(levelEntries || {})) {
+        await upsertSupabaseProgressEntry(ownerId, childId, {
+          grade: Number(gradeKey),
+          categoryId,
+          categoryTitle: resolveCategoryTitle(Number(gradeKey), categoryId, profile.scoreHistory.find((entry) => entry.grade === Number(gradeKey) && entry.categoryId === categoryId)?.categoryTitle || ""),
+          level: Number(levelKey),
+          attempt,
+          percentage: Math.round((Number(attempt.score || 0) / QUESTIONS_PER_LEVEL) * 100),
+          studyTimeSeconds: getStudySecondsForCategory(profile, categoryId)
+        });
+      }
+    }
+  }
+}
+
+async function syncSupabaseAccountSnapshot(account, user) {
+  if (!account || !user?.id) {
+    return;
+  }
+
+  await ensureSupabaseProfileRow(account, user);
+  if (account.type === "parent") {
+    await syncSupabaseChildren(account, user.id);
+    for (const child of Object.values(account.children || {})) {
+      await syncLearnerProgressEntries(child, child.linkedProfileId || user.id, child.supabaseChildId || null);
+    }
+    return;
+  }
+
+  await syncLearnerProgressEntries(account, user.id, null);
+}
+
+function createParentAccountFromRemote(profileId, profileRow, childrenRows, progressRows, fallbackAccount) {
+  const account = {
+    id: profileId,
+    type: "parent",
+    name: profileRow?.display_name || fallbackAccount?.name || "Parent",
+    passwordHash: "",
+    children: {},
+    activeChildId: fallbackAccount?.activeChildId || null
+  };
+
+  const progressByChildId = new Map();
+  for (const row of progressRows) {
+    const childId = row.owner_id;
+    if (!childId) {
+      continue;
+    }
+    if (!progressByChildId.has(childId)) {
+      progressByChildId.set(childId, []);
+    }
+    progressByChildId.get(childId).push(row);
+  }
+
+  for (const childRow of childrenRows) {
+    const childLocalId = buildProfileId(childRow.child_name);
+    const fallbackChild = fallbackAccount?.children?.[childLocalId];
+    const child = createLearnerRecord({
+      id: childLocalId,
+      name: childRow.child_name,
+      grade: Number(childRow.grade || fallbackChild?.grade || 1),
+      childEmail: childRow.child_email || fallbackChild?.childEmail || "",
+      avatarDataUrl: childRow.avatar_data_url || fallbackChild?.avatarDataUrl || "",
+      supabaseChildId: childRow.id,
+      linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null
+    });
+    const bundle = buildBundleFromProgressRows(progressByChildId.get(childRow.linked_profile_id) || []);
+    child.progress = bundle.progress;
+    child.scoreHistory = bundle.scoreHistory;
+    child.studyTime = bundle.studyTime;
+    account.children[child.id] = child;
+  }
+
+  const childIds = Object.keys(account.children);
+  if (!account.activeChildId || !account.children[account.activeChildId]) {
+    account.activeChildId = childIds[0] || null;
+  }
+
+  return account;
+}
+
+function createLearnerAccountFromRemote(profileId, profileRow, progressRows, fallbackAccount) {
+  const learner = createLearnerRecord({
+    id: profileId,
+    name: profileRow?.display_name || fallbackAccount?.name || "Learner",
+    grade: Number(profileRow?.grade || fallbackAccount?.grade || 1)
+  });
+  const bundle = buildBundleFromProgressRows(progressRows);
+  learner.progress = bundle.progress;
+  learner.scoreHistory = bundle.scoreHistory;
+  learner.studyTime = bundle.studyTime;
+  return learner;
+}
+
+async function loadSupabaseAccountData(session) {
+  const client = getSupabaseClient();
+  const user = session?.user;
+  if (!client || !user?.id) {
+    return;
+  }
+
+  state.supabaseHydrating = true;
+  state.supabaseUserId = user.id;
+  state.supabaseUserEmail = user.email || "";
+
+  const profileId = buildSupabaseProfileId(user.id);
+  const metadata = user.user_metadata || {};
+  const role = metadata.account_type === "parent" ? "parent" : "learner";
+  const fallbackName = metadata.user_name || user.email || "Learner";
+  const fallbackGrade = Number(metadata.grade) || 1;
+  let localAccount = profilesStore.profiles[profileId];
+
+  if (!localAccount) {
+    localAccount = role === "parent"
+      ? {
+          id: profileId,
+          type: "parent",
+          name: fallbackName,
+          passwordHash: "",
+          children: {},
+          activeChildId: null
+        }
+      : createLearnerRecord({
+          id: profileId,
+          name: fallbackName,
+          grade: fallbackGrade,
+          passwordHash: ""
+        });
+  }
+
+  localAccount.name = fallbackName;
+  localAccount.type = role;
+  if (role === "learner") {
+    localAccount.grade = Number(localAccount.grade || fallbackGrade || 1);
+  }
+
+  ensureAccountShape(localAccount);
+  await ensureSupabaseProfileRow(localAccount, user);
+
+  if (role === "learner" && user.email) {
+    const { data: pendingLinks, error: pendingLinkError } = await client
+      .from("mastery_children")
+      .select("id, parent_id, child_name, child_email, linked_profile_id, avatar_data_url, grade")
+      .eq("child_email", user.email);
+
+    if (pendingLinkError) {
+      throw pendingLinkError;
+    }
+
+    for (const pendingLink of pendingLinks || []) {
+      if (pendingLink.linked_profile_id !== user.id) {
+        const { error: claimError } = await client
+          .from("mastery_children")
+          .update({ linked_profile_id: user.id })
+          .eq("id", pendingLink.id);
+
+        if (claimError) {
+          throw claimError;
+        }
+      }
+
+      localAccount.childEmail = pendingLink.child_email || user.email;
+      localAccount.avatarDataUrl = pendingLink.avatar_data_url || localAccount.avatarDataUrl || "";
+      localAccount.grade = Number(pendingLink.grade || localAccount.grade || fallbackGrade || 1);
+
+      const { error: profileParentUpdateError } = await client
+        .from("mastery_profiles")
+        .update({ parent_id: pendingLink.parent_id, grade: Number(pendingLink.grade || localAccount.grade || 1) })
+        .eq("id", user.id);
+
+      if (profileParentUpdateError) {
+        throw profileParentUpdateError;
+      }
+    }
+  }
+
+  const [profileResponse, childrenResponse, progressResponse] = await Promise.all([
+    client.from("mastery_profiles").select("*").eq("id", user.id).maybeSingle(),
+    role === "parent"
+      ? client.from("mastery_children").select("*").eq("parent_id", user.id)
+      : Promise.resolve({ data: [], error: null }),
+    role === "parent"
+      ? Promise.resolve({ data: [], error: null })
+      : client.from("mastery_progress").select("*").eq("owner_id", user.id)
+  ]);
+
+  if (profileResponse.error) {
+    throw profileResponse.error;
+  }
+  if (childrenResponse.error) {
+    throw childrenResponse.error;
+  }
+  if (progressResponse.error) {
+    throw progressResponse.error;
+  }
+
+  const profileRow = profileResponse.data;
+  const childrenRows = childrenResponse.data || [];
+  let progressRows = progressResponse.data || [];
+  if (role === "parent") {
+    const linkedIds = childrenRows.map((row) => row.linked_profile_id).filter(Boolean);
+    const ownerIds = [user.id, ...linkedIds];
+    const { data: parentProgressRows, error: parentProgressError } = await client
+      .from("mastery_progress")
+      .select("*")
+      .in("owner_id", ownerIds);
+
+    if (parentProgressError) {
+      throw parentProgressError;
+    }
+    progressRows = parentProgressRows || [];
+  }
+  const hasRemoteLearningData = childrenRows.length > 0 || progressRows.length > 0;
+
+  const account = hasRemoteLearningData
+    ? role === "parent"
+      ? createParentAccountFromRemote(profileId, profileRow, childrenRows, progressRows, localAccount)
+      : createLearnerAccountFromRemote(profileId, profileRow, progressRows, localAccount)
+    : localAccount;
+
+  ensureAccountShape(account);
+  profilesStore.profiles[profileId] = account;
+  profilesStore.currentProfileId = profileId;
+  saveProfilesStore();
+
+  state.currentProfileId = profileId;
+  applyCurrentProfile();
+  renderGradeButtons();
+  renderCategories();
+
+  if (!hasRemoteLearningData) {
+    await syncSupabaseAccountSnapshot(account, user);
+  }
+
+  state.supabaseHydrating = false;
+}
+
+async function deleteSupabaseProgressForCategory(ownerId, childId, grade, categoryId) {
+  const client = getSupabaseClient();
+  if (!client || !ownerId) {
+    return;
+  }
+
+  let query = client
+    .from("mastery_progress")
+    .delete()
+    .eq("owner_id", ownerId)
+    .eq("grade", Number(grade))
+    .eq("category_id", categoryId);
+
+  query = applyChildFilter(query, childId);
+  const { error } = await query;
+  if (error) {
+    throw error;
+  }
+}
 
 const elements = {
   profileNameLabel: document.getElementById("profile-name-label"),
+  profileTypeLabel: document.getElementById("profile-type-label"),
+  profileChildLabel: document.getElementById("profile-child-label"),
+  profileRoleInput: document.getElementById("profile-role"),
   profileGradeLabel: document.getElementById("profile-grade-label"),
+  profileEmailLabel: document.getElementById("profile-email-label"),
   profileNameInput: document.getElementById("profile-name"),
+  profileGradeGroup: document.getElementById("profile-grade-group"),
   profileGradeInput: document.getElementById("profile-grade"),
+  profilePasswordGroup: document.getElementById("profile-password-group"),
   profilePasswordInput: document.getElementById("profile-password"),
+  profileFormNote: document.getElementById("profile-form-note"),
+  saveProfileButton: document.getElementById("save-profile-button"),
   createProfileButton: document.getElementById("create-profile-button"),
   loginProfileButton: document.getElementById("login-profile-button"),
   logoutProfileButton: document.getElementById("logout-profile-button"),
   profileMessage: document.getElementById("profile-message"),
+  parentPanel: document.getElementById("parent-panel"),
+  parentChildSelect: document.getElementById("parent-child-select"),
+  switchChildButton: document.getElementById("switch-child-button"),
+  childNameInput: document.getElementById("child-name"),
+  childGradeInput: document.getElementById("child-grade"),
+  childEmailInput: document.getElementById("child-email"),
+  childPhotoInput: document.getElementById("child-photo"),
+  childPhotoPreview: document.getElementById("child-photo-preview"),
+  addChildButton: document.getElementById("add-child-button"),
+  saveChildButton: document.getElementById("save-child-button"),
+  parentKidsDashboard: document.getElementById("parent-kids-dashboard"),
+  accountToolsSection: document.getElementById("account-tools-section"),
+  openAccountToolsButton: document.getElementById("open-account-tools-button"),
+  authAccountName: document.getElementById("auth-account-name"),
+  authAccountMeta: document.getElementById("auth-account-meta"),
+  openLoginLink: document.getElementById("open-login-link"),
+  logoutAuthButton: document.getElementById("logout-auth-button"),
   toggleProfilePanelButton: document.getElementById("toggle-profile-panel-button"),
   profilePanelContent: document.getElementById("profile-panel-content"),
   toggleGradePanelButton: document.getElementById("toggle-grade-panel-button"),
@@ -172,6 +764,8 @@ const elements = {
   topicSearchButton: document.getElementById("topic-search-button"),
   clearSearchButton: document.getElementById("clear-search-button"),
   topicSearchResults: document.getElementById("topic-search-results"),
+  toggleSearchPanelButton: document.getElementById("toggle-search-panel-button"),
+  topicSearchPanelContent: document.getElementById("topic-search-panel-content"),
   categoryCurrentCard: document.getElementById("category-current-card"),
   patTabSection: document.getElementById("pat-tab-section"),
   patTabTitle: document.getElementById("pat-tab-title"),
@@ -231,6 +825,12 @@ const elements = {
 };
 
 init();
+window.masteryApp = {
+  applySupabaseSessionToLocalProfile,
+  setAccountToolsVisible,
+  clearLearnerSession
+};
+window.dispatchEvent(new CustomEvent("mastery-app-ready"));
 
 function init() {
   populateProfileGradeOptions();
@@ -245,9 +845,16 @@ function init() {
 }
 
 function attachEvents() {
+  elements.saveProfileButton?.addEventListener("click", handleSaveProfileSettings);
   elements.createProfileButton.addEventListener("click", handleCreateProfile);
   elements.loginProfileButton.addEventListener("click", handleLoginProfile);
   elements.logoutProfileButton.addEventListener("click", handleLogoutProfile);
+  elements.profileRoleInput?.addEventListener("change", renderAccountFormMode);
+  elements.addChildButton?.addEventListener("click", handleAddChild);
+  elements.saveChildButton?.addEventListener("click", handleSaveChildSettings);
+  elements.switchChildButton?.addEventListener("click", handleSwitchChild);
+  elements.childPhotoInput?.addEventListener("change", handleChildPhotoSelected);
+  elements.openAccountToolsButton?.addEventListener("click", () => setAccountToolsVisible(true));
   elements.previousButton.addEventListener("click", moveToPreviousQuestion);
   elements.nextButton.addEventListener("click", moveToNextQuestion);
   elements.submitWritingButton?.addEventListener("click", submitWritingAnswer);
@@ -272,20 +879,42 @@ function attachEvents() {
   if (elements.toggleGradePanelButton) {
     elements.toggleGradePanelButton.addEventListener("click", toggleGradePanel);
   }
+  if (elements.toggleSearchPanelButton) {
+    elements.toggleSearchPanelButton.addEventListener("click", toggleSearchPanel);
+  }
   document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener("beforeunload", flushStudyTime);
 }
 
 function toggleProfilePanel() {
   const isHidden = elements.profilePanelContent.classList.toggle("hidden");
-  elements.toggleProfilePanelButton.textContent = isHidden ? "Show Profile" : "Hide Profile";
+  elements.toggleProfilePanelButton.textContent = isHidden ? "Show Tools" : "Hide Tools";
   elements.toggleProfilePanelButton.setAttribute("aria-expanded", String(!isHidden));
+}
+
+function setAccountToolsVisible(visible) {
+  if (!elements.accountToolsSection) {
+    return;
+  }
+  elements.accountToolsSection.classList.toggle("hidden", !visible);
+  if (visible) {
+    elements.accountToolsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function toggleGradePanel() {
   const isHidden = elements.gradePanelContent.classList.toggle("hidden");
   elements.toggleGradePanelButton.textContent = isHidden ? "Show Grades" : "Hide Grades";
   elements.toggleGradePanelButton.setAttribute("aria-expanded", String(!isHidden));
+}
+
+function toggleSearchPanel() {
+  if (!elements.topicSearchPanelContent || !elements.toggleSearchPanelButton) {
+    return;
+  }
+  const isHidden = elements.topicSearchPanelContent.classList.toggle("hidden");
+  elements.toggleSearchPanelButton.textContent = isHidden ? "Show Search" : "Hide Search";
+  elements.toggleSearchPanelButton.setAttribute("aria-expanded", String(!isHidden));
 }
 
 function handleCategorySelect(event, track) {
@@ -339,7 +968,6 @@ function renderCategories() {
   const completedLevels = getCompletedLevelsCount(state.selectedGrade);
 
   elements.selectedGradeLabel.textContent = `Grade ${state.selectedGrade}`;
-  elements.saveStatusLabel.textContent = state.currentProfileId ? getCurrentProfile().name : "Guest browser";
   elements.selectedCategoryLabel.textContent = "None yet";
   elements.completedLevelsLabel.textContent = String(completedLevels);
   elements.levelGrid.innerHTML = "";
@@ -415,6 +1043,10 @@ function renderCategorySelector(categories) {
 }
 
 function getPatTabDefinitions(categoryId, grade = state.selectedGrade) {
+  if (!ENABLE_PAT_PRACTICE) {
+    return [];
+  }
+
   if (grade === 9 && categoryId === "english-pat-part-a") {
     return [
       { id: "essay", label: "Essay", description: "Practice thesis writing, support, organization, tone, and conclusions for essay responses." },
@@ -682,6 +1314,54 @@ function renderLevelLoading(level) {
   elements.liveScore.textContent = "0 / 0";
 }
 
+function generateLevelQuestionOnDemand(grade, categoryId, patTabId, level, questionIndex, existingQuestions = []) {
+  const category = getCategoryById(categoryId, grade);
+  if (!category || !questionFactories[category.factory]) {
+    return null;
+  }
+
+  const cacheKey = `${grade}-${categoryId}-${patTabId || "base"}-level-${level}-slot-${questionIndex}`;
+  const seedBase = hashCode(cacheKey);
+  const difficulty = level;
+  const absoluteIndex = ((level - 1) * QUESTIONS_PER_LEVEL) + questionIndex;
+  const seenPrompts = new Set(
+    existingQuestions
+      .filter(Boolean)
+      .map((question) => normalizeQuestionPrompt(question.prompt))
+  );
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const rng = mulberry32(seedBase + attempt * 997);
+    const question = safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex + attempt, difficulty);
+    if (!question) {
+      continue;
+    }
+    const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
+    if (!seenPrompts.has(normalizedPrompt)) {
+      return question;
+    }
+  }
+
+  if (category.factory.startsWith("english")) {
+    const englishFallbackRng = mulberry32(seedBase + 7919);
+    const englishFallback = safeGenerateQuestion(category, englishFallbackRng, grade, patTabId, absoluteIndex + 50, Math.min(10, difficulty + 4));
+    if (englishFallback) {
+      const normalizedEnglishFallback = normalizeQuestionPrompt(englishFallback.prompt);
+      return seenPrompts.has(normalizedEnglishFallback)
+        ? uniquifyQuestionPrompt(englishFallback, questionIndex + 2)
+        : englishFallback;
+    }
+  }
+
+  const fallback = buildEmergencyQuestion(category, grade, difficulty, absoluteIndex);
+  const normalizedFallback = normalizeQuestionPrompt(fallback.prompt);
+  if (!seenPrompts.has(normalizedFallback)) {
+    return fallback;
+  }
+
+  return uniquifyQuestionPrompt(fallback, questionIndex + 2);
+}
+
 function startLevel(level) {
   try {
     if (isProbabilityMasteryCategory() && state.selectedProbabilityMode !== "mastery") {
@@ -691,16 +1371,12 @@ function startLevel(level) {
 
     flushStudyTime();
     state.selectedLevel = level;
-    state.currentQuestions = getQuestionsForLevel(state.selectedGrade, state.selectedCategoryId, state.selectedPatTab, level);
-    if (!state.currentQuestions.length) {
-      const category = getSelectedCategory();
-      state.currentQuestions = category ? [buildEmergencyQuestion(category, state.selectedGrade, level, level)] : [];
-    }
+    state.currentQuestions = Array.from({ length: QUESTIONS_PER_LEVEL }, () => null);
     state.currentIndex = 0;
     state.score = 0;
     state.answered = false;
     state.lastResults = [];
-    state.questionResults = Array.from({ length: state.currentQuestions.length }, () => null);
+    state.questionResults = Array.from({ length: QUESTIONS_PER_LEVEL }, () => null);
 
     elements.resultsSection.classList.add("hidden");
     elements.quizSection.classList.remove("hidden");
@@ -715,12 +1391,12 @@ function startLevel(level) {
     console.error("Level start failed", error);
     const category = getSelectedCategory();
     state.selectedLevel = level;
-    state.currentQuestions = category ? [buildEmergencyQuestion(category, state.selectedGrade, level, level)] : [];
+    state.currentQuestions = category ? [buildEmergencyQuestion(category, state.selectedGrade, level, level)] : Array.from({ length: QUESTIONS_PER_LEVEL }, () => null);
     state.currentIndex = 0;
     state.score = 0;
     state.answered = false;
     state.lastResults = [];
-    state.questionResults = Array.from({ length: state.currentQuestions.length }, () => null);
+    state.questionResults = Array.from({ length: QUESTIONS_PER_LEVEL }, () => null);
     elements.resultsSection.classList.add("hidden");
     elements.quizSection.classList.remove("hidden");
     elements.reviewSection?.classList.add("hidden");
@@ -734,6 +1410,17 @@ function startLevel(level) {
 }
 
 function renderQuestion() {
+  if (!state.currentQuestions[state.currentIndex]) {
+    state.currentQuestions[state.currentIndex] = generateLevelQuestionOnDemand(
+      state.selectedGrade,
+      state.selectedCategoryId,
+      state.selectedPatTab,
+      state.selectedLevel,
+      state.currentIndex,
+      state.currentQuestions
+    );
+  }
+
   const question = state.currentQuestions[state.currentIndex];
   if (!question) {
     return;
@@ -775,7 +1462,8 @@ function renderQuestion() {
     question.options.forEach((option, index) => {
       const button = document.createElement("button");
       button.className = "option-button";
-      button.textContent = option;
+      const optionLetter = String.fromCharCode(65 + index);
+      button.innerHTML = `<span class="option-letter">${optionLetter}.</span><span class="option-text">${escapeHtml(option)}</span>`;
       button.addEventListener("click", () => checkAnswer(index, button));
       elements.optionsList.appendChild(button);
     });
@@ -1193,6 +1881,7 @@ function resetSelectedTopicProgress() {
 
   flushStudyTime();
   const activeContext = getActiveCategoryContext();
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   if (profile) {
     const gradeProgress = profile.progress?.[state.selectedGrade];
@@ -1211,8 +1900,23 @@ function resetSelectedTopicProgress() {
     });
     clearStudyTimeForContext(profile.studyTime, activeContext.key);
 
-    profilesStore.profiles[profile.id] = profile;
+    if (account?.type === "parent") {
+      account.children[account.activeChildId] = profile;
+      profilesStore.profiles[account.id] = account;
+    } else {
+      profilesStore.profiles[profile.id] = profile;
+    }
     saveProfilesStore();
+
+    queueSupabaseWrite(async (_client, ownerId) => {
+      const progressOwnerId = getSupabaseProgressOwnerId(account, profile, ownerId);
+      await deleteSupabaseProgressForCategory(
+        progressOwnerId,
+        account?.type === "parent" ? profile.supabaseChildId || null : null,
+        state.selectedGrade,
+        activeContext.key
+      );
+    });
   } else {
     ensureGuestStoreShape();
     const gradeProgress = guestStore.progress?.[state.selectedGrade];
@@ -1989,9 +2693,13 @@ function saveGuestStore() {
 }
 
 function populateProfileGradeOptions() {
-  elements.profileGradeInput.innerHTML = grades
+  const options = grades
     .map((grade) => `<option value="${grade}">Grade ${grade}</option>`)
     .join("");
+  elements.profileGradeInput.innerHTML = options;
+  if (elements.childGradeInput) {
+    elements.childGradeInput.innerHTML = options;
+  }
 }
 
 function applyCurrentProfile() {
@@ -2000,15 +2708,21 @@ function applyCurrentProfile() {
   const profile = getCurrentProfile();
 
   if (profile) {
-    ensureProfileShape(profile);
     state.selectedGrade = profile.grade;
     elements.profileGradeInput.value = String(profile.grade);
+    if (elements.childGradeInput) {
+      elements.childGradeInput.value = String(profile.grade);
+    }
   } else {
     state.selectedGrade = 1;
     elements.profileGradeInput.value = "1";
+    if (elements.childGradeInput) {
+      elements.childGradeInput.value = "1";
+    }
   }
 
   renderProfilePanel();
+  renderAccountFormMode();
   renderReviewOptions();
   renderScoreHistory();
   renderStudyTime();
@@ -2016,46 +2730,402 @@ function applyCurrentProfile() {
 }
 
 function renderProfilePanel() {
-  const profile = getCurrentProfile();
+  const account = getCurrentAccount();
+  const learner = getCurrentProfile();
+  const loginEmail = account?.type === "parent"
+    ? state.supabaseUserEmail || "Parent signs in with email"
+    : learner?.childEmail || state.supabaseUserEmail || "Not linked yet";
 
-  if (profile) {
-    elements.profileNameLabel.textContent = profile.name;
-    elements.profileGradeLabel.textContent = `Grade ${profile.grade}`;
-    elements.saveStatusLabel.textContent = profile.name;
+  if (account) {
+    elements.profileNameLabel.textContent = account.name;
+    elements.profileTypeLabel.textContent = account.type === "parent" ? "Parent account" : "Learner account";
+    elements.profileChildLabel.textContent = learner ? learner.name : account.type === "parent" ? "No child selected" : account.name;
+    elements.profileGradeLabel.textContent = learner ? `Grade ${learner.grade}` : "Not set";
+    if (elements.profileEmailLabel) {
+      elements.profileEmailLabel.textContent = loginEmail;
+    }
+    elements.saveStatusLabel.textContent = learner
+      ? account.type === "parent" ? `${account.name} / ${learner.name}` : learner.name
+      : account.name;
     elements.logoutProfileButton.classList.remove("hidden");
+    elements.parentPanel?.classList.toggle("hidden", account.type !== "parent");
+    if (elements.profileRoleInput) {
+      elements.profileRoleInput.value = account.type || "learner";
+    }
+    if (elements.profileNameInput) {
+      elements.profileNameInput.value = account.name || "";
+    }
+    if (elements.profileGradeInput) {
+      elements.profileGradeInput.value = String(learner?.grade || account.grade || state.selectedGrade || 1);
+    }
+    renderParentPanel(account);
   } else {
     elements.profileNameLabel.textContent = "Guest";
+    elements.profileTypeLabel.textContent = "Guest";
+    elements.profileChildLabel.textContent = "Guest";
     elements.profileGradeLabel.textContent = "Not set";
+    if (elements.profileEmailLabel) {
+      elements.profileEmailLabel.textContent = "Not linked yet";
+    }
     elements.saveStatusLabel.textContent = "Guest browser";
     elements.logoutProfileButton.classList.add("hidden");
+    elements.parentPanel?.classList.add("hidden");
+    if (elements.profileRoleInput) {
+      elements.profileRoleInput.value = "learner";
+    }
+    if (elements.profileNameInput) {
+      elements.profileNameInput.value = "";
+    }
+    if (elements.profileGradeInput) {
+      elements.profileGradeInput.value = String(state.selectedGrade || 1);
+    }
+    renderParentPanel(null);
   }
+
+  renderAccountFormMode();
+}
+
+function renderAccountFormMode() {
+  if (!elements.profileRoleInput || !elements.profileGradeInput) {
+    return;
+  }
+  const account = getCurrentAccount();
+  const selectedRole = account?.type || elements.profileRoleInput.value || "learner";
+  const isParentMode = selectedRole === "parent";
+  const hasSignedInAccount = Boolean(account);
+
+  elements.profileRoleInput.value = selectedRole;
+  elements.profileRoleInput.disabled = hasSignedInAccount;
+  elements.profileNameInput.placeholder = isParentMode ? "Enter account name" : "Enter learner name";
+  elements.profileGradeInput.disabled = isParentMode;
+  elements.profileGradeGroup?.classList.toggle("hidden", isParentMode);
+  elements.profilePasswordGroup?.classList.toggle("hidden", hasSignedInAccount);
+  elements.profilePasswordInput.disabled = hasSignedInAccount;
+  elements.saveProfileButton?.classList.toggle("hidden", !hasSignedInAccount);
+  elements.createProfileButton?.classList.toggle("hidden", hasSignedInAccount);
+  elements.loginProfileButton?.classList.toggle("hidden", hasSignedInAccount);
+
+  if (elements.profileFormNote) {
+    elements.profileFormNote.textContent = hasSignedInAccount
+      ? isParentMode
+        ? "Update the parent account name here. Child names, grades, and linked learner emails are managed below."
+        : "Update the learner name and grade here. The parent connects to this learner using the login email shown above."
+      : "Create or log in to an account here. Once signed in, this area becomes your profile editor.";
+  }
+}
+
+async function handleSaveProfileSettings() {
+  const account = getCurrentAccount();
+  if (!account) {
+    showProfileMessage("Log in first, then update the profile here.", "error");
+    return;
+  }
+
+  const nextName = elements.profileNameInput?.value.trim();
+  const nextGrade = Number(elements.profileGradeInput?.value || state.selectedGrade || 1);
+  if (!nextName) {
+    showProfileMessage("Enter a name before saving the profile.", "error");
+    return;
+  }
+
+  account.name = nextName;
+  if (account.type !== "parent") {
+    account.grade = nextGrade;
+    state.selectedGrade = nextGrade;
+  }
+
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+
+  if (account.type !== "parent") {
+    renderGradeButtons();
+    renderCategories();
+  }
+  renderProfilePanel();
+  renderReviewOptions();
+  renderScoreHistory();
+  renderStudyTime();
+  renderHeroActivity();
+
+  const client = getSupabaseClient();
+  if (client && state.supabaseUserId && isSupabaseProfileId(account.id)) {
+    try {
+      const metadata = {
+        user_name: account.name,
+        account_type: account.type,
+        grade: account.type === "learner" ? Number(account.grade || nextGrade || 1) : null
+      };
+      const { error: authUpdateError } = await client.auth.updateUser({
+        data: metadata
+      });
+      if (authUpdateError) {
+        throw authUpdateError;
+      }
+
+      await ensureSupabaseProfileRow(account, {
+        id: state.supabaseUserId,
+        email: state.supabaseUserEmail
+      });
+    } catch (error) {
+      console.error("Profile update sync failed", error);
+      showProfileMessage("Profile saved on this device, but Supabase sync needs another try.", "error");
+      return;
+    }
+  }
+
+  showProfileMessage(account.type === "parent" ? "Parent profile updated." : "Learner profile updated.", "success");
+}
+
+function renderParentPanel(account) {
+  if (!elements.parentChildSelect || !elements.parentKidsDashboard) {
+    return;
+  }
+
+  if (!account || account.type !== "parent") {
+    elements.parentChildSelect.innerHTML = `<option value="">No child selected</option>`;
+    elements.parentChildSelect.disabled = true;
+    elements.switchChildButton && (elements.switchChildButton.disabled = true);
+    elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Create or open a parent account to view children here.</div>`;
+    setChildPhotoPreview("");
+    return;
+  }
+
+  const childEntries = Object.values(account.children || {});
+  if (!childEntries.length) {
+    elements.parentChildSelect.innerHTML = `<option value="">No children added yet</option>`;
+    elements.parentChildSelect.disabled = true;
+    elements.switchChildButton && (elements.switchChildButton.disabled = true);
+    elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Add a child to start tracking progress.</div>`;
+    setChildPhotoPreview("");
+    return;
+  }
+
+  elements.parentChildSelect.disabled = false;
+  elements.switchChildButton && (elements.switchChildButton.disabled = false);
+  elements.parentChildSelect.innerHTML = childEntries
+    .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${child.name} | Grade ${child.grade}</option>`)
+    .join("");
+
+  elements.parentKidsDashboard.innerHTML = childEntries
+    .map((child) => {
+      const totalLevels = countCompletedLevelsFromProgress(child.progress || {});
+      const lastEntry = Array.isArray(child.scoreHistory) && child.scoreHistory.length ? child.scoreHistory[0] : null;
+      const totalSeconds = getTotalStudySeconds(child.studyTime);
+      return `
+        <div class="parent-kid-card ${child.id === account.activeChildId ? "is-active" : ""}">
+          <div class="parent-kid-head">
+            ${child.avatarDataUrl ? `<img class="parent-kid-avatar" src="${child.avatarDataUrl}" alt="${escapeHtml(child.name)}" />` : `<div class="parent-kid-avatar parent-kid-avatar--placeholder">${escapeHtml((child.name || "?").charAt(0).toUpperCase())}</div>`}
+            <div>
+              <strong>${escapeHtml(child.name)}</strong>
+              <small>${escapeHtml(child.childEmail || "No email linked yet")}</small>
+            </div>
+          </div>
+          <div class="parent-kid-meta">
+            <span>Grade ${child.grade}</span>
+            <span>${totalLevels} completed</span>
+            <span>${lastEntry ? `Last score ${lastEntry.score}/${QUESTIONS_PER_LEVEL}` : "No score yet"}</span>
+            <span>${formatStudyTime(totalSeconds)} studied</span>
+          </div>
+          <small>${lastEntry ? `Last activity: ${escapeHtml(lastEntry.categoryTitle)} on ${formatDateTime(lastEntry.completedAt)}` : "No activity saved yet."}</small>
+        </div>
+      `;
+    })
+    .join("");
+
+  const activeChild = account.children[account.activeChildId];
+  if (activeChild) {
+    elements.childNameInput && (elements.childNameInput.value = activeChild.name || "");
+    elements.childGradeInput && (elements.childGradeInput.value = String(activeChild.grade || state.selectedGrade || 1));
+    elements.childEmailInput && (elements.childEmailInput.value = activeChild.childEmail || "");
+    setChildPhotoPreview(activeChild.avatarDataUrl || "");
+  }
+}
+
+function handleAddChild() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent") {
+    showProfileMessage("Log in to a parent account before adding children.", "error");
+    return;
+  }
+
+  const childName = elements.childNameInput?.value.trim();
+  const childGrade = Number(elements.childGradeInput?.value || state.selectedGrade || 1);
+  const childEmail = elements.childEmailInput?.value.trim() || "";
+  const avatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
+  if (!childName) {
+    showProfileMessage("Enter the child's name before adding them.", "error");
+    return;
+  }
+  if (!childEmail) {
+    showProfileMessage("Enter the learner email before adding the child.", "error");
+    return;
+  }
+
+  const childId = buildProfileId(childName);
+  if (account.children[childId]) {
+    showProfileMessage("That child name already exists in this parent account.", "error");
+    return;
+  }
+  if (findChildByEmail(childEmail)) {
+    showProfileMessage("That learner email is already linked. Please choose another one.", "error");
+    return;
+  }
+
+  account.children[childId] = createLearnerRecord({
+    id: childId,
+    name: childName,
+    grade: childGrade,
+    childEmail,
+    avatarDataUrl
+  });
+  account.activeChildId = childId;
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+
+  state.selectedGrade = childGrade;
+  state.selectedCategoryId = null;
+  state.selectedLevel = null;
+  state.currentQuestions = [];
+  hideQuizViews();
+  clearProfileFields();
+  renderProfilePanel();
+  renderGradeButtons();
+  renderCategories();
+  renderStudyTime();
+  renderHeroActivity();
+  showProfileMessage(`${childName} was added and is now the active learner.`, "success");
+
+  queueSupabaseWrite(async (_client, ownerId) => {
+    await syncSupabaseChildren(account, ownerId);
+  });
+}
+
+function handleSaveChildSettings() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent" || !account.activeChildId || !account.children?.[account.activeChildId]) {
+    showProfileMessage("Choose a child first before saving learner settings.", "error");
+    return;
+  }
+
+  const child = account.children[account.activeChildId];
+  const nextName = elements.childNameInput?.value.trim() || child.name;
+  const nextGrade = Number(elements.childGradeInput?.value || child.grade || 1);
+  const nextEmail = elements.childEmailInput?.value.trim() || "";
+  const nextAvatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
+
+  if (!nextName) {
+    showProfileMessage("Enter the child's name before saving.", "error");
+    return;
+  }
+  if (!nextEmail) {
+    showProfileMessage("Enter a learner email before saving.", "error");
+    return;
+  }
+
+  const emailConflict = findChildByEmail(nextEmail, account.id, child.id);
+  if (emailConflict) {
+    showProfileMessage("That learner email is already linked. Please choose another one.", "error");
+    return;
+  }
+
+  child.name = nextName;
+  child.grade = nextGrade;
+  child.childEmail = nextEmail;
+  child.avatarDataUrl = nextAvatarDataUrl;
+
+  account.children[child.id] = child;
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+
+  state.selectedGrade = nextGrade;
+  applyCurrentProfile();
+  renderGradeButtons();
+  renderCategories();
+  renderStudyTime();
+  renderHeroActivity();
+
+  showProfileMessage(`Saved learner settings for ${child.name}.`, "success");
+
+  queueSupabaseWrite(async (_client, ownerId) => {
+    await syncSupabaseChildren(account, ownerId);
+  });
+}
+
+function handleChildPhotoSelected(event) {
+  const file = event.target?.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    setChildPhotoPreview(typeof reader.result === "string" ? reader.result : "");
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleSwitchChild() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent") {
+    return;
+  }
+
+  const childId = elements.parentChildSelect?.value;
+  if (!childId || !account.children?.[childId]) {
+    showProfileMessage("Choose a child profile to open.", "error");
+    return;
+  }
+
+  account.activeChildId = childId;
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+
+  const child = account.children[childId];
+  state.selectedGrade = child.grade;
+  state.selectedCategoryId = null;
+  state.selectedLevel = null;
+  state.currentQuestions = [];
+  hideQuizViews();
+  renderProfilePanel();
+  renderGradeButtons();
+  renderCategories();
+  renderStudyTime();
+  renderHeroActivity();
+  showProfileMessage(`Now viewing ${child.name}'s learning progress.`, "success");
 }
 
 function handleCreateProfile() {
   const name = elements.profileNameInput.value.trim();
   const password = elements.profilePasswordInput.value;
   const grade = Number(elements.profileGradeInput.value);
+  const role = elements.profileRoleInput?.value || "learner";
 
   if (!name || !password) {
-    showProfileMessage("Enter both a learner name and password to create a profile.", "error");
+    showProfileMessage("Enter both a name and password to create an account.", "error");
     return;
   }
 
   const profileId = buildProfileId(name);
   if (profilesStore.profiles[profileId]) {
-    showProfileMessage("That learner name already exists. Log in or choose a different name.", "error");
+    showProfileMessage("That account name already exists. Log in or choose a different name.", "error");
     return;
   }
 
-  profilesStore.profiles[profileId] = {
-    id: profileId,
-    name,
-    grade,
-    passwordHash: hashPassword(password),
-    progress: {},
-    scoreHistory: [],
-    studyTime: createEmptyStudyTime()
-  };
+  profilesStore.profiles[profileId] = role === "parent"
+    ? {
+        id: profileId,
+        type: "parent",
+        name,
+        passwordHash: hashPassword(password),
+        children: {},
+        activeChildId: null
+      }
+    : createLearnerRecord({
+        id: profileId,
+        name,
+        grade,
+        passwordHash: hashPassword(password)
+      });
   profilesStore.currentProfileId = profileId;
   saveProfilesStore();
   state.selectedCategoryId = null;
@@ -2068,7 +3138,12 @@ function handleCreateProfile() {
   renderCategories();
   renderStudyTime();
   renderHeroActivity();
-  showProfileMessage(`Profile created for ${name}. Progress will now be saved to this learner.`, "success");
+  showProfileMessage(
+    role === "parent"
+      ? `Parent account created for ${name}. You can now add children and monitor their progress.`
+      : `Profile created for ${name}. Progress will now be saved to this learner.`,
+    "success"
+  );
 }
 
 function handleLoginProfile() {
@@ -2076,15 +3151,15 @@ function handleLoginProfile() {
   const password = elements.profilePasswordInput.value;
 
   if (!name || !password) {
-    showProfileMessage("Enter the learner name and password to log in.", "error");
+    showProfileMessage("Enter the account name and password to log in.", "error");
     return;
   }
 
   const profileId = buildProfileId(name);
-  const profile = profilesStore.profiles[profileId];
+  const account = profilesStore.profiles[profileId];
 
-  if (!profile || profile.passwordHash !== hashPassword(password)) {
-    showProfileMessage("The name or password does not match a saved learner profile.", "error");
+  if (!account || account.passwordHash !== hashPassword(password)) {
+    showProfileMessage("The name or password does not match a saved account.", "error");
     return;
   }
 
@@ -2100,12 +3175,13 @@ function handleLoginProfile() {
   renderCategories();
   renderStudyTime();
   renderHeroActivity();
-  showProfileMessage(`Welcome back, ${profile.name}. Your saved work has been loaded.`, "success");
+  showProfileMessage(`Welcome back, ${account.name}. Your saved work has been loaded.`, "success");
 }
 
 function handleLogoutProfile() {
   profilesStore.currentProfileId = null;
   saveProfilesStore();
+  clearLearnerSession();
   state.currentProfileId = null;
   state.selectedCategoryId = null;
   state.selectedLevel = null;
@@ -2116,12 +3192,25 @@ function handleLogoutProfile() {
   renderCategories();
   renderStudyTime();
   renderHeroActivity();
-  showProfileMessage("You are now signed out. Create or log in to a profile to save progress.", "success");
+  showProfileMessage("You are now signed out. Create or log in to an account to save progress.", "success");
 }
 
 function clearProfileFields() {
   elements.profileNameInput.value = "";
   elements.profilePasswordInput.value = "";
+  if (elements.childNameInput) {
+    elements.childNameInput.value = "";
+  }
+  if (elements.childEmailInput) {
+    elements.childEmailInput.value = "";
+  }
+  if (elements.childPhotoInput) {
+    elements.childPhotoInput.value = "";
+  }
+  if (elements.childPhotoPreview) {
+    elements.childPhotoPreview.removeAttribute("src");
+    elements.childPhotoPreview.classList.add("hidden");
+  }
 }
 
 function showProfileMessage(message, type) {
@@ -2130,49 +3219,169 @@ function showProfileMessage(message, type) {
   elements.profileMessage.classList.remove("hidden");
 }
 
+function setChildPhotoPreview(src) {
+  if (!elements.childPhotoPreview) {
+    return;
+  }
+
+  if (!src) {
+    elements.childPhotoPreview.removeAttribute("src");
+    elements.childPhotoPreview.classList.add("hidden");
+    return;
+  }
+
+  elements.childPhotoPreview.src = src;
+  elements.childPhotoPreview.classList.remove("hidden");
+}
+
+function findChildByEmail(email, excludedParentId = "", excludedChildId = "") {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  for (const [accountId, account] of Object.entries(profilesStore.profiles || {})) {
+    if (!account?.children) {
+      continue;
+    }
+
+    for (const child of Object.values(account.children)) {
+      if (accountId === excludedParentId && child.id === excludedChildId) {
+        continue;
+      }
+      if (String(child.childEmail || "").trim().toLowerCase() === normalizedEmail) {
+        return { accountId, child };
+      }
+    }
+  }
+
+  return null;
+}
+
 function buildProfileId(name) {
   return name.trim().toLowerCase();
+}
+
+function createLearnerRecord({ id, name, grade, childEmail = "", avatarDataUrl = "", supabaseChildId = null, linkedProfileId = null }) {
+  return {
+    id,
+    type: "learner",
+    name,
+    grade,
+    childEmail,
+    avatarDataUrl,
+    supabaseChildId,
+    linkedProfileId,
+    progress: {},
+    scoreHistory: [],
+    studyTime: createEmptyStudyTime()
+  };
 }
 
 function hashPassword(password) {
   return String(hashCode(`maths-profile:${password}`));
 }
 
-function getCurrentProfile() {
+function clearLearnerSession() {
+  localStorage.removeItem(learnerSessionKey);
+}
+
+function buildSupabaseProfileId(userId) {
+  return `supabase:${userId}`;
+}
+
+function applySupabaseSessionToLocalProfile(session) {
+  const user = session?.user;
+  if (!user?.id) {
+    return;
+  }
+
+  loadSupabaseAccountData(session).catch((error) => {
+    state.supabaseHydrating = false;
+    console.error("Supabase account load failed", error);
+  });
+}
+
+function getCurrentAccount() {
   if (!state.currentProfileId) {
     return null;
   }
 
-  const profile = profilesStore.profiles[state.currentProfileId] || null;
-  if (profile) {
-    ensureProfileShape(profile);
+  const account = profilesStore.profiles[state.currentProfileId] || null;
+  if (account) {
+    ensureAccountShape(account);
   }
-  return profile;
+  return account;
+}
+
+function getCurrentProfile() {
+  const account = getCurrentAccount();
+  if (!account) {
+    return null;
+  }
+
+  if (account.type === "parent") {
+    if (!account.activeChildId || !account.children?.[account.activeChildId]) {
+      return null;
+    }
+    const child = account.children[account.activeChildId];
+    ensureLearnerShape(child);
+    return child;
+  }
+
+  ensureLearnerShape(account);
+  return account;
 }
 
 function getActiveProgress() {
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   if (profile) {
     return profile.progress || {};
+  }
+  if (account) {
+    return {};
   }
   ensureGuestStoreShape();
   return guestStore.progress || {};
 }
 
 function syncProfileGrade() {
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
-  if (!profile) {
+  if (!account || !profile) {
     return;
   }
 
   profile.grade = state.selectedGrade;
-  profilesStore.profiles[profile.id] = profile;
+  if (account.type === "parent") {
+    account.children[account.activeChildId] = profile;
+    profilesStore.profiles[account.id] = account;
+  } else {
+    profilesStore.profiles[profile.id] = profile;
+  }
   saveProfilesStore();
   elements.profileGradeInput.value = String(state.selectedGrade);
+  if (elements.childGradeInput) {
+    elements.childGradeInput.value = String(state.selectedGrade);
+  }
   renderProfilePanel();
+
+  queueSupabaseWrite(async (_client, ownerId) => {
+    if (account.type === "parent") {
+      await syncSupabaseChildren(account, ownerId);
+      return;
+    }
+
+    await ensureSupabaseProfileRow(account, {
+      id: ownerId,
+      email: state.supabaseUserEmail
+    });
+  });
 }
 
 function saveCompletedLevel(grade, categoryId, categoryTitle, level, score) {
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   const completedAt = new Date().toISOString();
 
@@ -2198,9 +3407,35 @@ function saveCompletedLevel(grade, categoryId, categoryTitle, level, score) {
       completedAt
     });
     profile.scoreHistory = profile.scoreHistory.slice(0, 30);
-    profilesStore.profiles[profile.id] = profile;
+    if (account?.type === "parent") {
+      account.children[account.activeChildId] = profile;
+      profilesStore.profiles[account.id] = account;
+    } else {
+      profilesStore.profiles[profile.id] = profile;
+    }
     saveProfilesStore();
+
+    queueSupabaseWrite(async (_client, ownerId) => {
+      if (account?.type === "parent") {
+        await syncSupabaseChildren(account, ownerId);
+      }
+
+      const progressOwnerId = getSupabaseProgressOwnerId(account, profile, ownerId);
+      await upsertSupabaseProgressEntry(progressOwnerId, account?.type === "parent" ? profile.supabaseChildId || null : null, {
+        grade,
+        categoryId,
+        categoryTitle,
+        level,
+        attempt: profile.progress[grade][categoryId][level],
+        percentage: Math.round((score / QUESTIONS_PER_LEVEL) * 100),
+        studyTimeSeconds: getStudySecondsForCategory(profile, categoryId)
+      });
+    });
     return true;
+  }
+
+  if (account) {
+    return false;
   }
 
   ensureGuestStoreShape();
@@ -2230,9 +3465,10 @@ function saveCompletedLevel(grade, categoryId, categoryTitle, level, score) {
 }
 
 function renderScoreHistory() {
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   ensureGuestStoreShape();
-  const scoreHistory = profile ? profile.scoreHistory : guestStore.scoreHistory;
+  const scoreHistory = profile ? profile.scoreHistory : account ? [] : guestStore.scoreHistory;
 
   if (!scoreHistory.length) {
     elements.scoreHistoryEmpty.classList.remove("hidden");
@@ -2256,7 +3492,19 @@ function renderScoreHistory() {
   renderHeroActivity();
 }
 
-function ensureProfileShape(profile) {
+function ensureLearnerShape(profile) {
+  if (typeof profile.childEmail !== "string") {
+    profile.childEmail = "";
+  }
+  if (typeof profile.avatarDataUrl !== "string") {
+    profile.avatarDataUrl = "";
+  }
+  if (typeof profile.supabaseChildId !== "string" && profile.supabaseChildId !== null) {
+    profile.supabaseChildId = null;
+  }
+  if (typeof profile.linkedProfileId !== "string" && profile.linkedProfileId !== null) {
+    profile.linkedProfileId = null;
+  }
   if (!profile.progress || typeof profile.progress !== "object") {
     profile.progress = {};
   }
@@ -2268,6 +3516,28 @@ function ensureProfileShape(profile) {
   } else {
     ensureStudyTimeShape(profile.studyTime);
   }
+}
+
+function ensureAccountShape(account) {
+  if (!account.type) {
+    account.type = "learner";
+  }
+
+  if (account.type === "parent") {
+    if (!account.children || typeof account.children !== "object") {
+      account.children = {};
+    }
+    Object.values(account.children).forEach((child) => ensureLearnerShape(child));
+    if (account.activeChildId && !account.children[account.activeChildId]) {
+      account.activeChildId = null;
+    }
+    if (!account.activeChildId) {
+      account.activeChildId = Object.keys(account.children)[0] || null;
+    }
+    return;
+  }
+
+  ensureLearnerShape(account);
 }
 
 function ensureGuestStoreShape() {
@@ -2294,7 +3564,7 @@ function formatDateTime(value) {
 
 function getCompletedLevelsCount(grade) {
   const gradeProgress = getActiveProgress()[grade] || {};
-  return Object.values(gradeProgress).reduce((total, categoryLevels) => total + Object.keys(categoryLevels).length, 0);
+  return countCompletedLevelsFromProgress({ [grade]: gradeProgress });
 }
 
 function isLevelCompleted(grade, categoryId, level) {
@@ -2324,6 +3594,14 @@ function createEmptyStudyTime() {
   };
 }
 
+function countCompletedLevelsFromProgress(progress) {
+  return Object.values(progress || {}).reduce((gradeTotal, categoryMap) => {
+    return gradeTotal + Object.values(categoryMap || {}).reduce((categoryTotal, levelMap) => {
+      return categoryTotal + Object.keys(levelMap || {}).length;
+    }, 0);
+  }, 0);
+}
+
 function ensureStudyTimeShape(studyTime) {
   if (!studyTime.byCourse || typeof studyTime.byCourse !== "object") {
     studyTime.byCourse = {};
@@ -2334,10 +3612,14 @@ function ensureStudyTimeShape(studyTime) {
 }
 
 function getActiveStudyTimeStore() {
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   if (profile) {
-    ensureProfileShape(profile);
+    ensureLearnerShape(profile);
     return profile.studyTime;
+  }
+  if (account) {
+    return createEmptyStudyTime();
   }
   ensureGuestStoreShape();
   return guestStore.studyTime;
@@ -2349,6 +3631,14 @@ function getTodayKey() {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function getTotalStudySeconds(studyTime) {
+  if (!studyTime || typeof studyTime !== "object") {
+    return 0;
+  }
+  ensureStudyTimeShape(studyTime);
+  return Object.values(studyTime.byCourse || {}).reduce((total, value) => total + Number(value || 0), 0);
 }
 
 function isStudySessionActive() {
@@ -2424,10 +3714,19 @@ function addStudyTime(elapsedMs) {
 }
 
 function persistStudyTime() {
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   if (profile) {
-    profilesStore.profiles[profile.id] = profile;
+    if (account?.type === "parent") {
+      account.children[account.activeChildId] = profile;
+      profilesStore.profiles[account.id] = account;
+    } else {
+      profilesStore.profiles[profile.id] = profile;
+    }
     saveProfilesStore();
+    return;
+  }
+  if (account) {
     return;
   }
   saveGuestStore();
@@ -2474,10 +3773,11 @@ function renderHeroActivity() {
     return;
   }
 
+  const account = getCurrentAccount();
   const profile = getCurrentProfile();
   ensureGuestStoreShape();
-  const studyTime = profile ? profile.studyTime : guestStore.studyTime;
-  const scoreHistory = profile ? profile.scoreHistory : guestStore.scoreHistory;
+  const studyTime = profile ? profile.studyTime : account ? createEmptyStudyTime() : guestStore.studyTime;
+  const scoreHistory = profile ? profile.scoreHistory : account ? [] : guestStore.scoreHistory;
   ensureStudyTimeShape(studyTime);
 
   const todayKey = getTodayKey();
@@ -2625,6 +3925,10 @@ function makeEnglishCategories(grade) {
       { grade, skill: "writing" }
     )
   ];
+
+  if (!ENABLE_PAT_PRACTICE) {
+    return categories;
+  }
 
   if (grade === 9) {
     categories.push(
@@ -5231,6 +6535,168 @@ const questionFactories = {
   fractionsDecimalsPercent(rng, grade, config, index, difficulty) {
     const stage = config.stage;
 
+    if (stage === "grade7Fractions") {
+      if (index % 3 === 0) {
+        const pair = pick([
+          { a: [3, 4], b: [1, 8], total: [7, 8] },
+          { a: [5, 6], b: [1, 3], total: [1, 2] },
+          { a: [2, 5], b: [1, 10], total: [1, 2] },
+          { a: [7, 8], b: [1, 4], total: [5, 8] }
+        ], rng);
+        const correct = `${pair.total[0]}/${pair.total[1]}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${pair.total[1]}/${pair.total[0]}`,
+          `${pair.total[0] + 1}/${pair.total[1]}`,
+          `${Math.max(1, pair.total[0] - 1)}/${pair.total[1]}`
+        ], rng);
+        return {
+          prompt: `What is ${pair.a[0]}/${pair.a[1]} - ${pair.b[0]}/${pair.b[1]}?`,
+          options,
+          answerIndex,
+          explanation: `Use a common denominator, subtract, and simplify. The result is ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const selected = pick([
+          { fraction: "3/5", decimal: "0.6" },
+          { fraction: "7/10", decimal: "0.7" },
+          { fraction: "5/8", decimal: "0.625" },
+          { fraction: "9/20", decimal: "0.45" }
+        ], rng);
+        const { options, answerIndex } = buildOptions(selected.decimal, ["0.5", "0.75", "0.8"].filter((item) => item !== selected.decimal), rng);
+        return {
+          prompt: `Write ${selected.fraction} as a decimal.`,
+          options,
+          answerIndex,
+          explanation: `${selected.fraction} is equal to ${selected.decimal}.`
+        };
+      }
+
+      const first = pick([
+        [1, 2],
+        [2, 3],
+        [3, 4],
+        [5, 8]
+      ], rng);
+      const second = pick([
+        [3, 5],
+        [4, 5],
+        [7, 10],
+        [9, 20]
+      ], rng);
+      const firstValue = first[0] / first[1];
+      const secondValue = second[0] / second[1];
+      const correct = firstValue > secondValue ? `${first[0]}/${first[1]}` : `${second[0]}/${second[1]}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${first[0]}/${first[1]}`,
+        `${second[0]}/${second[1]}`,
+        "They are equal"
+      ].filter((item, optionIndex, array) => array.indexOf(item) === optionIndex && item !== correct), rng);
+      return {
+        prompt: `Which fraction is greater: ${first[0]}/${first[1]} or ${second[0]}/${second[1]}?`,
+        options,
+        answerIndex,
+        explanation: `Compare the values or rename them with common denominators. The greater fraction is ${correct}.`
+      };
+    }
+
+    if (stage === "grade7Decimals") {
+      if (index % 3 === 0) {
+        const values = pick([
+          [2.45, 1.8],
+          [5.07, 2.39],
+          [3.6, 0.78],
+          [9.25, 4.17]
+        ], rng);
+        const correct = (values[0] - values[1]).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        const { options, answerIndex } = buildOptions(correct, [
+          (values[0] + values[1]).toFixed(2),
+          (values[1] - values[0]).toFixed(2),
+          (Number(correct) + 1).toFixed(2)
+        ], rng);
+        return {
+          prompt: `What is ${values[0]} - ${values[1]}?`,
+          options,
+          answerIndex,
+          explanation: `Line up the decimal points and subtract carefully. The answer is ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const selected = pick([
+          { fraction: "1/4", decimal: "0.25" },
+          { fraction: "3/4", decimal: "0.75" },
+          { fraction: "1/8", decimal: "0.125" },
+          { fraction: "7/10", decimal: "0.7" }
+        ], rng);
+        const { options, answerIndex } = buildOptions(selected.fraction, ["1/2", "2/5", "5/8"].filter((item) => item !== selected.fraction), rng);
+        return {
+          prompt: `Write ${selected.decimal} as a fraction in simplest form.`,
+          options,
+          answerIndex,
+          explanation: `${selected.decimal} is the same as ${selected.fraction}.`
+        };
+      }
+
+      const values = shuffle([
+        number(11, 98, rng) / 10,
+        number(11, 98, rng) / 10,
+        number(11, 98, rng) / 10,
+        number(11, 98, rng) / 10
+      ], rng).map((value) => Number(value.toFixed(1)));
+      const correct = Math.max(...values);
+      const { options, answerIndex } = buildOptions(correct, values.filter((value) => value !== correct).slice(0, 3), rng);
+      return {
+        prompt: `Which decimal is greatest?`,
+        options,
+        answerIndex,
+        explanation: `Compare the whole-number part first, then compare the tenths and hundredths. ${correct} is greatest.`
+      };
+    }
+
+    if (stage === "grade7Percents") {
+      if (index % 3 === 0) {
+        const percent = pick([10, 15, 20, 25, 30, 40, 50, 75], rng);
+        const whole = pick([40, 60, 80, 100, 120, 200], rng);
+        const correct = Math.round((percent / 100) * whole);
+        const { options, answerIndex } = buildOptions(correct, [correct + 5, Math.max(1, correct - 5), whole - correct], rng);
+        return {
+          prompt: `What is ${percent}% of ${whole}?`,
+          options,
+          answerIndex,
+          explanation: `${percent}% means ${percent}/100. Multiply ${whole} by ${percent / 100} to get ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const percent = pick([5, 12, 18, 25, 40, 62, 75], rng);
+        const correct = (percent / 100).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        const { options, answerIndex } = buildOptions(correct, [
+          ((percent / 10)).toFixed(2),
+          Math.max(0, (percent / 100) - 0.1).toFixed(2),
+          `${percent}/10`
+        ], rng);
+        return {
+          prompt: `Convert ${percent}% to a decimal.`,
+          options,
+          answerIndex,
+          explanation: `Percent means out of 100, so move the decimal two places left. ${percent}% = ${correct}.`
+        };
+      }
+
+      const original = pick([20, 40, 60, 80, 120], rng);
+      const discount = pick([10, 15, 20, 25, 30], rng);
+      const correct = original - ((discount / 100) * original);
+      const { options, answerIndex } = buildOptions(correct, [original + correct, original - discount, correct + 10], rng);
+      return {
+        prompt: `A $${original} item is discounted by ${discount}%. What is the sale price?`,
+        options: options.map((value) => `$${Number(value).toFixed(2).replace(/\.00$/, "")}`),
+        answerIndex,
+        explanation: `Find ${discount}% of $${original}, then subtract it from the original price. The sale price is $${Number(correct).toFixed(2).replace(/\.00$/, "")}.`
+      };
+    }
+
     if (stage === "basicFractions") {
       const denominatorSets = [
         [2, 3, 4],
@@ -5528,6 +6994,84 @@ const questionFactories = {
   geometry(rng, grade, config, index, difficulty) {
     const level = config.level;
 
+    if (config.skill === "grade7GeometryMeasurement") {
+      if (index % 3 === 0) {
+        const base = number(4, difficultyStep(6, difficulty, 16), rng);
+        const height = number(3, difficultyStep(5, difficulty, 14), rng);
+        const correct = (base * height) / 2;
+        const { options, answerIndex } = buildOptions(correct, [base * height, base + height, correct + base], rng);
+        return {
+          prompt: `A triangle has base ${base} cm and height ${height} cm. What is its area?`,
+          options: options.map((value) => `${value} cm^2`),
+          answerIndex,
+          explanation: `Area of a triangle = (base x height) / 2 = (${base} x ${height}) / 2 = ${correct} cm^2.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const length = number(4, difficultyStep(6, difficulty, 20), rng);
+        const width = number(3, difficultyStep(5, difficulty, 14), rng);
+        const correct = 2 * (length + width);
+        const { options, answerIndex } = buildOptions(correct, [length * width, length + width, correct + 4], rng);
+        return {
+          prompt: `What is the perimeter of a rectangle with length ${length} cm and width ${width} cm?`,
+          options: options.map((value) => `${value} cm`),
+          answerIndex,
+          explanation: `Perimeter = 2(length + width) = 2(${length} + ${width}) = ${correct} cm.`
+        };
+      }
+
+      const shape = pick([
+        { shape: "a square", order: "4" },
+        { shape: "a rectangle", order: "2" },
+        { shape: "an equilateral triangle", order: "3" },
+        { shape: "a regular hexagon", order: "6" }
+      ], rng);
+      const { options, answerIndex } = buildOptions(shape.order, ["1", "2", "3", "4", "6"].filter((value) => value !== shape.order), rng);
+      return {
+        prompt: `What is the order of rotational symmetry for ${shape.shape}?`,
+        options,
+        answerIndex,
+        explanation: `${shape.shape.charAt(0).toUpperCase() + shape.shape.slice(1)} matches itself ${shape.order} times during one full turn.`
+      };
+    }
+
+    if (config.skill === "grade7Circles") {
+      if (index % 3 === 0) {
+        const radius = number(2, difficultyStep(4, difficulty, 12), rng);
+        const correct = radius * 2;
+        const { options, answerIndex } = buildOptions(correct, [radius, correct + 2, correct - 2], rng);
+        return {
+          prompt: `A circle has radius ${radius} cm. What is its diameter?`,
+          options: options.map((value) => `${value} cm`),
+          answerIndex,
+          explanation: `The diameter is twice the radius, so 2 x ${radius} = ${correct} cm.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const diameter = pick([7, 14, 21, 28], rng);
+        const correct = `${diameter}\u03c0`;
+        const { options, answerIndex } = buildOptions(correct, [`${diameter / 2}\u03c0`, `${diameter * 2}\u03c0`, `${diameter + 3}\u03c0`], rng);
+        return {
+          prompt: `Using C = \u03c0d, what is the circumference of a circle with diameter ${diameter} cm?`,
+          options: options.map((value) => `${value} cm`),
+          answerIndex,
+          explanation: `Substitute the diameter into C = \u03c0d. So C = \u03c0 x ${diameter} = ${correct} cm.`
+        };
+      }
+
+      const radius = pick([3, 4, 5, 6, 8], rng);
+      const correct = `${radius * radius}\u03c0`;
+      const { options, answerIndex } = buildOptions(correct, [`${radius * 2}\u03c0`, `${radius + radius}\u03c0`, `${(radius * radius) + radius}\u03c0`], rng);
+      return {
+        prompt: `Using A = \u03c0r^2, what is the area of a circle with radius ${radius} cm?`,
+        options: options.map((value) => `${value} cm^2`),
+        answerIndex,
+        explanation: `Substitute the radius into A = \u03c0r^2. So A = \u03c0 x ${radius}^2 = ${correct} cm^2.`
+      };
+    }
+
     if (level <= 2 && difficulty <= 5) {
       const shapes = [
         { name: "triangle", fact: "3 sides" },
@@ -5657,6 +7201,96 @@ const questionFactories = {
   algebra(rng, grade, config, index, difficulty) {
     const level = config.level;
 
+    if (config.skill === "grade7PatternsExpressions") {
+      if (index % 3 === 0) {
+        const start = number(2, 12, rng);
+        const step = pick([2, 3, 4, 5], rng);
+        const values = [start, start + step, start + (2 * step), start + (3 * step)];
+        const correct = start + (4 * step);
+        const { options, answerIndex } = buildOptions(correct, [correct + step, correct - step, start + (5 * step)], rng);
+        return {
+          prompt: `What comes next in the pattern ${values.join(", ")}?`,
+          options,
+          answerIndex,
+          explanation: `The pattern increases by ${step} each time, so the next value is ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const coefficient = number(2, 6, rng);
+        const constant = number(1, 8, rng);
+        const correct = `${coefficient}n + ${constant}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${coefficient + constant}n`,
+          `${coefficient}n - ${constant}`,
+          `${constant}n + ${coefficient}`
+        ], rng);
+        return {
+          prompt: `A pattern starts at ${coefficient + constant} and increases by ${coefficient} each step. Which expression fits term n?`,
+          options,
+          answerIndex,
+          explanation: `If the pattern grows by ${coefficient} each step, use ${coefficient}n. The constant adjusts the start, so the rule is ${correct}.`
+        };
+      }
+
+      const x = number(2, difficultyStep(4, difficulty, 14), rng);
+      const a = number(2, 5, rng);
+      const b = number(1, 8, rng);
+      const correct = (a * x) + b;
+      const { options, answerIndex } = buildOptions(correct, [correct + 2, correct - 2, a + b + x], rng);
+      return {
+        prompt: `If x = ${x}, what is ${a}x + ${b}?`,
+        options,
+        answerIndex,
+        explanation: `Substitute ${x} for x: ${a}(${x}) + ${b} = ${correct}.`
+      };
+    }
+
+    if (config.skill === "grade7Algebra") {
+      if (index % 3 === 0) {
+        const solution = number(2, difficultyStep(4, difficulty, 12), rng);
+        const constant = number(2, 9, rng);
+        const total = solution + constant;
+        const correct = solution;
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, total], rng);
+        return {
+          prompt: `Solve: x + ${constant} = ${total}`,
+          options,
+          answerIndex,
+          explanation: `Subtract ${constant} from both sides. That gives x = ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const coefficient = pick([2, 3, 4], rng);
+        const solution = number(2, difficultyStep(4, difficulty, 10), rng);
+        const total = coefficient * solution;
+        const correct = solution;
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, total], rng);
+        return {
+          prompt: `Solve: ${coefficient}x = ${total}`,
+          options,
+          answerIndex,
+          explanation: `Divide both sides by ${coefficient}. So x = ${correct}.`
+        };
+      }
+
+      const constant = number(2, 8, rng);
+      const limit = number(6, 16, rng);
+      const correct = `x > ${limit - constant}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `x < ${limit - constant}`,
+        `x > ${limit - constant + 1}`,
+        `x < ${limit - constant + 1}`
+      ], rng);
+      return {
+        prompt: `Solve the inequality: x + ${constant} > ${limit}`,
+        options,
+        answerIndex,
+        explanation: `Subtract ${constant} from both sides. The solution is ${correct}.`
+      };
+    }
+
     if (level <= 7) {
       if (index % 4 === 2) {
         const constant = number(2, difficultyStep(4, difficulty, 14), rng);
@@ -5748,6 +7382,93 @@ const questionFactories = {
   },
 
   statisticsProbability(rng, grade, config, index, difficulty) {
+    if (config.skill === "grade7CentralTendency") {
+      if (index % 3 === 0) {
+        const data = Array.from({ length: 5 }, () => number(4, difficultyStep(6, difficulty, 24), rng));
+        const correct = Math.round(data.reduce((sum, value) => sum + value, 0) / data.length);
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, data[0]], rng);
+        return {
+          prompt: `What is the mean of ${data.join(", ")} rounded to the nearest whole number?`,
+          options,
+          answerIndex,
+          explanation: `Add all values, then divide by ${data.length}. The mean is about ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const sorted = shuffle([number(2, 9, rng), number(10, 14, rng), number(15, 18, rng), number(19, 22, rng), number(23, 28, rng)], rng).sort((a, b) => a - b);
+        const correct = sorted[2];
+        const { options, answerIndex } = buildOptions(correct, [sorted[1], sorted[3], sorted[0]], rng);
+        return {
+          prompt: `What is the median of ${sorted.join(", ")}?`,
+          options,
+          answerIndex,
+          explanation: `The median is the middle number once the data is ordered. The middle value is ${correct}.`
+        };
+      }
+
+      const mode = pick([4, 6, 8, 10, 12], rng);
+      const data = shuffle([mode, mode, number(1, 14, rng), number(1, 14, rng), number(1, 14, rng)], rng);
+      const { options, answerIndex } = buildOptions(mode, [...new Set(data.filter((value) => value !== mode))].slice(0, 3), rng);
+      return {
+        prompt: `What is the mode of ${data.join(", ")}?`,
+        options,
+        answerIndex,
+        explanation: `The mode is the value that appears most often. Here, ${mode} appears the most.`
+      };
+    }
+
+    if (config.skill === "grade7Probability") {
+      if (index % 3 === 0) {
+        const total = pick([6, 8, 10, 12], rng);
+        const favorable = number(1, total - 1, rng);
+        const correct = fractionString(favorable, total, true);
+        const { options, answerIndex } = buildOptions(correct, [
+          fractionString(total - favorable, total, true),
+          fractionString(favorable + 1, total, true),
+          fractionString(favorable, total - 1, true)
+        ], rng);
+        return {
+          prompt: `A spinner has ${favorable} winning sections out of ${total} equal sections. What is the theoretical probability of winning?`,
+          options,
+          answerIndex,
+          explanation: `Theoretical probability = favorable outcomes / total outcomes = ${favorable}/${total} = ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const success = number(3, 12, rng);
+        const total = success + number(3, 10, rng);
+        const correct = fractionString(success, total, true);
+        const { options, answerIndex } = buildOptions(correct, [
+          fractionString(total - success, total, true),
+          fractionString(success + 1, total, true),
+          fractionString(success, total - 1, true)
+        ], rng);
+        return {
+          prompt: `An event happened ${success} times in ${total} trials. What is the experimental probability?`,
+          options,
+          answerIndex,
+          explanation: `Experimental probability = successes / trials = ${success}/${total} = ${correct}.`
+        };
+      }
+
+      const favorable = number(1, 5, rng);
+      const total = favorable + number(2, 6, rng);
+      const correct = fractionString(total - favorable, total, true);
+      const { options, answerIndex } = buildOptions(correct, [
+        fractionString(favorable, total, true),
+        fractionString(total - favorable - 1, total, true),
+        fractionString(total, favorable, true)
+      ], rng);
+      return {
+        prompt: `The probability of drawing a blue marble is ${fractionString(favorable, total, true)}. What is the probability of not drawing a blue marble?`,
+        options,
+        answerIndex,
+        explanation: `Use the complement: 1 - ${fractionString(favorable, total, true)} = ${correct}.`
+      };
+    }
+
     if (config.level >= 7 && difficulty >= 4 && index % 3 === 1) {
       const total = pick([6, 8, 10, 12], rng);
       const favorable = number(1, total - 1, rng);
@@ -5832,6 +7553,58 @@ const questionFactories = {
 
   functionsGraphing(rng, grade, config, index, difficulty) {
     const level = config.level;
+
+    if (config.skill === "grade7CoordinatesTransformations") {
+      if (index % 3 === 0) {
+        const x = pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5], rng);
+        const y = pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5], rng);
+        const correct = x > 0 && y > 0 ? "Quadrant I"
+          : x < 0 && y > 0 ? "Quadrant II"
+            : x < 0 && y < 0 ? "Quadrant III"
+              : "Quadrant IV";
+        const { options, answerIndex } = buildOptions(correct, ["Quadrant I", "Quadrant II", "Quadrant III", "Quadrant IV"].filter((item) => item !== correct), rng);
+        return {
+          prompt: `Which quadrant contains the point (${x}, ${y})?`,
+          options,
+          answerIndex,
+          explanation: `Check the signs of x and y. The point (${x}, ${y}) is in ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const startX = number(-4, 4, rng);
+        const startY = number(-4, 4, rng);
+        const right = number(1, 4, rng);
+        const up = number(1, 4, rng);
+        const correct = `(${startX + right}, ${startY + up})`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `(${startX - right}, ${startY + up})`,
+          `(${startX + right}, ${startY - up})`,
+          `(${startX - right}, ${startY - up})`
+        ], rng);
+        return {
+          prompt: `Translate the point (${startX}, ${startY}) by ${right} right and ${up} up. What is the image?`,
+          options,
+          answerIndex,
+          explanation: `Add ${right} to x and ${up} to y. The image is ${correct}.`
+        };
+      }
+
+      const x = number(1, 6, rng);
+      const y = number(-6, 6, rng);
+      const correct = `(${-x}, ${y})`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `(${x}, ${-y})`,
+        `(${-x}, ${-y})`,
+        `(${y}, ${x})`
+      ], rng);
+      return {
+        prompt: `What is the reflection of (${x}, ${y}) across the y-axis?`,
+        options,
+        answerIndex,
+        explanation: `Reflecting across the y-axis changes the sign of x only. So the image is ${correct}.`
+      };
+    }
 
     if (config.skill === "coordinateGraphing") {
       if (index % 3 === 0) {
@@ -6062,7 +7835,7 @@ const questionFactories = {
   englishGrammar(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.grammar[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -6077,7 +7850,7 @@ const questionFactories = {
   englishVocabulary(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.vocabulary[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -6092,7 +7865,7 @@ const questionFactories = {
   englishWriting(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishWritingPools[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {

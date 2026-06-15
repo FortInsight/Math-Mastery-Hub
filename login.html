@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Grammar & Maths Mastery Hub</title>
+  <meta name="theme-color" content="#12386f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Grammar & Maths Mastery Hub" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="auth-body">
+  <div class="auth-shell">
+    <section class="hero auth-card">
+      <div class="auth-copy">
+        <p class="eyebrow">Grammar & Maths Mastery Hub</p>
+        <h1>Sign in to open the learning hub.</h1>
+        <p class="hero-text">
+          Parents sign in with email and password. After login, parents can add children inside the dashboard and track each child's progress separately.
+        </p>
+        <p class="hero-text" id="auth-role-help">
+          Learners can also sign in with their own email and password. Parents can link learner accounts in the dashboard and view their progress.
+        </p>
+      </div>
+
+      <form id="authForm" class="profile-form auth-form">
+        <div class="two-up auth-input-grid">
+          <label>
+            Account type
+            <select id="authRole">
+              <option value="parent">Parent account</option>
+              <option value="learner">Learner account</option>
+            </select>
+          </label>
+          <label id="auth-grade-label" class="hidden">
+            Grade
+            <select id="authGrade">
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+              <option value="4">Grade 4</option>
+              <option value="5">Grade 5</option>
+              <option value="6">Grade 6</option>
+              <option value="7">Grade 7</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </label>
+          <label id="auth-email-label">
+            Email
+            <input type="email" id="authEmail" placeholder="Enter your email" autocomplete="email" />
+          </label>
+          <label>
+            Password
+            <input type="password" id="authPassword" placeholder="Enter password" autocomplete="current-password" />
+          </label>
+        </div>
+
+        <p class="hero-text" id="parent-flow-note">
+          Parent flow: create one parent login here, then add children by email after signing in.
+        </p>
+        <p class="hero-text hidden" id="learner-flow-note">
+          Learner flow: sign in with your own email and password. Your parent can still view your performance once your account is linked.
+        </p>
+
+        <div class="auth-actions">
+          <button id="signupButton" type="button" class="primary-button">Sign Up</button>
+          <button id="loginButton" type="submit" class="primary-button">Log In</button>
+          <button id="forgotPasswordButton" type="button" class="secondary-button">Forgot Password?</button>
+          <a href="learner-login.html" class="secondary-button auth-back-link">Learner Login</a>
+          <a href="index.html" class="secondary-button auth-back-link">Back to app</a>
+        </div>
+
+        <p id="authMessage" class="auth-message"></p>
+      </form>
+
+      <form id="updatePasswordForm" class="profile-form auth-form update-password-form" hidden>
+        <div class="auth-panel-copy">
+          <p class="eyebrow">Password recovery</p>
+          <h2>Update your password</h2>
+          <p class="hero-text">Enter a new password below to finish recovering your account.</p>
+        </div>
+
+        <div class="two-up auth-input-grid">
+          <label>
+            New password
+            <input type="password" id="newPassword" placeholder="Enter new password" autocomplete="new-password" />
+          </label>
+          <label>
+            Confirm password
+            <input type="password" id="confirmPassword" placeholder="Confirm new password" autocomplete="new-password" />
+          </label>
+        </div>
+
+        <div class="auth-actions">
+          <button id="updatePasswordButton" type="submit" class="primary-button">Update Password</button>
+          <button id="backToLoginButton" type="button" class="secondary-button">Back to Login</button>
+        </div>
+
+        <p id="updatePasswordMessage" class="auth-message"></p>
+      </form>
+    </section>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>
