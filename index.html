@@ -22,6 +22,21 @@
   <div class="page-shell">
     <header class="hero">
       <div class="hero-copy">
+        <div class="hero-topbar">
+          <div class="hero-topbar-title">
+            <p class="eyebrow">Grade 1 to 12 Learning App</p>
+            <strong>Grammar & Maths Mastery Hub</strong>
+          </div>
+          <div class="hero-topbar-actions">
+            <button id="toggle-hero-copy-button" class="secondary-button collapse-button" type="button" aria-expanded="false" aria-controls="hero-copy-content">
+              Show Header
+            </button>
+            <button id="open-hero-panel-button" class="secondary-button hamburger-button" type="button" aria-expanded="false" aria-controls="hero-panel">
+            ☰ Activity
+          </button>
+          </div>
+        </div>
+        <div id="hero-copy-content" class="hidden">
         <p class="eyebrow">Grade 1 to 12 Learning App</p>
         <h1>Grammar & Maths Mastery Hub</h1>
         <p class="hero-text">
@@ -35,69 +50,74 @@
         </div>
         <div class="topic-search-panel hero-search-panel">
           <div class="topic-search-head section-heading--collapsible">
-            <div>
-              <h3>Search Topics</h3>
-              <p>Find a course or question across grades, like logarithms, fractions, punctuation, or PAT.</p>
+            <h3>Search Topics</h3>
+            <div class="topic-search-toolbar">
+              <input id="topic-search-input" class="topic-search-input" type="text" placeholder="Search across grades, topics, or PAT" />
+              <button id="topic-search-button" class="secondary-button" type="button">Search</button>
+              <button id="clear-search-button" class="secondary-button" type="button">Clear</button>
             </div>
             <button id="toggle-search-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
               Hide Search
             </button>
           </div>
           <div id="topic-search-panel-content">
-            <div class="topic-search-row">
-              <input id="topic-search-input" class="topic-search-input" type="text" placeholder="Search across grades" />
-              <button id="topic-search-button" class="secondary-button" type="button">Search</button>
-              <button id="clear-search-button" class="secondary-button" type="button">Clear</button>
-            </div>
             <div id="topic-search-results" class="topic-search-results">
               <div class="topic-search-empty">Search a topic or keyword to see matching courses and question levels.</div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="hero-panel">
-        <div class="hero-panel-heading">
-          <p class="eyebrow">Learning Activity</p>
-          <h3>Your Time & Achievement</h3>
-        </div>
-        <div class="hero-account-card">
-          <div class="hero-account-copy">
-            <span>Signed in</span>
-            <strong id="auth-account-name">Guest</strong>
-            <small id="auth-account-meta">Open login to continue</small>
-          </div>
-          <div class="hero-account-actions">
-            <a id="open-login-link" class="secondary-button hero-account-button" href="login.html">Open Login</a>
-            <button id="open-account-tools-button" class="secondary-button hero-account-button hidden" type="button">Manage Learners</button>
-            <button id="logout-auth-button" class="secondary-button hero-account-button hidden" type="button">Log Out</button>
-          </div>
-        </div>
-        <div class="hero-stats">
-          <div class="hero-stat-card">
-            <span>Today</span>
-            <strong id="hero-today-time">0m 0s</strong>
-          </div>
-          <div class="hero-stat-card">
-            <span>Past 7 days</span>
-            <strong id="hero-week-achievement">0 levels</strong>
-          </div>
-        </div>
-        <div class="hero-chart-wrap">
-          <div class="hero-chart-heading">
-            <span>Past 7 days</span>
-            <small>Time spent and levels completed</small>
-          </div>
-          <div id="hero-activity-chart" class="hero-activity-chart"></div>
         </div>
       </div>
+      <div id="hero-panel-overlay" class="hero-panel-overlay hidden"></div>
+      <aside id="hero-panel" class="hero-panel">
+        <div class="hero-panel-heading section-heading--collapsible">
+          <div>
+            <p class="eyebrow">Learning Activity</p>
+            <h3>Your Time & Achievement</h3>
+          </div>
+          <button id="toggle-hero-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
+            Close
+          </button>
+        </div>
+        <div id="hero-panel-content">
+          <div class="hero-account-card">
+            <div class="hero-account-copy">
+              <span>Signed in</span>
+              <strong id="auth-account-name">Guest</strong>
+              <small id="auth-account-meta">Open login to continue</small>
+            </div>
+            <div class="hero-account-actions">
+              <a id="open-login-link" class="secondary-button hero-account-button" href="login.html">Open Login</a>
+              <button id="open-account-tools-button" class="secondary-button hero-account-button hidden" type="button">Manage Learners</button>
+              <button id="logout-auth-button" class="secondary-button hero-account-button hidden" type="button">Log Out</button>
+            </div>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat-card">
+              <span>Today</span>
+              <strong id="hero-today-time">0m 0s</strong>
+            </div>
+            <div class="hero-stat-card">
+              <span>Past 7 days</span>
+              <strong id="hero-week-achievement">0 levels</strong>
+            </div>
+          </div>
+          <div class="hero-chart-wrap">
+            <div class="hero-chart-heading">
+              <span>Past 7 days</span>
+              <small>Time spent and levels completed</small>
+            </div>
+            <div id="hero-activity-chart" class="hero-activity-chart"></div>
+          </div>
+        </div>
+      </aside>
     </header>
 
     <main class="layout">
       <section class="sidebar card">
-        <div class="section-heading section-heading--collapsible">
+        <div class="section-heading section-heading--collapsible compact-heading">
           <div>
             <h2>Choose Grade</h2>
-            <p>This is the first step. Pick a grade to unlock matching topics.</p>
           </div>
           <button id="toggle-grade-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
             Hide Grades
@@ -144,9 +164,8 @@
 
       <section class="content">
         <section class="card">
-          <div class="section-heading">
+          <div class="section-heading compact-heading">
             <h2>Grammar & Maths Topics</h2>
-            <p>This is the second step. Choose one topic from either Maths or English to see its levels.</p>
           </div>
           <div class="topic-select-grid">
             <div class="topic-select-wrap">
@@ -183,9 +202,8 @@
         </section>
 
         <section id="level-section" class="card">
-          <div class="section-heading">
+          <div class="section-heading compact-heading">
             <h2>Choose Level</h2>
-            <p>This is the third step. Start with Level 1 if you are new to the topic.</p>
           </div>
           <div id="level-grid" class="level-grid"></div>
           <div class="level-actions">
@@ -249,9 +267,8 @@
         </section>
 
         <section id="review-section" class="card">
-          <div class="section-heading">
+          <div class="section-heading compact-heading">
             <h2>Review Past Levels</h2>
-            <p>Open any completed level to see the questions answered and the feedback from that attempt.</p>
           </div>
           <div class="review-controls">
             <select id="review-level-select"></select>
@@ -261,6 +278,70 @@
           <div id="review-details" class="hidden">
             <p id="review-summary" class="quiz-meta"></p>
             <div id="review-breakdown" class="results-breakdown"></div>
+          </div>
+        </section>
+
+        <section id="parent-dashboard-section" class="card hidden">
+          <div class="section-heading section-heading--collapsible compact-heading">
+            <div>
+              <h2>Family Dashboard</h2>
+            </div>
+            <button id="toggle-parent-dashboard-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
+              Hide Dashboard
+            </button>
+          </div>
+
+          <div id="parent-dashboard-content">
+            <div id="parent-dashboard-empty" class="feedback-box">Sign in as a parent and add learners to open the family dashboard.</div>
+
+            <div id="parent-dashboard-body" class="hidden">
+              <div id="parent-dashboard-learner-grid" class="parent-dashboard-learner-grid"></div>
+
+              <div class="parent-dashboard-overview">
+                <div class="parent-dashboard-summary-card">
+                  <div class="parent-dashboard-summary-head">
+                    <div>
+                      <p class="eyebrow">Selected Learner</p>
+                      <h3 id="parent-dashboard-name">No learner selected</h3>
+                    </div>
+                    <div id="parent-dashboard-avatar" class="parent-dashboard-avatar parent-dashboard-avatar--placeholder">?</div>
+                  </div>
+                  <div class="parent-dashboard-summary-grid">
+                    <div class="parent-dashboard-metric">
+                      <span>Total study</span>
+                      <strong id="parent-dashboard-total-time">0m 0s</strong>
+                    </div>
+                    <div class="parent-dashboard-metric">
+                      <span>Past 7 days</span>
+                      <strong id="parent-dashboard-week-time">0m 0s</strong>
+                    </div>
+                    <div class="parent-dashboard-metric">
+                      <span>Completed levels</span>
+                      <strong id="parent-dashboard-levels">0</strong>
+                    </div>
+                    <div class="parent-dashboard-metric">
+                      <span>Average score</span>
+                      <strong id="parent-dashboard-average">0%</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="parent-dashboard-chart-card">
+                  <div class="hero-chart-heading">
+                    <span>Past 7 days</span>
+                    <small>Study time and levels completed</small>
+                  </div>
+                  <div id="parent-dashboard-chart" class="hero-activity-chart"></div>
+                </div>
+              </div>
+
+              <div class="parent-dashboard-table-card">
+                <div class="section-heading compact-heading">
+                  <h3>Course Analysis</h3>
+                </div>
+                <div id="parent-dashboard-analysis" class="parent-dashboard-analysis"></div>
+              </div>
+            </div>
           </div>
         </section>
 

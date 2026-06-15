@@ -275,6 +275,22 @@ async function ensureSupabaseProfileRow(account, user) {
   }
 }
 
+async function updateLinkedChildEmailForLearner(ownerId, nextEmail) {
+  const client = getSupabaseClient();
+  if (!client || !ownerId || !nextEmail) {
+    return;
+  }
+
+  const { error } = await client
+    .from("mastery_children")
+    .update({ child_email: nextEmail })
+    .eq("linked_profile_id", ownerId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 async function syncSupabaseChildren(account, ownerId) {
   const client = getSupabaseClient();
   if (!client || !ownerId || account?.type !== "parent") {
@@ -726,6 +742,8 @@ const elements = {
   profileGradeLabel: document.getElementById("profile-grade-label"),
   profileEmailLabel: document.getElementById("profile-email-label"),
   profileNameInput: document.getElementById("profile-name"),
+  profileEmailGroup: document.getElementById("profile-email-group"),
+  profileEmailInput: document.getElementById("profile-email"),
   profileGradeGroup: document.getElementById("profile-grade-group"),
   profileGradeInput: document.getElementById("profile-grade"),
   profilePasswordGroup: document.getElementById("profile-password-group"),
@@ -747,12 +765,34 @@ const elements = {
   addChildButton: document.getElementById("add-child-button"),
   saveChildButton: document.getElementById("save-child-button"),
   parentKidsDashboard: document.getElementById("parent-kids-dashboard"),
+  parentDashboardSection: document.getElementById("parent-dashboard-section"),
+  toggleParentDashboardButton: document.getElementById("toggle-parent-dashboard-button"),
+  parentDashboardContent: document.getElementById("parent-dashboard-content"),
+  parentDashboardEmpty: document.getElementById("parent-dashboard-empty"),
+  parentDashboardBody: document.getElementById("parent-dashboard-body"),
+  parentDashboardLearnerGrid: document.getElementById("parent-dashboard-learner-grid"),
+  parentDashboardName: document.getElementById("parent-dashboard-name"),
+  parentDashboardAvatar: document.getElementById("parent-dashboard-avatar"),
+  parentDashboardTotalTime: document.getElementById("parent-dashboard-total-time"),
+  parentDashboardWeekTime: document.getElementById("parent-dashboard-week-time"),
+  parentDashboardLevels: document.getElementById("parent-dashboard-levels"),
+  parentDashboardAverage: document.getElementById("parent-dashboard-average"),
+  parentDashboardChart: document.getElementById("parent-dashboard-chart"),
+  parentDashboardAnalysis: document.getElementById("parent-dashboard-analysis"),
   accountToolsSection: document.getElementById("account-tools-section"),
   openAccountToolsButton: document.getElementById("open-account-tools-button"),
   authAccountName: document.getElementById("auth-account-name"),
   authAccountMeta: document.getElementById("auth-account-meta"),
   openLoginLink: document.getElementById("open-login-link"),
   logoutAuthButton: document.getElementById("logout-auth-button"),
+  toggleHeroCopyButton: document.getElementById("toggle-hero-copy-button"),
+  heroCopy: document.querySelector(".hero-copy"),
+  heroCopyContent: document.getElementById("hero-copy-content"),
+  openHeroPanelButton: document.getElementById("open-hero-panel-button"),
+  heroPanel: document.getElementById("hero-panel"),
+  heroPanelOverlay: document.getElementById("hero-panel-overlay"),
+  toggleHeroPanelButton: document.getElementById("toggle-hero-panel-button"),
+  heroPanelContent: document.getElementById("hero-panel-content"),
   toggleProfilePanelButton: document.getElementById("toggle-profile-panel-button"),
   profilePanelContent: document.getElementById("profile-panel-content"),
   toggleGradePanelButton: document.getElementById("toggle-grade-panel-button"),
@@ -838,6 +878,10 @@ function init() {
   renderGradeButtons();
   renderCategories();
   attachEvents();
+  if (elements.openHeroPanelButton) {
+    elements.openHeroPanelButton.textContent = "Activity";
+  }
+  collapseHeroCopyByDefault();
   renderScoreHistory();
   renderStudyTime();
   renderHeroActivity();
@@ -854,7 +898,14 @@ function attachEvents() {
   elements.saveChildButton?.addEventListener("click", handleSaveChildSettings);
   elements.switchChildButton?.addEventListener("click", handleSwitchChild);
   elements.childPhotoInput?.addEventListener("change", handleChildPhotoSelected);
-  elements.openAccountToolsButton?.addEventListener("click", () => setAccountToolsVisible(true));
+  elements.openAccountToolsButton?.addEventListener("click", () => {
+    const account = getCurrentAccount();
+    if (account?.type === "parent") {
+      setParentDashboardVisible(true);
+      return;
+    }
+    setAccountToolsVisible(true);
+  });
   elements.previousButton.addEventListener("click", moveToPreviousQuestion);
   elements.nextButton.addEventListener("click", moveToNextQuestion);
   elements.submitWritingButton?.addEventListener("click", submitWritingAnswer);
@@ -876,9 +927,25 @@ function attachEvents() {
   if (elements.toggleProfilePanelButton) {
     elements.toggleProfilePanelButton.addEventListener("click", toggleProfilePanel);
   }
+  if (elements.toggleHeroPanelButton) {
+    elements.toggleHeroPanelButton.addEventListener("click", toggleHeroPanel);
+  }
+  if (elements.toggleHeroCopyButton) {
+    elements.toggleHeroCopyButton.addEventListener("click", toggleHeroCopy);
+  }
+  if (elements.openHeroPanelButton) {
+    elements.openHeroPanelButton.addEventListener("click", openHeroPanel);
+  }
+  if (elements.heroPanelOverlay) {
+    elements.heroPanelOverlay.addEventListener("click", closeHeroPanel);
+  }
   if (elements.toggleGradePanelButton) {
     elements.toggleGradePanelButton.addEventListener("click", toggleGradePanel);
   }
+  if (elements.toggleParentDashboardButton) {
+    elements.toggleParentDashboardButton.addEventListener("click", toggleParentDashboard);
+  }
+  elements.parentDashboardLearnerGrid?.addEventListener("click", handleParentDashboardLearnerClick);
   if (elements.toggleSearchPanelButton) {
     elements.toggleSearchPanelButton.addEventListener("click", toggleSearchPanel);
   }
@@ -892,6 +959,59 @@ function toggleProfilePanel() {
   elements.toggleProfilePanelButton.setAttribute("aria-expanded", String(!isHidden));
 }
 
+function setHeroCopyCollapsed(collapsed) {
+  if (!elements.heroCopyContent || !elements.toggleHeroCopyButton) {
+    return;
+  }
+
+  elements.heroCopyContent.classList.toggle("hidden", collapsed);
+  elements.heroCopy?.classList.toggle("hero-copy--compact", collapsed);
+  elements.toggleHeroCopyButton.textContent = collapsed ? "Show Header" : "Hide Header";
+  elements.toggleHeroCopyButton.setAttribute("aria-expanded", String(!collapsed));
+}
+
+function collapseHeroCopyByDefault() {
+  setHeroCopyCollapsed(true);
+}
+
+function toggleHeroCopy() {
+  if (!elements.heroCopyContent) {
+    return;
+  }
+
+  const collapsed = !elements.heroCopyContent.classList.contains("hidden");
+  setHeroCopyCollapsed(collapsed);
+}
+
+function openHeroPanel() {
+  if (!elements.heroPanel || !elements.heroPanelOverlay || !elements.openHeroPanelButton) {
+    return;
+  }
+  elements.heroPanel.classList.add("is-open");
+  elements.heroPanelOverlay.classList.remove("hidden");
+  elements.openHeroPanelButton.setAttribute("aria-expanded", "true");
+}
+
+function closeHeroPanel() {
+  if (!elements.heroPanel || !elements.heroPanelOverlay || !elements.openHeroPanelButton) {
+    return;
+  }
+  elements.heroPanel.classList.remove("is-open");
+  elements.heroPanelOverlay.classList.add("hidden");
+  elements.openHeroPanelButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleHeroPanel() {
+  if (!elements.heroPanel) {
+    return;
+  }
+  if (elements.heroPanel.classList.contains("is-open")) {
+    closeHeroPanel();
+    return;
+  }
+  openHeroPanel();
+}
+
 function setAccountToolsVisible(visible) {
   if (!elements.accountToolsSection) {
     return;
@@ -902,10 +1022,30 @@ function setAccountToolsVisible(visible) {
   }
 }
 
+function setParentDashboardVisible(visible) {
+  if (!elements.parentDashboardSection) {
+    return;
+  }
+  elements.parentDashboardSection.classList.toggle("hidden", !visible);
+  if (visible) {
+    renderParentDashboard();
+    elements.parentDashboardSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 function toggleGradePanel() {
   const isHidden = elements.gradePanelContent.classList.toggle("hidden");
   elements.toggleGradePanelButton.textContent = isHidden ? "Show Grades" : "Hide Grades";
   elements.toggleGradePanelButton.setAttribute("aria-expanded", String(!isHidden));
+}
+
+function toggleParentDashboard() {
+  if (!elements.parentDashboardContent || !elements.toggleParentDashboardButton) {
+    return;
+  }
+  const isHidden = elements.parentDashboardContent.classList.toggle("hidden");
+  elements.toggleParentDashboardButton.textContent = isHidden ? "Show Dashboard" : "Hide Dashboard";
+  elements.toggleParentDashboardButton.setAttribute("aria-expanded", String(!isHidden));
 }
 
 function toggleSearchPanel() {
@@ -2749,11 +2889,17 @@ function renderProfilePanel() {
       : account.name;
     elements.logoutProfileButton.classList.remove("hidden");
     elements.parentPanel?.classList.toggle("hidden", account.type !== "parent");
+    if (elements.openAccountToolsButton) {
+      elements.openAccountToolsButton.textContent = account.type === "parent" ? "Family Dashboard" : "Manage Account";
+    }
     if (elements.profileRoleInput) {
       elements.profileRoleInput.value = account.type || "learner";
     }
     if (elements.profileNameInput) {
       elements.profileNameInput.value = account.name || "";
+    }
+    if (elements.profileEmailInput) {
+      elements.profileEmailInput.value = state.supabaseUserEmail || learner?.childEmail || "";
     }
     if (elements.profileGradeInput) {
       elements.profileGradeInput.value = String(learner?.grade || account.grade || state.selectedGrade || 1);
@@ -2770,11 +2916,17 @@ function renderProfilePanel() {
     elements.saveStatusLabel.textContent = "Guest browser";
     elements.logoutProfileButton.classList.add("hidden");
     elements.parentPanel?.classList.add("hidden");
+    if (elements.openAccountToolsButton) {
+      elements.openAccountToolsButton.textContent = "Manage Learners";
+    }
     if (elements.profileRoleInput) {
       elements.profileRoleInput.value = "learner";
     }
     if (elements.profileNameInput) {
       elements.profileNameInput.value = "";
+    }
+    if (elements.profileEmailInput) {
+      elements.profileEmailInput.value = "";
     }
     if (elements.profileGradeInput) {
       elements.profileGradeInput.value = String(state.selectedGrade || 1);
@@ -2797,6 +2949,10 @@ function renderAccountFormMode() {
   elements.profileRoleInput.value = selectedRole;
   elements.profileRoleInput.disabled = hasSignedInAccount;
   elements.profileNameInput.placeholder = isParentMode ? "Enter account name" : "Enter learner name";
+  elements.profileEmailGroup?.classList.toggle("hidden", !hasSignedInAccount);
+  if (elements.profileEmailInput) {
+    elements.profileEmailInput.disabled = !hasSignedInAccount;
+  }
   elements.profileGradeInput.disabled = isParentMode;
   elements.profileGradeGroup?.classList.toggle("hidden", isParentMode);
   elements.profilePasswordGroup?.classList.toggle("hidden", hasSignedInAccount);
@@ -2808,8 +2964,8 @@ function renderAccountFormMode() {
   if (elements.profileFormNote) {
     elements.profileFormNote.textContent = hasSignedInAccount
       ? isParentMode
-        ? "Update the parent account name here. Child names, grades, and linked learner emails are managed below."
-        : "Update the learner name and grade here. The parent connects to this learner using the login email shown above."
+        ? "Update the parent account name and login email here. Child names, grades, and linked learner emails are managed below."
+        : "Update the learner name, login email, and grade here. The parent connects to this learner using this same login email."
       : "Create or log in to an account here. Once signed in, this area becomes your profile editor.";
   }
 }
@@ -2822,15 +2978,22 @@ async function handleSaveProfileSettings() {
   }
 
   const nextName = elements.profileNameInput?.value.trim();
+  const currentEmail = state.supabaseUserEmail || "";
+  const nextEmail = elements.profileEmailInput?.value.trim() || currentEmail;
   const nextGrade = Number(elements.profileGradeInput?.value || state.selectedGrade || 1);
   if (!nextName) {
     showProfileMessage("Enter a name before saving the profile.", "error");
+    return;
+  }
+  if (!nextEmail) {
+    showProfileMessage("Enter the login email before saving the profile.", "error");
     return;
   }
 
   account.name = nextName;
   if (account.type !== "parent") {
     account.grade = nextGrade;
+    account.childEmail = nextEmail;
     state.selectedGrade = nextGrade;
   }
 
@@ -2855,16 +3018,25 @@ async function handleSaveProfileSettings() {
         account_type: account.type,
         grade: account.type === "learner" ? Number(account.grade || nextGrade || 1) : null
       };
-      const { error: authUpdateError } = await client.auth.updateUser({
-        data: metadata
-      });
+      const updatePayload = { data: metadata };
+      const emailChanged = Boolean(nextEmail && nextEmail !== currentEmail);
+      if (emailChanged) {
+        updatePayload.email = nextEmail;
+      }
+
+      const { error: authUpdateError } = await client.auth.updateUser(updatePayload);
       if (authUpdateError) {
         throw authUpdateError;
       }
 
+      if (emailChanged) {
+        await updateLinkedChildEmailForLearner(state.supabaseUserId, nextEmail);
+        state.supabaseUserEmail = nextEmail;
+      }
+
       await ensureSupabaseProfileRow(account, {
         id: state.supabaseUserId,
-        email: state.supabaseUserEmail
+        email: nextEmail || state.supabaseUserEmail
       });
     } catch (error) {
       console.error("Profile update sync failed", error);
@@ -2873,7 +3045,13 @@ async function handleSaveProfileSettings() {
     }
   }
 
-  showProfileMessage(account.type === "parent" ? "Parent profile updated." : "Learner profile updated.", "success");
+  const emailChanged = Boolean(nextEmail && nextEmail !== currentEmail);
+  showProfileMessage(
+    emailChanged
+      ? "Profile updated. If Supabase asks for email confirmation, please confirm the new email."
+      : account.type === "parent" ? "Parent profile updated." : "Learner profile updated.",
+    "success"
+  );
 }
 
 function renderParentPanel(account) {
@@ -2938,6 +3116,200 @@ function renderParentPanel(account) {
     elements.childGradeInput && (elements.childGradeInput.value = String(activeChild.grade || state.selectedGrade || 1));
     elements.childEmailInput && (elements.childEmailInput.value = activeChild.childEmail || "");
     setChildPhotoPreview(activeChild.avatarDataUrl || "");
+  }
+
+  renderParentDashboard();
+}
+
+function handleParentDashboardLearnerClick(event) {
+  const button = event.target.closest("[data-parent-dashboard-child]");
+  if (!button) {
+    return;
+  }
+
+  const childId = button.getAttribute("data-parent-dashboard-child");
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent" || !childId || !account.children?.[childId]) {
+    return;
+  }
+
+  account.activeChildId = childId;
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+  applyCurrentProfile();
+  showProfileMessage(`Now viewing ${account.children[childId].name}'s family dashboard.`, "success");
+}
+
+function getAverageScorePercentage(scoreHistory) {
+  if (!Array.isArray(scoreHistory) || !scoreHistory.length) {
+    return 0;
+  }
+  const total = scoreHistory.reduce((sum, entry) => sum + Number(entry.percentage || 0), 0);
+  return Math.round(total / scoreHistory.length);
+}
+
+function getWeeklySeconds(studyTime) {
+  if (!studyTime || typeof studyTime !== "object") {
+    return 0;
+  }
+  ensureStudyTimeShape(studyTime);
+  const dayItems = getPastSevenDaysActivity(studyTime.byDay || {}, []);
+  return dayItems.reduce((sum, item) => sum + Number(item.seconds || 0), 0);
+}
+
+function getTopicAnalytics(profile) {
+  const analyticsByCategory = new Map();
+  const progress = profile?.progress || {};
+  const studyTime = profile?.studyTime || createEmptyStudyTime();
+  ensureStudyTimeShape(studyTime);
+
+  Object.entries(progress).forEach(([gradeKey, gradeProgress]) => {
+    Object.entries(gradeProgress || {}).forEach(([categoryId, levelEntries]) => {
+      const attempts = Object.values(levelEntries || {});
+      if (!attempts.length) {
+        return;
+      }
+      const existing = analyticsByCategory.get(categoryId) || {
+        categoryId,
+        title: resolveCategoryTitle(Number(gradeKey), categoryId, categoryId),
+        grade: Number(gradeKey),
+        attempts: 0,
+        bestScore: 0,
+        bestPercentage: 0,
+        timeSeconds: 0
+      };
+      existing.attempts += attempts.length;
+      attempts.forEach((attempt) => {
+        const score = Number(attempt?.score || 0);
+        const percentage = Math.round((score / QUESTIONS_PER_LEVEL) * 100);
+        existing.bestScore = Math.max(existing.bestScore, score);
+        existing.bestPercentage = Math.max(existing.bestPercentage, percentage);
+      });
+      existing.timeSeconds += Number(studyTime.byCourse?.[categoryId] || 0);
+      analyticsByCategory.set(categoryId, existing);
+    });
+  });
+
+  return [...analyticsByCategory.values()].sort((left, right) => {
+    if (right.bestPercentage !== left.bestPercentage) {
+      return right.bestPercentage - left.bestPercentage;
+    }
+    return right.attempts - left.attempts;
+  });
+}
+
+function renderMiniActivityChart(target, studyTime, scoreHistory) {
+  if (!target) {
+    return;
+  }
+
+  ensureStudyTimeShape(studyTime);
+  const dayItems = getPastSevenDaysActivity(studyTime.byDay || {}, scoreHistory || []);
+  const maxSeconds = Math.max(...dayItems.map((item) => item.seconds), 0);
+  target.innerHTML = dayItems
+    .map((item) => {
+      const height = maxSeconds > 0 ? Math.max(10, Math.round((item.seconds / maxSeconds) * 100)) : 10;
+      return `
+        <div class="hero-activity-day">
+          <div class="hero-activity-meta">
+            <span class="hero-activity-time">${formatCompactStudyTime(item.seconds)}</span>
+            <span class="hero-activity-achievement">${item.levelsCompleted} done</span>
+          </div>
+          <div class="hero-activity-bar-wrap">
+            <div class="hero-activity-bar ${item.seconds === 0 ? "is-empty" : ""}" style="height:${height}px"></div>
+          </div>
+          <span class="hero-activity-label">${item.label}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderParentDashboard() {
+  const account = getCurrentAccount();
+  if (!elements.parentDashboardSection) {
+    return;
+  }
+
+  const isParent = account?.type === "parent";
+  elements.parentDashboardSection.classList.toggle("hidden", !isParent);
+  if (!isParent) {
+    return;
+  }
+
+  const childEntries = Object.values(account.children || {});
+  const selectedChildId = account.activeChildId || childEntries[0]?.id || "";
+  const activeChild = selectedChildId ? account.children?.[selectedChildId] : null;
+
+  if (!childEntries.length || !activeChild) {
+    elements.parentDashboardEmpty?.classList.remove("hidden");
+    elements.parentDashboardBody?.classList.add("hidden");
+    return;
+  }
+
+  elements.parentDashboardEmpty?.classList.add("hidden");
+  elements.parentDashboardBody?.classList.remove("hidden");
+
+  if (elements.parentDashboardLearnerGrid) {
+    elements.parentDashboardLearnerGrid.innerHTML = childEntries
+      .map((child) => `
+        <button type="button" class="parent-dashboard-learner-card ${child.id === selectedChildId ? "is-active" : ""}" data-parent-dashboard-child="${child.id}">
+          ${child.avatarDataUrl
+            ? `<img class="parent-dashboard-learner-photo" src="${child.avatarDataUrl}" alt="${escapeHtml(child.name)}" />`
+            : `<div class="parent-dashboard-learner-photo parent-dashboard-learner-photo--placeholder">${escapeHtml((child.name || "?").charAt(0).toUpperCase())}</div>`}
+          <strong>${escapeHtml(child.name)}</strong>
+          <small>Grade ${child.grade}</small>
+        </button>
+      `)
+      .join("");
+  }
+
+  const totalStudy = getTotalStudySeconds(activeChild.studyTime);
+  const weeklyStudy = getWeeklySeconds(activeChild.studyTime);
+  const completedLevels = countCompletedLevelsFromProgress(activeChild.progress || {});
+  const averageScore = getAverageScorePercentage(activeChild.scoreHistory || []);
+  const topicAnalytics = getTopicAnalytics(activeChild);
+
+  if (elements.parentDashboardName) {
+    elements.parentDashboardName.textContent = activeChild.name;
+  }
+  if (elements.parentDashboardAvatar) {
+    if (activeChild.avatarDataUrl) {
+      elements.parentDashboardAvatar.innerHTML = `<img src="${activeChild.avatarDataUrl}" alt="${escapeHtml(activeChild.name)}" />`;
+      elements.parentDashboardAvatar.classList.remove("parent-dashboard-avatar--placeholder");
+    } else {
+      elements.parentDashboardAvatar.textContent = (activeChild.name || "?").charAt(0).toUpperCase();
+      elements.parentDashboardAvatar.classList.add("parent-dashboard-avatar--placeholder");
+    }
+  }
+  elements.parentDashboardTotalTime && (elements.parentDashboardTotalTime.textContent = formatStudyTime(totalStudy));
+  elements.parentDashboardWeekTime && (elements.parentDashboardWeekTime.textContent = formatStudyTime(weeklyStudy));
+  elements.parentDashboardLevels && (elements.parentDashboardLevels.textContent = String(completedLevels));
+  elements.parentDashboardAverage && (elements.parentDashboardAverage.textContent = `${averageScore}%`);
+
+  renderMiniActivityChart(elements.parentDashboardChart, activeChild.studyTime || createEmptyStudyTime(), activeChild.scoreHistory || []);
+
+  if (elements.parentDashboardAnalysis) {
+    if (!topicAnalytics.length) {
+      elements.parentDashboardAnalysis.innerHTML = `<div class="history-empty">This learner has not completed any topic yet.</div>`;
+    } else {
+      elements.parentDashboardAnalysis.innerHTML = `
+        <div class="parent-dashboard-analysis-table">
+          <div class="parent-dashboard-analysis-head">Topic</div>
+          <div class="parent-dashboard-analysis-head">Grade</div>
+          <div class="parent-dashboard-analysis-head">Attempts</div>
+          <div class="parent-dashboard-analysis-head">Best Score</div>
+          <div class="parent-dashboard-analysis-head">Study Time</div>
+          ${topicAnalytics.slice(0, 12).map((item) => `
+            <div class="parent-dashboard-analysis-cell">${escapeHtml(item.title)}</div>
+            <div class="parent-dashboard-analysis-cell">Grade ${item.grade}</div>
+            <div class="parent-dashboard-analysis-cell">${item.attempts}</div>
+            <div class="parent-dashboard-analysis-cell">${item.bestScore}/${QUESTIONS_PER_LEVEL} (${item.bestPercentage}%)</div>
+            <div class="parent-dashboard-analysis-cell">${formatStudyTime(item.timeSeconds)}</div>
+          `).join("")}
+        </div>
+      `;
+    }
   }
 }
 
@@ -3754,6 +4126,7 @@ function renderStudyTime() {
   elements.courseTimeLabel.textContent = formatStudyTime(courseSeconds);
   elements.dailyTimeLabel.textContent = formatStudyTime(todaySeconds);
   renderHeroActivity();
+  renderParentDashboard();
 }
 
 function formatStudyTime(totalSeconds) {

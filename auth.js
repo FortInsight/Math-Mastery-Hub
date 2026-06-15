@@ -115,7 +115,7 @@
     const role = metadata.account_type === "parent" ? "Parent account" : "Learner account";
 
     setText("auth-account-name", displayName);
-    setText("auth-account-meta", user ? `${role} | ${user.email || "Signed in"}` : "Open login to continue");
+    setText("auth-account-meta", user ? role : "Open login to continue");
     setHidden("open-login-link", Boolean(user));
     setHidden("open-account-tools-button", !user);
     setHidden("logout-auth-button", !user);
@@ -129,7 +129,7 @@
       }
 
       setText("auth-account-name", learnerSession.childName || "Learner");
-      setText("auth-account-meta", `Learner profile | ${learnerSession.childUsername || "Child session"}`);
+      setText("auth-account-meta", "Learner account");
       setHidden("open-login-link", true);
       setHidden("open-account-tools-button", true);
       setHidden("logout-auth-button", false);
