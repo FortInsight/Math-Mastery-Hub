@@ -4659,6 +4659,10 @@ function decimalString(numerator, denominator) {
   return rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
 }
 
+function unitLabel(value, singular = "unit", plural = "units") {
+  return `${value} ${Number(value) === 1 ? singular : plural}`;
+}
+
 function formatDecimalAnswer(value, digits = 2, minimumPlaces = 1) {
   const fixed = Number(value).toFixed(digits);
   const [whole, fraction = ""] = fixed.split(".");
@@ -7473,13 +7477,19 @@ const questionFactories = {
 
     const first = number(grade * difficulty, grade * difficultyStep(4, difficulty, 60) + 10, rng);
     const second = number(grade, grade * difficultyStep(3, difficulty, 45) + 5, rng);
-    const correct = Math.max(first, second);
-    const optionValues = shuffle([first, second, correct + 2, Math.max(1, correct - 2)], rng);
+    const larger = Math.max(first, second);
+    const smaller = Math.min(first, second);
+    const correct = larger - smaller;
+    const { options, answerIndex } = buildOptions(correct, [
+      correct + 1,
+      correct + 2,
+      Math.max(1, correct - 1)
+    ], rng);
     return {
-      prompt: `Which measurement is larger?`,
-      options: optionValues.map((value) => `${value} units`),
-      answerIndex: optionValues.indexOf(correct),
-      explanation: `${correct} units is the larger measurement.`
+      prompt: `One ribbon is ${unitLabel(larger)} long and another is ${unitLabel(smaller)} long. How many units longer is the longer ribbon?`,
+      options: options.map((value) => unitLabel(value)),
+      answerIndex,
+      explanation: `Subtract the smaller measurement from the larger one: ${larger} - ${smaller} = ${unitLabel(correct)}.`
     };
   },
 
