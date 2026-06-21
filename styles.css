@@ -397,7 +397,7 @@ h1 {
 
 .content {
   display: grid;
-  gap: 1.5rem;
+  gap: 0.8rem;
   align-content: start;
 }
 
@@ -408,6 +408,10 @@ h1 {
 .card {
   border-radius: 0;
   padding: 1.5rem;
+}
+
+.content > .card {
+  padding: 1rem 1.1rem;
 }
 
 .hero,
@@ -486,7 +490,7 @@ h1 {
 }
 
 .section-heading {
-  margin-bottom: 1rem;
+  margin-bottom: 0.55rem;
 }
 
 .section-heading--collapsible {
@@ -532,7 +536,7 @@ h1 {
 }
 
 .compact-heading {
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.35rem;
 }
 
 .compact-heading p {
@@ -833,7 +837,7 @@ h1 {
 }
 
 .level-actions {
-  margin-top: 1rem;
+  margin-top: 0.6rem;
   display: flex;
   justify-content: flex-end;
   position: relative;
@@ -1040,8 +1044,8 @@ h1 {
 }
 
 .category-current-card {
-  margin-top: 1rem;
-  padding: 1.15rem 1.2rem;
+  margin-top: 0.55rem;
+  padding: 0.8rem 1rem;
   border-radius: 22px;
   text-align: left;
   background:
@@ -1067,7 +1071,7 @@ h1 {
 
 .category-current-card small {
   display: block;
-  margin-top: 0.7rem;
+  margin-top: 0.45rem;
   color: #12386f;
   font-size: 0.98rem;
   font-weight: 800;
@@ -1578,9 +1582,13 @@ h1 {
 
 .review-controls {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.55rem;
   flex-wrap: wrap;
   align-items: center;
+}
+
+#review-empty {
+  margin-top: 0.5rem;
 }
 
 .review-controls select {

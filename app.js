@@ -2455,6 +2455,18 @@ function normalizeQuestionPrompt(prompt) {
     .replace(/\s+/g, " ");
 }
 
+function isDecimalAnswerPrompt(prompt) {
+  const text = String(prompt || "").toLowerCase();
+  return text.includes("what decimal is equal to")
+    || (text.includes("convert") && text.includes("to a decimal"))
+    || (text.includes("write") && text.includes(" as a decimal"))
+    || text.includes("which decimal is greatest");
+}
+
+function looksLikeDecimalOption(value) {
+  return /^-?\d+(\.\d+)?$/.test(String(value || "").trim());
+}
+
 function isValidQuestion(question) {
   if (!question || typeof question.prompt !== "string" || !question.prompt.trim()) {
     return false;
@@ -2464,25 +2476,65 @@ function isValidQuestion(question) {
     return true;
   }
 
-  return Array.isArray(question.options)
+  const hasValidOptions = Array.isArray(question.options)
     && question.options.length >= 2
     && Number.isInteger(question.answerIndex)
     && question.answerIndex >= 0
     && question.answerIndex < question.options.length;
+
+  if (!hasValidOptions) {
+    return false;
+  }
+
+  if (isDecimalAnswerPrompt(question.prompt)) {
+    return question.options.every((option) => looksLikeDecimalOption(option));
+  }
+
+  return true;
 }
 
 function buildEmergencyQuestion(category, grade, difficulty, index) {
-  const baseA = Math.max(2, grade + difficulty + (index % 4));
-  const baseB = baseA + 2;
-  const correct = String(baseB);
-  const distractors = [String(baseA), String(baseB + 2), String(Math.max(1, baseA - 1))];
+  if (category?.factory === "fractionsDecimalsPercent") {
+    const fractionDecimalPool = [
+      { fraction: "1/2", decimal: "0.5" },
+      { fraction: "1/4", decimal: "0.25" },
+      { fraction: "3/4", decimal: "0.75" },
+      { fraction: "1/5", decimal: "0.2" },
+      { fraction: "2/5", decimal: "0.4" },
+      { fraction: "4/5", decimal: "0.8" }
+    ];
+    const selected = fractionDecimalPool[index % fractionDecimalPool.length];
+    const { options, answerIndex } = buildOptions(
+      selected.decimal,
+      fractionDecimalPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal),
+      mulberry32(hashCode(`fraction-decimal-fallback-${category.id}-${grade}-${difficulty}-${index}`))
+    );
+    return {
+      prompt: `What decimal is equal to ${selected.fraction}?`,
+      options,
+      answerIndex,
+      explanation: `${selected.fraction} is equal to ${selected.decimal} as a decimal.`,
+      hint: "Divide the numerator by the denominator to write the fraction as a decimal."
+    };
+  }
+
+  const start = Math.max(1, grade + difficulty + (index % 3));
+  const sequence = [start, start + 1, start + 2, start + 3];
+  const missingIndex = index % sequence.length;
+  const correct = String(sequence[missingIndex]);
+  const visible = sequence.map((value, idx) => idx === missingIndex ? "__" : value).join(", ");
+  const distractors = [
+    String(sequence[Math.max(0, missingIndex - 1)]),
+    String(sequence[Math.min(sequence.length - 1, missingIndex + 1)]),
+    String(sequence[missingIndex] + 2)
+  ].filter((value, optionIndex, array) => array.indexOf(value) === optionIndex && value !== correct);
   const { options, answerIndex } = buildOptions(correct, distractors, mulberry32(hashCode(`${category.id}-${grade}-${difficulty}-${index}`)));
   return {
-    prompt: `Quick practice for ${category.title}: which number is greatest?`,
+    prompt: `Fill in the missing number for ${category.title}: ${visible}`,
     options,
     answerIndex,
-    explanation: `${baseB} is greater than ${baseA}, ${baseB + 2 - 2}, and ${Math.max(1, baseA - 1)}.`,
-    hint: "Compare the numbers and choose the largest one."
+    explanation: `The numbers count in order, so the missing number is ${correct}.`,
+    hint: "Look at the pattern and count forward by ones."
   };
 }
 
@@ -4434,12 +4486,17 @@ function shuffle(list, rng) {
 function buildOptions(correct, distractors, rng, formatter = (value) => String(value)) {
   const rawPool = shuffle([correct, ...distractors], rng);
   const options = [];
-  const seen = new Set();
+  const seenLabels = new Set();
+  const seenMathKeys = new Set();
 
   rawPool.forEach((value) => {
     const label = formatter(value);
-    if (!seen.has(label)) {
-      seen.add(label);
+    const mathKey = mathEquivalentKey(label);
+    if (!seenLabels.has(label) && (!mathKey || !seenMathKeys.has(mathKey))) {
+      seenLabels.add(label);
+      if (mathKey) {
+        seenMathKeys.add(mathKey);
+      }
       options.push(label);
     }
   });
@@ -4448,8 +4505,12 @@ function buildOptions(correct, distractors, rng, formatter = (value) => String(v
   while (options.length < 4 && attempt <= 12 && canAutoGenerateFallbackOptions(correct)) {
     const fallbackValue = buildFallbackOptionValue(correct, attempt);
     const fallbackLabel = formatter(fallbackValue);
-    if (!seen.has(fallbackLabel)) {
-      seen.add(fallbackLabel);
+    const fallbackMathKey = mathEquivalentKey(fallbackLabel);
+    if (!seenLabels.has(fallbackLabel) && (!fallbackMathKey || !seenMathKeys.has(fallbackMathKey))) {
+      seenLabels.add(fallbackLabel);
+      if (fallbackMathKey) {
+        seenMathKeys.add(fallbackMathKey);
+      }
       options.push(fallbackLabel);
     }
     attempt += 1;
@@ -4596,6 +4657,59 @@ function decimalString(numerator, denominator) {
   const value = numerator / denominator;
   const rounded = Math.round(value * 100) / 100;
   return rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function formatDecimalAnswer(value, digits = 2, minimumPlaces = 1) {
+  const fixed = Number(value).toFixed(digits);
+  const [whole, fraction = ""] = fixed.split(".");
+  if (!fraction.length) {
+    return whole;
+  }
+
+  let trimmed = fraction.replace(/0+$/, "");
+  if (minimumPlaces > 0) {
+    trimmed = trimmed.padEnd(minimumPlaces, "0");
+  }
+
+  return trimmed ? `${whole}.${trimmed}` : whole;
+}
+
+function fractionResultString(numerator, denominator) {
+  const value = simplifyFraction(numerator, denominator);
+  return value.denominator === 1
+    ? String(value.numerator)
+    : `${value.numerator}/${value.denominator}`;
+}
+
+function mathEquivalentKey(value) {
+  const text = String(value ?? "").trim();
+  if (!text) {
+    return null;
+  }
+
+  if (/^-?\d+\/-?\d+$/.test(text)) {
+    const [rawNumerator, rawDenominator] = text.split("/").map(Number);
+    if (!rawDenominator) {
+      return null;
+    }
+    const denominatorSign = rawDenominator < 0 ? -1 : 1;
+    const simplified = simplifyFraction(rawNumerator * denominatorSign, Math.abs(rawDenominator));
+    return `number:${(simplified.numerator / simplified.denominator).toFixed(8)}`;
+  }
+
+  if (/^\$-?\d+(\.\d+)?$/.test(text)) {
+    return `number:${Number(text.replace("$", "")).toFixed(8)}`;
+  }
+
+  if (/^-?\d+(\.\d+)?%$/.test(text)) {
+    return `number:${(Number(text.replace("%", "")) / 100).toFixed(8)}`;
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(text)) {
+    return `number:${Number(text).toFixed(8)}`;
+  }
+
+  return null;
 }
 
 function probabilityExplanation(steps) {
@@ -6823,13 +6937,13 @@ const questionFactories = {
     if (mode === 0) {
       const a = number(min, max, rng);
       const b = number(min, max, rng);
-      const correct = Math.max(a, b);
-      const { options, answerIndex } = buildOptions(correct, [Math.min(a, b), correct + 1, Math.max(0, correct - 1)], rng);
+      const correct = a > b ? ">" : "<";
+      const { options, answerIndex } = buildOptions(correct, ["<", ">", "="].filter((item) => item !== correct), rng);
       return {
-        prompt: `Which number is greater?`,
-        options: [`${a} and ${b} → ${options[0]}`, `${a} and ${b} → ${options[1]}`, `${a} and ${b} → ${options[2]}`, `${a} and ${b} → ${options[3]}`],
+        prompt: `Which sign makes this true: ${a} __ ${b}?`,
+        options,
         answerIndex,
-        explanation: `Compare the values. ${correct} is greater than ${Math.min(a, b)}.`
+        explanation: `${a} ${correct} ${b} because ${a > b ? `${a} is greater than ${b}` : `${a} is less than ${b}`}.`
       };
     }
 
@@ -6982,11 +7096,11 @@ const questionFactories = {
           [3.6, 0.78],
           [9.25, 4.17]
         ], rng);
-        const correct = (values[0] - values[1]).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        const correct = formatDecimalAnswer(values[0] - values[1], 2, 1);
         const { options, answerIndex } = buildOptions(correct, [
-          (values[0] + values[1]).toFixed(2),
-          (values[1] - values[0]).toFixed(2),
-          (Number(correct) + 1).toFixed(2)
+          formatDecimalAnswer(values[0] + values[1], 2, 1),
+          formatDecimalAnswer(values[1] - values[0], 2, 1),
+          formatDecimalAnswer(Number(correct) + 1, 2, 1)
         ], rng);
         return {
           prompt: `What is ${values[0]} - ${values[1]}?`,
@@ -7018,13 +7132,19 @@ const questionFactories = {
         number(11, 98, rng) / 10,
         number(11, 98, rng) / 10
       ], rng).map((value) => Number(value.toFixed(1)));
-      const correct = Math.max(...values);
-      const { options, answerIndex } = buildOptions(correct, values.filter((value) => value !== correct).slice(0, 3), rng);
+      const sorted = [...values].sort((a, b) => a - b);
+      const correct = formatDecimalAnswer(sorted[1] + sorted[2], 1, 1);
+      const distractors = [
+        formatDecimalAnswer(sorted[0] + sorted[3], 1, 1),
+        formatDecimalAnswer(sorted[2] - sorted[1], 1, 1),
+        formatDecimalAnswer(sorted[3] - sorted[0], 1, 1)
+      ];
+      const { options, answerIndex } = buildOptions(correct, distractors, rng);
       return {
-        prompt: `Which decimal is greatest?`,
+        prompt: `What is ${formatDecimalAnswer(sorted[1], 1, 1)} + ${formatDecimalAnswer(sorted[2], 1, 1)}?`,
         options,
         answerIndex,
-        explanation: `Compare the whole-number part first, then compare the tenths and hundredths. ${correct} is greatest.`
+        explanation: `Line up the decimal points and add ${formatDecimalAnswer(sorted[1], 1, 1)} + ${formatDecimalAnswer(sorted[2], 1, 1)} to get ${correct}.`
       };
     }
 
@@ -7044,10 +7164,10 @@ const questionFactories = {
 
       if (index % 3 === 1) {
         const percent = pick([5, 12, 18, 25, 40, 62, 75], rng);
-        const correct = (percent / 100).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        const correct = formatDecimalAnswer(percent / 100, 2, 1);
         const { options, answerIndex } = buildOptions(correct, [
-          ((percent / 10)).toFixed(2),
-          Math.max(0, (percent / 100) - 0.1).toFixed(2),
+          formatDecimalAnswer(percent / 10, 2, 1),
+          formatDecimalAnswer(Math.max(0, (percent / 100) - 0.1), 2, 1),
           `${percent}/10`
         ], rng);
         return {
@@ -7147,12 +7267,11 @@ const questionFactories = {
           const firstNumerator = number(1, denominator - 1, rng);
           const secondNumerator = number(1, denominator - firstNumerator, rng);
           const sum = firstNumerator + secondNumerator;
-          const simplified = simplifyFraction(sum, denominator);
-          const correct = `${simplified.numerator}/${simplified.denominator}`;
+          const correct = fractionResultString(sum, denominator);
           const distractors = [
-            `${sum}/${denominator}`,
-            `${Math.max(1, sum - 1)}/${denominator}`,
-            `${simplified.denominator}/${simplified.numerator}`
+            fractionResultString(Math.max(1, sum - 1), denominator),
+            `${Math.min(denominator, sum + 1)}/${denominator}`,
+            `${denominator + 1}/${Math.max(1, sum)}`
           ];
           const { options, answerIndex } = buildOptions(correct, distractors, rng);
           return {
@@ -7248,11 +7367,11 @@ const questionFactories = {
           [0.62, 0.19],
           [0.75, 0.08]
         ], rng);
-        const total = (hundredths[0] + hundredths[1]).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        const total = formatDecimalAnswer(hundredths[0] + hundredths[1], 2, 1);
         const { options, answerIndex } = buildOptions(total, [
-          (hundredths[0] - hundredths[1]).toFixed(2).replace(/0+$/, "").replace(/\.$/, ""),
-          (hundredths[0] + hundredths[1] + 0.1).toFixed(2).replace(/0+$/, "").replace(/\.$/, ""),
-          (hundredths[0] + hundredths[1] - 0.1).toFixed(2).replace(/0+$/, "").replace(/\.$/, "")
+          formatDecimalAnswer(hundredths[0] - hundredths[1], 2, 1),
+          formatDecimalAnswer(hundredths[0] + hundredths[1] + 0.1, 2, 1),
+          formatDecimalAnswer(hundredths[0] + hundredths[1] - 0.1, 2, 1)
         ], rng);
         return {
           prompt: `What is ${hundredths[0]} + ${hundredths[1]}?`,
@@ -7286,25 +7405,25 @@ const questionFactories = {
       const percentPool = difficulty <= 7 ? [5, 10, 20, 25, 40, 50, 75] : [5, 12, 15, 18, 20, 25, 40, 62, 75, 85];
       const percent = pick(percentPool, rng);
       const correct = percent / 100;
-      const { options, answerIndex } = buildOptions(correct.toFixed(2), [
-        (correct + 0.1).toFixed(2),
-        Math.max(0, correct - 0.1).toFixed(2),
-        (correct * 10).toFixed(2)
+      const { options, answerIndex } = buildOptions(formatDecimalAnswer(correct, 2, 1), [
+        formatDecimalAnswer(correct + 0.1, 2, 1),
+        formatDecimalAnswer(Math.max(0, correct - 0.1), 2, 1),
+        formatDecimalAnswer(correct * 10, 2, 1)
       ], rng);
       return {
         prompt: `Convert ${percent}% to a decimal.`,
         options,
         answerIndex,
-        explanation: `${percent}% means ${percent}/100, so the decimal is ${correct.toFixed(2)}.`
+        explanation: `${percent}% means ${percent}/100, so the decimal is ${formatDecimalAnswer(correct, 2, 1)}.`
       };
     }
 
     const denominator = pick(difficulty <= 5 ? [2, 4, 5, 10] : [2, 4, 5, 8, 10, 20], rng);
     const numerator = number(1, denominator - 1, rng);
-    const correct = (numerator / denominator).toFixed(2);
+    const correct = formatDecimalAnswer(numerator / denominator, 2, 1);
     const { options, answerIndex } = buildOptions(correct, [
-      (Math.min(0.99, numerator / denominator + 0.1)).toFixed(2),
-      Math.max(0, numerator / denominator - 0.1).toFixed(2),
+      formatDecimalAnswer(Math.min(0.99, numerator / denominator + 0.1), 2, 1),
+      formatDecimalAnswer(Math.max(0, numerator / denominator - 0.1), 2, 1),
       `${numerator}${denominator}`
     ], rng);
     return {
