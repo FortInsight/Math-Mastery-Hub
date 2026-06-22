@@ -5,11 +5,11 @@
   <script src="supabase-config.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grammar & Maths Mastery Hub</title>
+  <title>Alberta Curriculum | Grammar & Maths Mastery Hub</title>
   <meta name="theme-color" content="#12386f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Grammar & Maths Mastery Hub" />
+  <meta name="apple-mobile-web-app-title" content="Alberta Curriculum Hub" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -24,7 +24,7 @@
       <div class="hero-copy">
         <div class="hero-topbar">
           <div class="hero-topbar-title">
-            <p class="eyebrow">Grade 1 to 12 Learning App</p>
+            <p class="eyebrow">Alberta Curriculum Learning App</p>
             <strong>Grammar & Maths Mastery Hub</strong>
           </div>
           <div class="hero-topbar-actions">
@@ -37,10 +37,10 @@
           </div>
         </div>
         <div id="hero-copy-content" class="hidden">
-        <p class="eyebrow">Grade 1 to 12 Learning App</p>
+        <p class="eyebrow">Alberta Curriculum Learning App</p>
         <h1>Grammar & Maths Mastery Hub</h1>
         <p class="hero-text">
-          Practice by grade, choose a grammar or maths topic, answer 10 questions per level, get instant feedback,
+          Practice Alberta-style grammar, reading, writing, and maths by grade, answer 10 questions per level,
           and track your score as you grow.
         </p>
         <div class="hero-actions">
@@ -163,7 +163,7 @@
       </section>
 
       <section class="content">
-        <section class="card">
+        <section id="topics-section" class="card">
           <div class="section-heading compact-heading">
             <h2>Grammar & Maths Topics</h2>
           </div>
@@ -258,6 +258,16 @@
           <div class="section-heading">
             <h2>Level Complete</h2>
             <p id="results-summary"></p>
+          </div>
+          <div id="results-dashboard" class="results-dashboard">
+            <div id="results-metrics" class="results-metrics"></div>
+            <div class="results-chart-card">
+              <div class="results-chart-heading">
+                <strong>Quick Report</strong>
+                <span>Each bar shows one question.</span>
+              </div>
+              <div id="results-chart" class="results-chart" aria-label="Quiz report chart"></div>
+            </div>
           </div>
           <div id="results-breakdown" class="results-breakdown"></div>
           <div class="results-actions">

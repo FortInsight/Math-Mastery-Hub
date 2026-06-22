@@ -90,31 +90,31 @@ const curriculum = {
     makeCategory("relations", "Relations & Graphs", "Interpret graphs, relations, and domain-range ideas.", "functionsGraphing", { level: 9 })
   ],
   10: [
-    makeCategory("algebra", "Advanced Algebra", "Quadratics, radicals, and polynomial operations.", "algebra", { level: 10 }),
-    makeCategory("functions", "Functions & Graphing", "Linear, quadratic, and exponential behaviour.", "functionsGraphing", { level: 10 }),
-    makeCategory("trig", "Trigonometry", "Use right triangle ratios and angle relationships.", "trigonometry", { level: 10 }),
-    makeCategory("statistics", "Statistics & Probability", "Normal ideas, variation, and event probability.", "statisticsProbability", { level: 10 }),
-    makeCategory("geometry", "Measurement & Geometry", "Surface area, volume, and coordinate geometry.", "geometry", { level: 10 }),
-    makeCategory("exponents", "Powers & Radicals", "Simplify radical and exponent expressions.", "algebra", { level: 10 }),
-    makeCategory("finance", "Applied Financial Math", "Use percentage models, budgeting, and interest.", "financialMath", { level: 10 })
+    makeCategory("algebra", "Math 10 Algebra", "Quadratics, radicals, polynomial operations, and algebra foundations.", "algebra", { level: 10 }),
+    makeCategory("functions", "Math 10 Relations & Functions", "Linear, quadratic, and exponential behaviour.", "functionsGraphing", { level: 10 }),
+    makeCategory("trig", "Math 10 Trigonometry", "Use right triangle ratios and angle relationships.", "trigonometry", { level: 10 }),
+    makeCategory("statistics", "Math 10 Statistics & Probability", "Variation, event probability, and data reasoning.", "statisticsProbability", { level: 10 }),
+    makeCategory("geometry", "Math 10 Measurement & Geometry", "Surface area, volume, and coordinate geometry.", "geometry", { level: 10 }),
+    makeCategory("exponents", "Math 10 Powers & Radicals", "Simplify radical and exponent expressions.", "algebra", { level: 10 }),
+    makeCategory("finance", "Math 10 Financial Applications", "Use percentage models, budgeting, and interest.", "financialMath", { level: 10 })
   ],
   11: [
-    makeCategory("functions", "Functions", "Polynomial, rational, logarithmic, and exponential ideas.", "functionsGraphing", { level: 11 }),
-    makeCategory("algebra", "Advanced Algebra", "Sequences, series, and equation solving.", "algebra", { level: 11 }),
-    makeCategory("trig", "Trigonometry", "Unit circle, identities, and solving trig equations.", "trigonometry", { level: 11 }),
-    makeCategory("statistics", "Statistics", "Sampling, distributions, and inference ideas.", "statisticsProbability", { level: 11 }),
-    makeCategory("precalc", "Pre-Calculus", "Rates of change and model analysis.", "functionsGraphing", { level: 11.5 }),
-    makeCategory("sequences", "Sequences & Series", "Work with arithmetic and geometric sequences.", "algebra", { level: 11 }),
-    makeCategory("logarithms", "Exponential & Logarithmic Models", "Study growth, decay, and logarithmic behaviour.", "functionsGraphing", { level: 11.2 })
+    makeCategory("functions", "Math 20 Functions", "Polynomial, rational, logarithmic, and exponential ideas.", "functionsGraphing", { level: 11 }),
+    makeCategory("algebra", "Math 20 Algebra", "Sequences, series, and equation solving.", "algebra", { level: 11 }),
+    makeCategory("trig", "Math 20 Trigonometry", "Unit circle, identities, and solving trig equations.", "trigonometry", { level: 11 }),
+    makeCategory("statistics", "Math 20 Statistics", "Sampling, distributions, counting principles, and inference ideas.", "statisticsProbability", { level: 11 }),
+    makeCategory("precalc", "Math 20 Pre-Calculus", "Rates of change and model analysis.", "functionsGraphing", { level: 11.5 }),
+    makeCategory("sequences", "Math 20 Sequences & Series", "Work with arithmetic and geometric sequences.", "algebra", { level: 11 }),
+    makeCategory("logarithms", "Math 20 Exponential & Logarithmic Models", "Study growth, decay, and logarithmic behaviour.", "functionsGraphing", { level: 11.2 })
   ],
   12: [
-    makeCategory("calculus", "Calculus", "Limits, derivatives, and real-world applications.", "calculus", { level: 12 }),
-    makeCategory("advanced-func", "Advanced Functions", "Composite, inverse, and transformed functions.", "functionsGraphing", { level: 12 }),
-    makeCategory("trig", "Trigonometry", "Advanced identities and modelling.", "trigonometry", { level: 12 }),
-    makeCategory("statistics", "Statistics & Probability", "Expected value, inference, and models.", "statisticsProbability", { level: 12 }),
-    makeCategory("financial", "Financial Math", "Loans, annuities, and growth models.", "financialMath", { level: 12 }),
-    makeCategory("derivatives", "Derivatives & Applications", "Use derivative rules and interpret rates of change.", "calculus", { level: 12 }),
-    makeCategory("integrated-func", "Function Transformations", "Combine advanced functions, graphs, and modelling.", "functionsGraphing", { level: 12.2 })
+    makeCategory("calculus", "Math 30 Calculus", "Limits, derivatives, and real-world applications.", "calculus", { level: 12 }),
+    makeCategory("advanced-func", "Math 30 Advanced Functions", "Composite, inverse, and transformed functions.", "functionsGraphing", { level: 12 }),
+    makeCategory("trig", "Math 30 Trigonometry", "Advanced identities and modelling.", "trigonometry", { level: 12 }),
+    makeCategory("statistics", "Math 30 Statistics & Probability", "Expected value, inference, and model-based reasoning.", "statisticsProbability", { level: 12 }),
+    makeCategory("financial", "Math 30 Financial Math", "Loans, annuities, and growth models.", "financialMath", { level: 12 }),
+    makeCategory("derivatives", "Math 30 Derivatives & Applications", "Use derivative rules and interpret rates of change.", "calculus", { level: 12 }),
+    makeCategory("integrated-func", "Math 30 Function Transformations", "Combine advanced functions, graphs, and modelling.", "functionsGraphing", { level: 12.2 })
   ]
 };
 
@@ -825,6 +825,7 @@ const elements = {
   quizSection: document.getElementById("quiz-section"),
   resultsSection: document.getElementById("results-section"),
   selectedGradeLabel: document.getElementById("selected-grade-label"),
+  topicsSection: document.getElementById("topics-section"),
   saveStatusLabel: document.getElementById("save-status-label"),
   selectedCategoryLabel: document.getElementById("selected-category-label"),
   completedLevelsLabel: document.getElementById("completed-levels-label"),
@@ -852,6 +853,9 @@ const elements = {
   progressBar: document.getElementById("progress-bar"),
   liveScore: document.getElementById("live-score"),
   resultsSummary: document.getElementById("results-summary"),
+  resultsDashboard: document.getElementById("results-dashboard"),
+  resultsMetrics: document.getElementById("results-metrics"),
+  resultsChart: document.getElementById("results-chart"),
   resultsBreakdown: document.getElementById("results-breakdown"),
   retryLevelButton: document.getElementById("retry-level-button"),
   nextLevelButton: document.getElementById("next-level-button"),
@@ -1098,6 +1102,9 @@ function renderGradeButtons() {
       renderCategories();
       renderTopicSearch();
       renderStudyTime();
+      window.setTimeout(() => {
+        elements.topicsSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0);
     });
     elements.gradeButtons.appendChild(button);
   });
@@ -1679,7 +1686,7 @@ function checkAnswer(selectedIndex, selectedButton) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "🎉" : "😅"}</span>
+      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
       <strong class="feedback-title">${isCorrect ? "Correct!" : "Not quite."}</strong>
     </div>
     <div>${question.explanation}</div>
@@ -1819,6 +1826,7 @@ function completeLevel() {
     ? `Cross-grade mastery`
     : `Grade ${state.selectedGrade}`;
   elements.resultsSummary.textContent = `You scored ${state.score} out of ${QUESTIONS_PER_LEVEL} in ${resultPrefix} ${activeContext.title}, Level ${state.selectedLevel} (${percentage}%). ${saveMessage}`;
+  renderResultsDashboard(state.lastResults, state.score);
   elements.resultsBreakdown.innerHTML = state.lastResults
     .map((result, index) => renderResultItem(result, index))
     .join("");
@@ -1915,7 +1923,7 @@ function showFeedback(isCorrect, explanation) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "🎸" : "😅"}</span>
+      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
       <strong class="feedback-title">${isCorrect ? "Yeah!" : "Oh no."}</strong>
     </div>
     <div>${isCorrect ? "Yeah, you got it." : "That is not correct. Check the hint to learn more."}</div>
@@ -2125,6 +2133,48 @@ function renderResultItem(result, index) {
       <span>${result.explanation}</span>
     </div>
   `;
+}
+
+function renderResultsDashboard(results, score) {
+  if (!elements.resultsMetrics || !elements.resultsChart) {
+    return;
+  }
+
+  const total = results.length || QUESTIONS_PER_LEVEL;
+  const correct = results.filter((item) => item.correct).length;
+  const wrong = Math.max(0, total - correct);
+  const percentage = total ? Math.round((correct / total) * 100) : 0;
+
+  elements.resultsMetrics.innerHTML = `
+    <div class="results-metric-card">
+      <span class="results-metric-label">Score</span>
+      <strong>${score}/${total}</strong>
+    </div>
+    <div class="results-metric-card success">
+      <span class="results-metric-label">Correct</span>
+      <strong>${correct}</strong>
+    </div>
+    <div class="results-metric-card error">
+      <span class="results-metric-label">Wrong</span>
+      <strong>${wrong}</strong>
+    </div>
+    <div class="results-metric-card highlight">
+      <span class="results-metric-label">Accuracy</span>
+      <strong>${percentage}%</strong>
+      <div class="results-accuracy-bar" aria-hidden="true">
+        <div class="results-accuracy-fill" style="width:${percentage}%"></div>
+      </div>
+    </div>
+  `;
+
+  elements.resultsChart.innerHTML = results
+    .map((result, index) => `
+      <div class="results-chart-item ${result.correct ? "is-correct" : "is-wrong"}" title="Question ${index + 1}: ${result.correct ? "Correct" : "Wrong"}">
+        <span class="results-chart-bar"></span>
+        <small>Q${index + 1}</small>
+      </div>
+    `)
+    .join("");
 }
 
 function getSelectedCategory() {
@@ -2518,23 +2568,17 @@ function buildEmergencyQuestion(category, grade, difficulty, index) {
     };
   }
 
-  const start = Math.max(1, grade + difficulty + (index % 3));
-  const sequence = [start, start + 1, start + 2, start + 3];
-  const missingIndex = index % sequence.length;
-  const correct = String(sequence[missingIndex]);
-  const visible = sequence.map((value, idx) => idx === missingIndex ? "__" : value).join(", ");
-  const distractors = [
-    String(sequence[Math.max(0, missingIndex - 1)]),
-    String(sequence[Math.min(sequence.length - 1, missingIndex + 1)]),
-    String(sequence[missingIndex] + 2)
-  ].filter((value, optionIndex, array) => array.indexOf(value) === optionIndex && value !== correct);
-  const { options, answerIndex } = buildOptions(correct, distractors, mulberry32(hashCode(`${category.id}-${grade}-${difficulty}-${index}`)));
+  const fallbackRng = mulberry32(hashCode(`${category.id}-${grade}-${difficulty}-${index}`));
+  const compareA = number(Math.max(5, grade * 2), Math.max(20, grade * 20), fallbackRng);
+  const compareB = number(Math.max(5, grade * 2), Math.max(20, grade * 20), fallbackRng);
+  const correct = compareA > compareB ? ">" : compareA < compareB ? "<" : "=";
+  const { options, answerIndex } = buildOptions(correct, ["<", ">", "="].filter((item) => item !== correct), fallbackRng);
   return {
-    prompt: `Fill in the missing number for ${category.title}: ${visible}`,
+    prompt: `Which sign makes this true for ${category.title}: ${compareA} __ ${compareB}?`,
     options,
     answerIndex,
-    explanation: `The numbers count in order, so the missing number is ${correct}.`,
-    hint: "Look at the pattern and count forward by ones."
+    explanation: `${compareA} ${correct} ${compareB}, so ${correct} is the correct sign.`,
+    hint: "Compare the two numbers carefully from greatest to least."
   };
 }
 
@@ -4336,6 +4380,13 @@ function makeEnglishCategories(grade) {
       { grade, skill: "grammar" }
     ),
     makeCategory(
+      "english-reading",
+      "English Reading",
+      englishReadingDescription(grade),
+      "englishReading",
+      { grade, skill: "reading" }
+    ),
+    makeCategory(
       "english-vocabulary",
       "English Vocabulary",
       englishVocabularyDescription(grade),
@@ -4417,6 +4468,19 @@ function englishVocabularyDescription(grade) {
   return "Master advanced vocabulary, nuanced meaning, and precise diction.";
 }
 
+function englishReadingDescription(grade) {
+  if (grade <= 3) {
+    return "Practice main idea, details, sequence, and early story understanding.";
+  }
+  if (grade <= 6) {
+    return "Build comprehension with inference, context clues, theme, and text features.";
+  }
+  if (grade <= 9) {
+    return "Practice literary and informational reading, evidence, inference, and author's purpose.";
+  }
+  return "Develop advanced comprehension, analysis, argument, tone, bias, and evidence-based reading.";
+}
+
 function englishWritingDescription(grade) {
   if (grade <= 3) {
     return "Practice complete sentences, story openings, and simple writing choices.";
@@ -4488,6 +4552,7 @@ function buildOptions(correct, distractors, rng, formatter = (value) => String(v
   const options = [];
   const seenLabels = new Set();
   const seenMathKeys = new Set();
+  const correctLabel = formatter(correct);
 
   rawPool.forEach((value) => {
     const label = formatter(value);
@@ -4502,9 +4567,10 @@ function buildOptions(correct, distractors, rng, formatter = (value) => String(v
   });
 
   let attempt = 1;
-  while (options.length < 4 && attempt <= 12 && canAutoGenerateFallbackOptions(correct)) {
-    const fallbackValue = buildFallbackOptionValue(correct, attempt);
-    const fallbackLabel = formatter(fallbackValue);
+  while (options.length < 4 && attempt <= 20) {
+    const fallbackLabel = canAutoGenerateFallbackOptions(correct)
+      ? formatter(buildFallbackOptionValue(correct, attempt))
+      : buildGenericFallbackOptionLabel(correctLabel, attempt);
     const fallbackMathKey = mathEquivalentKey(fallbackLabel);
     if (!seenLabels.has(fallbackLabel) && (!fallbackMathKey || !seenMathKeys.has(fallbackMathKey))) {
       seenLabels.add(fallbackLabel);
@@ -4519,8 +4585,50 @@ function buildOptions(correct, distractors, rng, formatter = (value) => String(v
   const shuffledOptions = shuffle(options.slice(0, 4), rng);
   return {
     options: shuffledOptions,
-    answerIndex: shuffledOptions.indexOf(formatter(correct))
+    answerIndex: shuffledOptions.indexOf(correctLabel)
   };
+}
+
+function buildGenericFallbackOptionLabel(correctLabel, attempt) {
+  const text = String(correctLabel || "").trim();
+
+  if ([">", "<", "="].includes(text)) {
+    return [">", "<", "=", "≠"][attempt % 4];
+  }
+
+  if (/^-?\d+x$/.test(text)) {
+    const coefficient = Number(text.replace("x", ""));
+    return `${coefficient + attempt}x`;
+  }
+
+  if (/^-?x$/.test(text)) {
+    return `${attempt + 1}x`;
+  }
+
+  if (/^-?\d+(\.\d+)?x\s*[+\-]\s*\d+(\.\d+)?$/.test(text)) {
+    return text.replace(/-?\d+(\.\d+)?x/, `${attempt + 1}x`);
+  }
+
+  if (/^\d+\s*degrees?$/.test(text)) {
+    const value = Number(text);
+    return `${value + (attempt * 15)} degrees`;
+  }
+
+  if (/^pi\/\d+$/.test(text)) {
+    const denominator = Number(text.split("/")[1]);
+    return `pi/${denominator + attempt}`;
+  }
+
+  if (/^sqrt\(\d+\)\/\d+$/.test(text)) {
+    const match = text.match(/^sqrt\((\d+)\)\/(\d+)$/);
+    if (match) {
+      const radical = Number(match[1]);
+      const denominator = Number(match[2]);
+      return `sqrt(${radical + attempt})/${denominator}`;
+    }
+  }
+
+  return `Choice ${String.fromCharCode(68 + ((attempt - 1) % 6))}`;
 }
 
 function canAutoGenerateFallbackOptions(correct) {
@@ -4657,6 +4765,28 @@ function decimalString(numerator, denominator) {
   const value = numerator / denominator;
   const rounded = Math.round(value * 100) / 100;
   return rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function factorial(value) {
+  let total = 1;
+  for (let current = 2; current <= value; current += 1) {
+    total *= current;
+  }
+  return total;
+}
+
+function permutation(n, r) {
+  if (r > n || r < 0) {
+    return 0;
+  }
+  return factorial(n) / factorial(n - r);
+}
+
+function combination(n, r) {
+  if (r > n || r < 0) {
+    return 0;
+  }
+  return permutation(n, r) / factorial(r);
 }
 
 function unitLabel(value, singular = "unit", plural = "units") {
@@ -4972,6 +5102,48 @@ const englishSkillPools = {
       "Which sentence uses active voice more effectively?",
       "Which sentence uses standard formal grammar?"
     ].includes(item.prompt))
+  },
+  reading: {
+    lower: [
+      { prompt: "What is the main idea of this sentence: 'Sam planted a seed and watered it every day so it could grow'?", correct: "Sam is helping a plant grow.", distractors: ["Sam is building a toy.", "Sam is cleaning his room.", "Sam is buying groceries."], hint: "The main idea is what the sentence is mostly about.", explanation: "The sentence is mostly about Sam caring for a seed so it can grow." },
+      { prompt: "Which detail tells where the story happens: 'At the park, Musa flew his kite beside the pond'?", correct: "At the park", distractors: ["flew", "his kite", "beside"], hint: "A setting detail tells where or when something happens.", explanation: "'At the park' tells where the action happens." },
+      { prompt: "What happened first in this sequence: 'Lina opened her book, read the story, and told her brother about it'?", correct: "Lina opened her book.", distractors: ["Lina read the story.", "Lina told her brother about it.", "Lina closed her book."], hint: "Look for the first action in the sentence.", explanation: "The first thing Lina did was open her book." },
+      { prompt: "How does the character probably feel: 'Tariq smiled and jumped when he saw the surprise cake'?", correct: "happy", distractors: ["angry", "sleepy", "confused"], hint: "Use the clues from the character's actions.", explanation: "Smiling and jumping show that Tariq is happy." },
+      { prompt: "Which sentence best tells the lesson of this short idea: 'Amina practiced reading every night and soon read with confidence'?", correct: "Practice helps you improve.", distractors: ["Reading should only happen at night.", "Confidence means reading very fast.", "Amina did not like books."], hint: "A lesson is a message you can learn from what happened.", explanation: "The sentence shows that regular practice helped Amina improve." },
+      { prompt: "Which word helps you know this is a question: 'Why did the bird leave the nest'?", correct: "Why", distractors: ["bird", "leave", "nest"], hint: "Question words help show what a sentence is asking.", explanation: "'Why' signals that the sentence is asking a question." },
+      { prompt: "What is the setting in this sentence: 'On Saturday morning, we visited Grandma at her farm'?", correct: "Saturday morning at Grandma's farm", distractors: ["we visited", "Grandma", "farm animals"], hint: "The setting includes when and where.", explanation: "The setting is given by both the time and the place." },
+      { prompt: "Which detail is most important: 'Kofi packed his boots, gloves, and helmet before the hockey game'?", correct: "Kofi packed what he needed for the hockey game.", distractors: ["Kofi likes to count his things.", "The boots were blue.", "Gloves are soft."], hint: "Choose the detail that best supports the main event.", explanation: "The important detail is that Kofi packed the gear he needed for the game." }
+    ],
+    upper: [
+      { prompt: "What is the main idea of this passage sentence: 'School gardens teach students about science, teamwork, and responsibility'?", correct: "School gardens help students learn in several ways.", distractors: ["School gardens are only for science class.", "Students dislike working together in gardens.", "Responsibility means watering once."], hint: "The main idea combines the important details into one clear message.", explanation: "The sentence explains that school gardens support several kinds of learning." },
+      { prompt: "Which clue best helps you infer that the weather was bad: 'The players hurried indoors as thunder shook the sky'?", correct: "thunder shook the sky", distractors: ["players hurried", "indoors", "the sky"], hint: "An inference comes from the strongest context clue.", explanation: "Thunder is the clearest clue that the weather was stormy." },
+      { prompt: "What does the word 'fragile' most likely mean in this sentence: 'Please carry the fragile bowl carefully'?", correct: "easy to break", distractors: ["very heavy", "full of water", "hard to find"], hint: "Use the word 'carefully' to help you understand the meaning.", explanation: "If something must be carried carefully, it is likely easy to break." },
+      { prompt: "Which text feature would best help a reader find the meaning of a bold word in a nonfiction book?", correct: "glossary", distractors: ["title", "caption", "page number"], hint: "Think about the feature that explains word meanings.", explanation: "A glossary gives definitions for important words." },
+      { prompt: "Why did the character probably apologize: 'After knocking over the paint jar, Nia quickly said sorry to her partner'?", correct: "She made a mistake that affected someone else.", distractors: ["She wanted more paint.", "She finished the project early.", "She was leaving the classroom."], hint: "Look at what happened just before the apology.", explanation: "Nia apologized because she caused a problem by knocking over the paint jar." },
+      { prompt: "Which statement is an inference instead of a stated fact?", correct: "The hiker was tired after climbing for hours.", distractors: ["The hiker climbed for hours.", "The trail was on a mountain.", "The backpack was red."], hint: "An inference is a smart idea based on clues, not directly stated words.", explanation: "If someone has been climbing for hours, it is reasonable to infer that the person is tired." },
+      { prompt: "Which sentence best summarizes this idea: 'The article explains how bees pollinate flowers and why that matters for food production'?", correct: "Bees help plants grow food by pollinating flowers.", distractors: ["Bees are yellow and black insects.", "Flowers look pretty in gardens.", "Food comes from many stores."], hint: "A summary keeps the most important ideas only.", explanation: "The best summary includes both pollination and why it matters." },
+      { prompt: "What is the author's purpose in a safety poster that explains helmet rules?", correct: "to inform and encourage safe behaviour", distractors: ["to entertain with a funny story", "to confuse the reader", "to sell a helmet collection"], hint: "Author's purpose asks why the text was created.", explanation: "A safety poster aims to give information and guide safe choices." }
+    ],
+    middle: [
+      { prompt: "Which detail would be the strongest evidence that a character is determined?", correct: "She kept practicing her speech even after making several mistakes.", distractors: ["She owns a speech notebook.", "She arrived at school on time.", "She sat near the window."], hint: "Strong evidence directly proves the trait.", explanation: "Continuing to practice after mistakes is strong evidence of determination." },
+      { prompt: "What is the author's purpose in an editorial arguing for longer library hours?", correct: "to persuade", distractors: ["to entertain", "to describe a festival", "to present a recipe"], hint: "Editorials often try to convince readers.", explanation: "An editorial that argues for change is persuasive writing." },
+      { prompt: "Which statement is the best inference: 'Jamal checked the clock three times before the interview began'?", correct: "Jamal was nervous or eager about the interview.", distractors: ["Jamal forgot how to read clocks.", "The interview was cancelled.", "Jamal never arrives on time."], hint: "Use behaviour clues to infer feelings.", explanation: "Repeatedly checking the clock suggests nervousness or anticipation." },
+      { prompt: "Which sentence best summarizes a nonfiction paragraph?", correct: "A summary includes only the key ideas and leaves out small details.", distractors: ["A summary copies every sentence exactly.", "A summary should always be one word.", "A summary adds new information from the reader."], hint: "A good summary is short but still accurate.", explanation: "The best summary keeps the main points without extra detail." },
+      { prompt: "What does the phrase 'a wave of relief' suggest about the speaker?", correct: "The speaker felt stress disappear.", distractors: ["The speaker went swimming.", "The speaker was angry at the weather.", "The speaker forgot the event."], hint: "Think figuratively, not literally.", explanation: "The phrase suggests a strong feeling of relief after stress." },
+      { prompt: "Which evidence best supports the claim that the article is informative?", correct: "It includes facts, explanations, and clear examples.", distractors: ["It has a surprising ending.", "It rhymes in every line.", "It speaks in first person only."], hint: "Informative texts teach readers something.", explanation: "Facts and explanations are strong signs of an informative text." },
+      { prompt: "Which statement best explains tone in a text?", correct: "Tone is the writer's attitude toward the subject or audience.", distractors: ["Tone is the number of paragraphs.", "Tone is the font size in the title.", "Tone is only the setting of a story."], hint: "Tone is about attitude and feeling in the writing.", explanation: "Tone shows how the writer feels or sounds while presenting the ideas." },
+      { prompt: "Which question best helps identify theme?", correct: "What message about life or people does the text reveal?", distractors: ["How many pages are in the book?", "What colour is the cover?", "Who published the text first?"], hint: "Theme is the deeper message, not a small fact.", explanation: "Theme asks what bigger idea or message the text communicates." }
+    ],
+    senior: [
+      { prompt: "Which statement best describes the author's argument?", correct: "A clear claim supported by reasons and evidence.", distractors: ["A random collection of details.", "A summary of the title only.", "A list of unrelated quotations."], hint: "An argument combines a position with support.", explanation: "An author's argument is the main claim backed by evidence and reasoning." },
+      { prompt: "Which evidence would best support a claim in an academic article?", correct: "data from a credible study", distractors: ["an unsupported rumour", "a random online comment", "an unrelated personal memory"], hint: "Strong evidence is credible and relevant.", explanation: "Credible research data is stronger support than opinion or rumour." },
+      { prompt: "What does bias mean in a text?", correct: "a preference that may shape how information is presented", distractors: ["a list of sources", "a correct grammar choice", "a neutral explanation"], hint: "Bias affects fairness and balance.", explanation: "Bias means the text may lean toward one view or perspective." },
+      { prompt: "Which tone is most likely in a formal critique?", correct: "analytical", distractors: ["careless", "playful nonsense", "confused"], hint: "Formal critique language is usually thoughtful and evidence-based.", explanation: "An analytical tone fits formal evaluation and close discussion." },
+      { prompt: "Which statement best distinguishes theme from topic?", correct: "A topic names the subject, while a theme expresses the deeper message.", distractors: ["A theme is always one word, but a topic is a sentence.", "A topic is hidden, but a theme is printed in bold.", "They mean exactly the same thing."], hint: "One names what the text is about; the other explains what it says about that subject.", explanation: "Topic is the subject area, while theme is the insight or message." },
+      { prompt: "Which reading strategy best helps evaluate an argument?", correct: "checking whether the evidence is relevant, sufficient, and credible", distractors: ["counting the commas only", "skipping the reasons and reading the title", "looking only for interesting adjectives"], hint: "Evaluating argument means testing the quality of support.", explanation: "Strong evaluation focuses on how well the evidence supports the claim." },
+      { prompt: "What is the strongest inference about a narrator who avoids direct answers and changes the subject often?", correct: "The narrator may be hiding something or may be unreliable.", distractors: ["The narrator is always fully objective.", "The narrator has finished the story.", "The narrator is writing a dictionary."], hint: "Think about what evasive behaviour suggests.", explanation: "Avoiding direct answers can suggest unreliability or hidden motives." },
+      { prompt: "Which statement best explains how structure affects meaning?", correct: "The organization of ideas shapes how the reader understands emphasis and connection.", distractors: ["Structure has no effect if the vocabulary is formal.", "Structure only matters in poetry.", "Structure changes spelling but not meaning."], hint: "Order matters in how readers process ideas.", explanation: "Structure influences how ideas build, connect, and stand out in a text." }
+    ]
   },
   vocabulary: {
     lower: englishQuestionPools.lower.filter((item) => [
@@ -7870,6 +8042,80 @@ const questionFactories = {
       };
     }
 
+    if (level >= 11) {
+      if (index % 4 === 0) {
+        const firstTerm = number(2, 12, rng);
+        const difference = pick([2, 3, 4, 5, 6], rng);
+        const termNumber = number(6, 14, rng);
+        const correct = firstTerm + ((termNumber - 1) * difference);
+        const { options, answerIndex } = buildOptions(correct, [
+          correct + difference,
+          correct - difference,
+          firstTerm + (termNumber * difference)
+        ], rng);
+        return {
+          prompt: `An arithmetic sequence has first term ${firstTerm} and common difference ${difference}. What is term ${termNumber}?`,
+          options,
+          answerIndex,
+          explanation: `Use a_n = a_1 + (n - 1)d. So a_${termNumber} = ${firstTerm} + (${termNumber} - 1)(${difference}) = ${correct}.`
+        };
+      }
+
+      if (index % 4 === 1) {
+        const firstTerm = pick([2, 3, 4, 5, 6], rng);
+        const ratio = pick([2, 3, 4], rng);
+        const termNumber = number(4, 8, rng);
+        const correct = firstTerm * (ratio ** (termNumber - 1));
+        const { options, answerIndex } = buildOptions(correct, [
+          correct * ratio,
+          Math.max(1, Math.round(correct / ratio)),
+          firstTerm * ratio * termNumber
+        ], rng);
+        return {
+          prompt: `A geometric sequence has first term ${firstTerm} and common ratio ${ratio}. What is term ${termNumber}?`,
+          options,
+          answerIndex,
+          explanation: `Use a_n = a_1r^(n - 1). So a_${termNumber} = ${firstTerm}(${ratio})^${termNumber - 1} = ${correct}.`
+        };
+      }
+
+      if (index % 4 === 2) {
+        const root1 = pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5], rng);
+        const root2 = pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5].filter((value) => value !== root1), rng);
+        const sum = root1 + root2;
+        const product = root1 * root2;
+        const answerText = [root1, root2].sort((a, b) => a - b).join(" and ");
+        const distractor1 = [root1, -root2].sort((a, b) => a - b).join(" and ");
+        const distractor2 = [product, sum].sort((a, b) => a - b).join(" and ");
+        const distractor3 = [root1 + 1, root2 - 1].sort((a, b) => a - b).join(" and ");
+        const { options, answerIndex } = buildOptions(answerText, [distractor1, distractor2, distractor3], rng);
+        const middleTerm = sum >= 0 ? ` - ${sum}x` : ` + ${Math.abs(sum)}x`;
+        const constantTerm = product >= 0 ? ` + ${product}` : ` - ${Math.abs(product)}`;
+        return {
+          prompt: `Solve x^2${middleTerm}${constantTerm} = 0.`,
+          options,
+          answerIndex,
+          explanation: `Factor the quadratic into two linear factors. The solutions are x = ${root1} and x = ${root2}.`
+        };
+      }
+
+      const value = number(2, 6, rng);
+      const powerA = number(2, 5, rng);
+      const powerB = number(2, 5, rng);
+      const correct = `${value}^${powerA + powerB}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${value}^${powerA * powerB}`,
+        `${value}^${Math.abs(powerA - powerB)}`,
+        `${value * 2}^${powerA + powerB}`
+      ], rng);
+      return {
+        prompt: `Simplify ${value}^${powerA} x ${value}^${powerB}.`,
+        options,
+        answerIndex,
+        explanation: `When multiplying powers with the same base, add the exponents. So ${value}^${powerA} x ${value}^${powerB} = ${value}^${powerA + powerB}.`
+      };
+    }
+
     const x = number(1, difficultyStep(3, difficulty, 12), rng);
     const a = number(1, difficultyStep(2, difficulty, 6), rng);
     const b = number(1, difficultyStep(3, difficulty, 10), rng);
@@ -7985,6 +8231,79 @@ const questionFactories = {
         options,
         answerIndex,
         explanation: `Step 1: Probability = favorable outcomes / total outcomes.<br>Step 2: Write ${favorable}/${total}.<br>Step 3: Simplify if possible. The probability is ${correct}.`
+      };
+    }
+
+    if (config.level >= 11) {
+      if (index % 4 === 0) {
+        const n = number(5, 9, rng);
+        const r = number(2, Math.min(4, n - 1), rng);
+        const correct = combination(n, r);
+        const { options, answerIndex } = buildOptions(correct, [
+          permutation(n, r),
+          combination(n, Math.max(1, r - 1)),
+          correct + n
+        ], rng);
+        return {
+          prompt: `How many combinations of ${r} items can be chosen from ${n} items?`,
+          options,
+          answerIndex,
+          explanation: `Use combinations because order does not matter. ${n}C${r} = ${correct}.`
+        };
+      }
+
+      if (index % 4 === 1) {
+        const red = number(3, 8, rng);
+        const blue = number(3, 8, rng);
+        const total = red + blue;
+        const correct = fractionString(red, total, true);
+        const { options, answerIndex } = buildOptions(correct, [
+          fractionString(blue, total, true),
+          fractionString(red, Math.max(1, total - 1), true),
+          fractionString(total, red, true)
+        ], rng);
+        return {
+          prompt: `A bag has ${red} red marbles and ${blue} blue marbles. What is the probability of drawing a red marble on one draw?`,
+          options,
+          answerIndex,
+          explanation: `Probability = favorable outcomes / total outcomes = ${red}/${total} = ${correct}.`
+        };
+      }
+
+      if (index % 4 === 2) {
+        const mean = number(60, 85, rng);
+        const sd = pick([4, 5, 6, 8], rng);
+        const score = mean + (sd * pick([-2, -1, 1, 2], rng));
+        const correct = formatDecimalAnswer((score - mean) / sd, 2, 1);
+        const { options, answerIndex } = buildOptions(correct, [
+          formatDecimalAnswer((mean - score) / sd, 2, 1),
+          formatDecimalAnswer(score / sd, 2, 1),
+          formatDecimalAnswer((score - sd) / mean, 2, 1)
+        ], rng);
+        return {
+          prompt: `A test score is ${score}, with mean ${mean} and standard deviation ${sd}. What is the z-score?`,
+          options,
+          answerIndex,
+          explanation: `Use z = (x - mean) / standard deviation = (${score} - ${mean}) / ${sd} = ${correct}.`
+        };
+      }
+
+      const win1 = pick([2, 4, 5, 6], rng);
+      const win2 = pick([1, 3, 4, 5], rng);
+      const loss1 = pick([2, 3, 4], rng);
+      const loss2 = pick([3, 4, 5], rng);
+      const total = win1 + win2 + loss1 + loss2;
+      const correct = formatDecimalAnswer((win1 + win2) / total, 3, 2);
+      const { options, answerIndex } = buildOptions(correct, [
+        formatDecimalAnswer((win1 + loss1) / total, 3, 2),
+        formatDecimalAnswer((win2 + loss2) / total, 3, 2),
+        formatDecimalAnswer((loss1 + loss2) / total, 3, 2)
+      ], rng);
+      return {
+        prompt: `A table shows wins and losses for two teams: Team A wins ${win1}, Team B wins ${win2}, Team A losses ${loss1}, Team B losses ${loss2}. What fraction of all results are wins?`,
+        options,
+        answerIndex,
+        explanation: `Add the wins: ${win1} + ${win2} = ${win1 + win2}. Then divide by the total ${total}. The result is ${correct}.`
       };
     }
 
@@ -8178,26 +8497,183 @@ const questionFactories = {
       };
     }
 
-    if (level <= 11) {
-      const x = number(1, difficultyStep(2, difficulty, 10), rng);
-      const correct = x * x;
-      const { options, answerIndex } = buildOptions(correct, [correct + x, x + x, correct - 1], rng);
+    if (level < 11) {
+      if (index % 3 === 0) {
+        const a = pick([1, 2, 3], rng);
+        const h = number(-4, 4, rng);
+        const k = number(-6, 6, rng);
+        const correct = `(${h}, ${k})`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `(${k}, ${h})`,
+          `(${-h}, ${k})`,
+          `(${h}, ${-k})`
+        ], rng);
+        return {
+          prompt: `What is the vertex of y = ${a}(x ${h < 0 ? "+" : "-"} ${Math.abs(h)})^2 ${k < 0 ? "-" : "+"} ${Math.abs(k)}?`,
+          options,
+          answerIndex,
+          explanation: `In vertex form y = a(x - h)^2 + k, the vertex is (h, k). So the vertex is ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const a = pick([1, 2, 3], rng);
+        const b = pick([2, 3, 4, 5], rng);
+        const x = number(1, 4, rng);
+        const correct = a * (b ** x);
+        const { options, answerIndex } = buildOptions(correct, [
+          a * (b ** (x - 1)),
+          (a + b) * x,
+          correct + a
+        ], rng);
+        return {
+          prompt: `If y = ${a}(${b})^x, what is y when x = ${x}?`,
+          options,
+          answerIndex,
+          explanation: `Substitute x = ${x}: y = ${a}(${b})^${x} = ${a * (b ** x)}.`
+        };
+      }
+
+      const x = number(1, 5, rng);
+      const a = pick([1, 2, 3], rng);
+      const b = number(-5, 5, rng);
+      const c = number(-6, 6, rng);
+      const correct = (a * x * x) + (b * x) + c;
+      const { options, answerIndex } = buildOptions(correct, [
+        correct + a,
+        correct - a,
+        (a * x) + b + c
+      ], rng);
       return {
-        prompt: `If f(x) = x^2, what is f(${x})?`,
+        prompt: `If f(x) = ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}, what is f(${x})?`,
         options,
         answerIndex,
-        explanation: `Square the input: ${x}^2 = ${correct}.`
+        explanation: `Substitute x = ${x} into the quadratic and simplify to get ${correct}.`
       };
     }
 
-    const x = number(1, difficultyStep(2, difficulty, 10), rng);
-    const correct = 2 * x + 1;
-    const { options, answerIndex } = buildOptions(correct, [correct + 2, correct - 2, x * x], rng);
+    if (level < 12) {
+      if (index % 4 === 0) {
+        const h = pick([-4, -3, -2, -1, 1, 2, 3, 4], rng);
+        const k = number(-5, 5, rng);
+        const correct = `x = ${h}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `y = ${k}`,
+          `x = ${-h}`,
+          `y = ${h}`
+        ], rng);
+        return {
+          prompt: `What is the vertical asymptote of y = 1 / (x ${h < 0 ? "+" : "-"} ${Math.abs(h)}) ${k < 0 ? "-" : "+"} ${Math.abs(k)}?`,
+          options,
+          answerIndex,
+          explanation: `A vertical asymptote happens where the denominator is 0. So x ${h < 0 ? "+" : "-"} ${Math.abs(h)} = 0 gives ${correct}.`
+        };
+      }
+
+      if (index % 4 === 1) {
+        const a = pick([2, 3, 4, 5], rng);
+        const exponent = number(2, 5, rng);
+        const correct = exponent;
+        const { options, answerIndex } = buildOptions(correct, [
+          exponent + 1,
+          exponent - 1,
+          a
+        ], rng);
+        return {
+          prompt: `If ${a}^x = ${a ** exponent}, what is the value of x?`,
+          options,
+          answerIndex,
+          explanation: `When the bases are the same, the exponents must match. So x = ${correct}.`
+        };
+      }
+
+      if (index % 4 === 2) {
+        const value = pick([8, 16, 32, 64, 100, 1000], rng);
+        const useBaseTen = value === 100 || value === 1000;
+        const base = useBaseTen ? 10 : 2;
+        const correct = useBaseTen ? (value === 100 ? 2 : 3) : Math.round(Math.log2(value));
+        const { options, answerIndex } = buildOptions(correct, [
+          correct + 1,
+          Math.max(0, correct - 1),
+          base
+        ], rng);
+        return {
+          prompt: `What is log base ${base} of ${value}?`,
+          options,
+          answerIndex,
+          explanation: `log base ${base} of ${value} asks for the exponent on ${base} that gives ${value}. That exponent is ${correct}.`
+        };
+      }
+
+      const x = number(-2, 3, rng);
+      const a = pick([1, 2], rng);
+      const b = pick([1, 3, 5], rng);
+      const c = number(-4, 4, rng);
+      const correct = (a * (x ** 3)) + (b * x) + c;
+      const { options, answerIndex } = buildOptions(correct, [
+        correct + 2,
+        correct - 2,
+        (a * (x ** 2)) + (b * x) + c
+      ], rng);
+      return {
+        prompt: `If p(x) = ${a}x^3 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}, what is p(${x})?`,
+        options,
+        answerIndex,
+        explanation: `Substitute x = ${x} into the polynomial and simplify to get ${correct}.`
+      };
+    }
+
+    if (index % 3 === 0) {
+      const a = pick([1, 2, 3], rng);
+      const b = pick([1, 2, 4], rng);
+      const c = number(-3, 3, rng);
+      const d = number(-2, 5, rng);
+      const correct = `${a * b}x ${((a * c) + d) < 0 ? "-" : "+"} ${Math.abs((a * c) + d)}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${a + b}x + ${c + d}`,
+        `${a * b}x + ${Math.abs((a * c) - d)}`,
+        `${a}x + ${b + c + d}`
+      ], rng);
+      return {
+        prompt: `If f(x) = ${a}x ${c < 0 ? "-" : "+"} ${Math.abs(c)} and g(x) = ${b}x ${d < 0 ? "-" : "+"} ${Math.abs(d)}, what is (f o g)(x)?`,
+        options,
+        answerIndex,
+        explanation: `Compose the functions: f(g(x)) = ${a}(${b}x ${d < 0 ? "-" : "+"} ${Math.abs(d)}) ${c < 0 ? "-" : "+"} ${Math.abs(c)} = ${correct}.`
+      };
+    }
+
+    if (index % 3 === 1) {
+      const a = pick([2, 3, 4, 5], rng);
+      const b = number(-6, 6, rng);
+      const xValue = number(-2, 4, rng);
+      const correct = (xValue - b) / a;
+      const { options, answerIndex } = buildOptions(correct, [
+        correct + 1,
+        correct - 1,
+        a * xValue + b
+      ], rng);
+      return {
+        prompt: `If f(x) = ${a}x ${b < 0 ? "-" : "+"} ${Math.abs(b)}, what is f^-1(${xValue})?`,
+        options,
+        answerIndex,
+        explanation: `Set y = ${a}x ${b < 0 ? "-" : "+"} ${Math.abs(b)} and solve for x. Then substitute y = ${xValue}, giving ${correct}.`
+      };
+    }
+
+    const a = pick([2, 3, 4, 5], rng);
+    const x = pick([1, 2, 3, 4], rng);
+    const correct = 1 / (a ** x);
+    const correctText = formatDecimalAnswer(correct, 4, 2);
+    const { options, answerIndex } = buildOptions(correctText, [
+      formatDecimalAnswer(a ** x, 2, 1),
+      formatDecimalAnswer(1 / (a ** (x - 1)), 4, 2),
+      formatDecimalAnswer(1 / (a * x), 4, 2)
+    ], rng);
     return {
-      prompt: `If g(x) = 2x + 1, what is g(${x})?`,
+      prompt: `Evaluate ${a}^(-${x}).`,
       options,
       answerIndex,
-      explanation: `Substitute ${x} into 2x + 1 to get ${correct}.`
+      explanation: `A negative exponent means reciprocal: ${a}^(-${x}) = 1 / ${a}^${x} = ${correctText}.`
     };
   },
 
@@ -8222,14 +8698,112 @@ const questionFactories = {
       };
     }
 
-    const angle = pick([0, 30, 45, 60, 90], rng);
-    const correct = angle === 0 ? "1" : angle === 90 ? "0" : angle === 60 ? "1/2" : angle === 45 ? "sqrt(2)/2" : "sqrt(3)/2";
-    const { options, answerIndex } = buildOptions(correct, ["0", "1", "1/2", "sqrt(2)/2", "sqrt(3)/2"].filter((item) => item !== correct).slice(0, 3), rng);
+    if (config.level < 12) {
+      if (index % 3 === 0) {
+        const angle = pick([120, 135, 150, 210, 225, 240, 300, 315, 330], rng);
+        const sinMap = {
+          120: "sqrt(3)/2",
+          135: "sqrt(2)/2",
+          150: "1/2",
+          210: "-1/2",
+          225: "-sqrt(2)/2",
+          240: "-sqrt(3)/2",
+          300: "-sqrt(3)/2",
+          315: "-sqrt(2)/2",
+          330: "-1/2"
+        };
+        const correct = sinMap[angle];
+        const distractorPool = ["1/2", "-1/2", "sqrt(2)/2", "-sqrt(2)/2", "sqrt(3)/2", "-sqrt(3)/2"];
+        const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+        return {
+          prompt: `What is sin(${angle} degrees)?`,
+          options,
+          answerIndex,
+          explanation: `Use the unit circle and the reference angle. sin(${angle} degrees) = ${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const degree = pick([30, 45, 60, 90, 120, 135, 150, 180], rng);
+        const radianMap = {
+          30: "pi/6",
+          45: "pi/4",
+          60: "pi/3",
+          90: "pi/2",
+          120: "2pi/3",
+          135: "3pi/4",
+          150: "5pi/6",
+          180: "pi"
+        };
+        const correct = radianMap[degree];
+        const { options, answerIndex } = buildOptions(correct, ["pi/6", "pi/4", "pi/3", "pi/2", "2pi/3", "3pi/4", "5pi/6", "pi"].filter((item) => item !== correct).slice(0, 3), rng);
+        return {
+          prompt: `Convert ${degree} degrees to radians.`,
+          options,
+          answerIndex,
+          explanation: `Multiply by pi/180. ${degree} degrees = ${correct} radians.`
+        };
+      }
+
+      const value = pick([30, 45, 60], rng);
+      const second = 180 - value;
+      const correct = `${value} degrees and ${second} degrees`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${value} degrees only`,
+        `${second} degrees only`,
+        `${180 + value} degrees and ${360 - value} degrees`
+      ], rng);
+      return {
+        prompt: `On 0 degrees to 360 degrees, solve sin(x) = ${value === 30 ? "1/2" : value === 45 ? "sqrt(2)/2" : "sqrt(3)/2"}.`,
+        options,
+        answerIndex,
+        explanation: `Sine is positive in Quadrants I and II. The solutions are ${value} degrees and ${second} degrees.`
+      };
+    }
+
+    if (index % 3 === 0) {
+      const angle = pick([0, 30, 45, 60, 90, 120, 135, 150, 180], rng);
+      const cosMap = {
+        0: "1",
+        30: "sqrt(3)/2",
+        45: "sqrt(2)/2",
+        60: "1/2",
+        90: "0",
+        120: "-1/2",
+        135: "-sqrt(2)/2",
+        150: "-sqrt(3)/2",
+        180: "-1"
+      };
+      const correct = cosMap[angle];
+      const distractorPool = ["1", "-1", "0", "1/2", "-1/2", "sqrt(2)/2", "-sqrt(2)/2", "sqrt(3)/2", "-sqrt(3)/2"];
+      const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+      return {
+        prompt: `What is cos(${angle} degrees)?`,
+        options,
+        answerIndex,
+        explanation: `From the unit circle, cos(${angle} degrees) = ${correct}.`
+      };
+    }
+
+    if (index % 3 === 1) {
+      const angle = pick([30, 45, 60], rng);
+      const correct = angle === 30 ? "1/sqrt(3)" : angle === 45 ? "1" : "sqrt(3)";
+      const { options, answerIndex } = buildOptions(correct, ["1/sqrt(3)", "1", "sqrt(3)", "0"].filter((item) => item !== correct).slice(0, 3), rng);
+      return {
+        prompt: `What is tan(${angle} degrees)?`,
+        options,
+        answerIndex,
+        explanation: `Use tan(x) = sin(x) / cos(x). So tan(${angle} degrees) = ${correct}.`
+      };
+    }
+
+    const correct = "sin(x) / cos(x)";
+    const { options, answerIndex } = buildOptions(correct, ["cos(x) / sin(x)", "1 / cos(x)", "1 / sin(x)"], rng);
     return {
-      prompt: `What is cos(${angle} degrees)?`,
+      prompt: `Which identity is equal to tan(x)?`,
       options,
       answerIndex,
-      explanation: `From the unit circle, cos(${angle} degrees) = ${correct}.`
+      explanation: `The quotient identity says tan(x) = sin(x) / cos(x).`
     };
   },
 
@@ -8251,6 +8825,59 @@ const questionFactories = {
   },
 
   financialMath(rng, grade, config, index, difficulty) {
+    if (config.level >= 12) {
+      if (index % 3 === 0) {
+        const principal = number(500, 4000, rng);
+        const rate = pick([3, 4, 5, 6, 7], rng);
+        const years = number(2, 6, rng);
+        const correct = (principal * ((1 + rate / 100) ** years)).toFixed(2);
+        const { options, answerIndex } = buildOptions(correct, [
+          (principal * (1 + (rate / 100) * years)).toFixed(2),
+          (principal * ((1 + rate / 100) ** (years - 1))).toFixed(2),
+          (principal + (rate * years)).toFixed(2)
+        ], rng);
+        return {
+          prompt: `What is the value of $${principal} invested at ${rate}% compounded annually for ${years} years?`,
+          options: options.map((option) => `$${option}`),
+          answerIndex,
+          explanation: `Use A = P(1 + r)^t. So A = ${principal}(1 + ${rate}/100)^${years} = $${correct}.`
+        };
+      }
+
+      if (index % 3 === 1) {
+        const payment = number(100, 500, rng);
+        const months = pick([12, 24, 36], rng);
+        const correct = payment * months;
+        const { options, answerIndex } = buildOptions(correct, [
+          correct + payment,
+          correct - payment,
+          payment + months
+        ], rng);
+        return {
+          prompt: `A student saves $${payment} each month for ${months} months. How much money is saved in total before interest?`,
+          options: options.map((option) => `$${option}`),
+          answerIndex,
+          explanation: `Multiply the monthly deposit by the number of months: ${payment} x ${months} = $${correct}.`
+        };
+      }
+
+      const currentValue = number(800, 5000, rng);
+      const growthRate = pick([2, 3, 4, 5], rng);
+      const years = number(2, 5, rng);
+      const correct = (currentValue * ((1 + growthRate / 100) ** years)).toFixed(2);
+      const { options, answerIndex } = buildOptions(correct, [
+        (currentValue * (1 + (growthRate / 100) * years)).toFixed(2),
+        (currentValue * ((1 + growthRate / 100) ** (years - 1))).toFixed(2),
+        (currentValue + (growthRate * years)).toFixed(2)
+      ], rng);
+      return {
+        prompt: `An investment of $${currentValue} grows by ${growthRate}% per year. What is its value after ${years} years if growth compounds yearly?`,
+        options: options.map((option) => `$${option}`),
+        answerIndex,
+        explanation: `Compound growth uses repeated multiplication: ${currentValue}(1 + ${growthRate}/100)^${years} = $${correct}.`
+      };
+    }
+
     if (index % 2 === 0) {
       const price = number(20, difficultyStep(40, difficulty, 600), rng);
       const discount = pick(difficulty <= 5 ? [5, 10, 15, 20, 25] : [5, 10, 12, 15, 18, 20, 25, 30, 35], rng);
@@ -8338,6 +8965,21 @@ const questionFactories = {
     const band = englishBand(grade);
     const pool = englishSkillPools.grammar[band];
     const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
+    const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
+
+    return {
+      prompt: item.prompt,
+      options,
+      answerIndex,
+      explanation: item.explanation,
+      hint: item.hint
+    };
+  },
+
+  englishReading(rng, grade, config, index, difficulty) {
+    const band = englishBand(grade);
+    const pool = englishSkillPools.reading[band];
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 8);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -8504,15 +9146,27 @@ function roundLabel(grade) {
 }
 
 function placeValueQuestion(value, grade) {
-  const text = String(value);
   const placeNames = ["ones", "tens", "hundreds", "thousands", "ten-thousands", "hundred-thousands"];
-  const index = Math.min(text.length - 1, grade <= 2 ? 1 : grade <= 4 ? 2 : Math.min(5, text.length - 1));
+  let adjustedValue = value;
+  if (grade <= 2 && adjustedValue < 10) {
+    adjustedValue += 10;
+  }
+  if (grade >= 3 && adjustedValue < 100) {
+    adjustedValue += 100;
+  }
+  if (grade >= 5 && adjustedValue < 1000) {
+    adjustedValue += 1000;
+  }
+
+  const text = String(adjustedValue);
+  const desiredIndex = grade <= 1 ? 0 : grade <= 2 ? 1 : grade <= 4 ? 2 : Math.min(5, text.length - 1);
+  const index = Math.min(text.length - 1, desiredIndex);
   const digit = Number(text[text.length - 1 - index]);
   return {
-    prompt: `In the number ${value}, what digit is in the ${placeNames[index]} place?`,
+    prompt: `In the number ${adjustedValue}, what digit is in the ${placeNames[index]} place?`,
     answer: String(digit),
     distractors: [...new Set([String((digit + 1) % 10), String((digit + 2) % 10), String((digit + 9) % 10)])],
-    explanation: `In ${value}, the ${placeNames[index]} digit is ${digit}.`
+    explanation: `In ${adjustedValue}, the ${placeNames[index]} digit is ${digit}.`
   };
 }
 
