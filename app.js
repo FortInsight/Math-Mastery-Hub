@@ -42,6 +42,7 @@ const curriculum = {
     makeCategory("numbers", "Number Sense", "Place value, rounding, and powers of 10.", "numberSense", { min: 1000, max: 1000000 }),
     makeCategory("operations", "Operations", "Multiply, divide, and solve word problems.", "multiplicationDivision", { max: 20 }),
     makeCategory("fractions", "Fractions, Decimals & Percent", "Operate with fractions and decimals.", "fractionsDecimalsPercent", { stage: "upperElementary" }),
+    makeCategory("ratios", "Ratios & Intro Proportions", "Compare quantities using simple ratios, part-to-part thinking, and scaling.", "ratiosProportions", { level: 5 }),
     makeCategory("geometry", "Geometry", "Volume, coordinates, and classification.", "geometry", { level: 5 }),
     makeCategory("data", "Data & Patterns", "Graphs, mean ideas, and pattern rules.", "patternsData", { level: 5 }),
     makeCategory("measurement", "Measurement & Conversions", "Convert units and solve area and volume questions.", "measurement", { level: 5 }),
@@ -75,6 +76,7 @@ const curriculum = {
     makeCategory("numbers", "Rational & Irrational Numbers", "Classify numbers and use exponents.", "integersRational", { level: 8 }),
     makeCategory("algebra", "Linear Equations & Inequalities", "Solve linear equations and inequalities and analyze linear relationships.", "algebra", { level: 8 }),
     makeCategory("functions", "Functions", "Understand input-output rules, tables, and graphs.", "functionsGraphing", { level: 8 }),
+    makeCategory("ratios", "Ratios, Rates & Proportions", "Use proportional reasoning, unit rates, and scale relationships in context.", "ratiosProportions", { level: 8 }),
     makeCategory("geometry", "Transformations & Geometry", "Congruence, similarity, rotational symmetry, and the Pythagorean theorem.", "geometry", { level: 8 }),
     makeCategory("data", "Statistics", "Scatter plots, lines of best fit, and probability.", "statisticsProbability", { level: 8 }),
     makeCategory("exponents", "Exponents & Roots", "Work with powers, roots, and scientific notation ideas.", "integersRational", { level: 8 }),
@@ -83,6 +85,7 @@ const curriculum = {
   9: [
     makeCategory("algebra", "Algebra Foundations", "Laws of exponents, factoring, solving equations, and linear inequalities.", "algebra", { level: 9 }),
     makeCategory("functions", "Linear Functions", "Slope, intercepts, tables, and graphs.", "functionsGraphing", { level: 9 }),
+    makeCategory("ratios", "Proportional Reasoning", "Use scale factors, similarity, direct variation, and proportional relationships.", "ratiosProportions", { level: 9 }),
     makeCategory("geometry", "Geometry", "Triangles, similarity, and coordinate geometry.", "geometry", { level: 9 }),
     makeCategory("statistics", "Statistics & Probability", "Analyze distributions and probability models.", "statisticsProbability", { level: 9 }),
     makeCategory("financial", "Financial Math", "Discounts, tax, interest, and budgeting.", "financialMath", { level: 9 }),
