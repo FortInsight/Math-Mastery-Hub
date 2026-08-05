@@ -13,7 +13,7 @@ const curriculum = {
   ],
   2: [
     makeCategory("numbers", "Place Value", "Work with ones, tens, and numbers to 1,000.", "numberSense", { min: 10, max: 1000 }),
-    makeCategory("add-sub", "Addition & Subtraction", "Add and subtract with regrouping ideas.", "additionSubtraction", { maxA: 100, maxB: 100 }),
+    makeCategory("add-sub", "Addition & Subtraction", "Add and subtract with regrouping ideas.", "additionSubtraction", { maxA: 150, maxB: 150 }),
     makeCategory("skip-counting", "Skip Counting", "Build fluency with 2s, 5s, 10s, and repeated patterns.", "patternsData", { level: 2 }),
     makeCategory("measurement", "Measurement & Money", "Tell time, count coins, and compare measures.", "measurement", { level: 2 }),
     makeCategory("shapes", "Shapes & Fractions", "Name shapes and equal parts.", "geometry", { level: 2 }),
@@ -22,7 +22,7 @@ const curriculum = {
   ],
   3: [
     makeCategory("numbers", "Numbers & Place Value", "Build fluency with numbers to 10,000.", "numberSense", { min: 100, max: 10000 }),
-    makeCategory("mult-div", "Multiplication & Division", "Use arrays, groups, and fact families.", "multiplicationDivision", { max: 10 }),
+    makeCategory("mult-div", "Multiplication & Division", "Use arrays, groups, and fact families.", "multiplicationDivision", { max: 12 }),
     makeCategory("fractions", "Fractions", "Understand halves, thirds, fourths, and simple comparisons.", "fractionsDecimalsPercent", { stage: "basicFractions" }),
     makeCategory("measurement", "Measurement", "Perimeter, time, mass, capacity, and money.", "measurement", { level: 3 }),
     makeCategory("geometry", "Geometry & Data", "Angles, shapes, bar graphs, and tables.", "geometry", { level: 3 }),
@@ -31,7 +31,7 @@ const curriculum = {
   ],
   4: [
     makeCategory("numbers", "Whole Numbers", "Compare, round, and estimate larger numbers.", "numberSense", { min: 100, max: 100000 }),
-    makeCategory("mult-div", "Multiplication & Division", "Multi-step operations with larger factors.", "multiplicationDivision", { max: 12 }),
+    makeCategory("mult-div", "Multiplication & Division", "Multi-step operations with larger factors.", "multiplicationDivision", { max: 16 }),
     makeCategory("fractions", "Fractions & Decimals", "Equivalent fractions and tenths.", "fractionsDecimalsPercent", { stage: "fractionDecimalBridge" }),
     makeCategory("measurement", "Measurement & Area", "Area, perimeter, elapsed time, and conversions.", "measurement", { level: 4 }),
     makeCategory("patterns", "Patterns & Algebra", "Number patterns and input-output rules.", "patternsData", { level: 4 }),
@@ -40,7 +40,7 @@ const curriculum = {
   ],
   5: [
     makeCategory("numbers", "Number Sense", "Place value, rounding, and powers of 10.", "numberSense", { min: 1000, max: 1000000 }),
-    makeCategory("operations", "Operations", "Multiply, divide, and solve word problems.", "multiplicationDivision", { max: 20 }),
+    makeCategory("operations", "Operations", "Multiply, divide, and solve word problems.", "multiplicationDivision", { max: 25 }),
     makeCategory("fractions", "Fractions, Decimals & Percent", "Operate with fractions and decimals.", "fractionsDecimalsPercent", { stage: "upperElementary" }),
     makeCategory("ratios", "Ratios & Intro Proportions", "Compare quantities using simple ratios, part-to-part thinking, and scaling.", "ratiosProportions", { level: 5 }),
     makeCategory("geometry", "Geometry", "Volume, coordinates, and classification.", "geometry", { level: 5 }),
@@ -49,7 +49,7 @@ const curriculum = {
     makeCategory("graphing", "Coordinate Graphing", "Plot points and describe positions on a grid.", "geometry", { level: 5 })
   ],
   6: [
-    makeCategory("numbers", "Ratios & Number Sense", "Factors, multiples, and rational number foundations.", "numberSense", { min: 10, max: 500 }),
+    makeCategory("numbers", "Ratios & Number Sense", "Factors, multiples, and rational number foundations.", "numberSense", { min: 10, max: 750 }),
     makeCategory("operations", "Fractions & Decimals", "Compute with fractions, decimals, and percent.", "fractionsDecimalsPercent", { stage: "middleSchoolStart" }),
     makeCategory("algebra", "Expressions & Equations", "Use variables, order of operations, and simple equations.", "algebra", { level: 6 }),
     makeCategory("geometry", "Geometry & Measurement", "Area, surface area, and volume.", "geometry", { level: 6 }),
@@ -73,14 +73,14 @@ const curriculum = {
     makeCategory("ratios", "Ratios & Proportions", "Use rates, ratios, and proportional reasoning in context.", "ratiosProportions", { level: 7 })
   ],
   8: [
-    makeCategory("numbers", "Rational & Irrational Numbers", "Classify numbers and use exponents.", "integersRational", { level: 8 }),
+    makeCategory("numbers", "Rational & Irrational Numbers", "Classify numbers and use exponents.", "integersRational", { level: 8, skill: "rationalIrrational" }),
     makeCategory("algebra", "Linear Equations & Inequalities", "Solve linear equations and inequalities and analyze linear relationships.", "algebra", { level: 8 }),
     makeCategory("functions", "Functions", "Understand input-output rules, tables, and graphs.", "functionsGraphing", { level: 8 }),
     makeCategory("ratios", "Ratios, Rates & Proportions", "Use proportional reasoning, unit rates, and scale relationships in context.", "ratiosProportions", { level: 8 }),
     makeCategory("geometry", "Transformations & Geometry", "Congruence, similarity, rotational symmetry, and the Pythagorean theorem.", "geometry", { level: 8 }),
     makeCategory("data", "Statistics", "Scatter plots, lines of best fit, and probability.", "statisticsProbability", { level: 8 }),
-    makeCategory("exponents", "Exponents & Roots", "Work with powers, roots, and scientific notation ideas.", "integersRational", { level: 8 }),
-    makeCategory("systems", "Linear Patterns", "Compare patterns in tables, graphs, and equations.", "functionsGraphing", { level: 8.5 })
+    makeCategory("exponents", "Exponents & Roots", "Work with powers, roots, and scientific notation ideas.", "integersRational", { level: 8, skill: "exponentsRoots" }),
+    makeCategory("systems", "Linear Patterns", "Compare patterns in tables, graphs, and equations.", "functionsGraphing", { level: 8.5, skill: "linearPatterns" })
   ],
   9: [
     makeCategory("algebra", "Algebra Foundations", "Laws of exponents, factoring, solving equations, and linear inequalities.", "algebra", { level: 9 }),
@@ -89,8 +89,8 @@ const curriculum = {
     makeCategory("geometry", "Geometry", "Triangles, similarity, and coordinate geometry.", "geometry", { level: 9 }),
     makeCategory("statistics", "Statistics & Probability", "Analyze distributions and probability models.", "statisticsProbability", { level: 9 }),
     makeCategory("financial", "Financial Math", "Discounts, tax, interest, and budgeting.", "financialMath", { level: 9 }),
-    makeCategory("quadratics", "Intro to Quadratics", "Explore quadratic patterns, forms, and solutions.", "algebra", { level: 9.5 }),
-    makeCategory("relations", "Relations & Graphs", "Interpret graphs, relations, and domain-range ideas.", "functionsGraphing", { level: 9 })
+    makeCategory("quadratics", "Intro to Quadratics", "Explore quadratic patterns, forms, and solutions.", "algebra", { level: 9.5, skill: "quadraticsIntro" }),
+    makeCategory("relations", "Relations & Graphs", "Interpret graphs, relations, and domain-range ideas.", "functionsGraphing", { level: 9, skill: "relationsGraphs" })
   ],
   10: [
     makeCategory("algebra", "Math 10 Algebra", "Quadratics, radicals, polynomial operations, and algebra foundations.", "algebra", { level: 10 }),
@@ -98,17 +98,17 @@ const curriculum = {
     makeCategory("trig", "Math 10 Trigonometry", "Use right triangle ratios and angle relationships.", "trigonometry", { level: 10 }),
     makeCategory("statistics", "Math 10 Statistics & Probability", "Variation, event probability, and data reasoning.", "statisticsProbability", { level: 10 }),
     makeCategory("geometry", "Math 10 Measurement & Geometry", "Surface area, volume, and coordinate geometry.", "geometry", { level: 10 }),
-    makeCategory("exponents", "Math 10 Powers & Radicals", "Simplify radical and exponent expressions.", "algebra", { level: 10 }),
+    makeCategory("exponents", "Math 10 Powers & Radicals", "Simplify radical and exponent expressions.", "algebra", { level: 10, skill: "powersRadicals" }),
     makeCategory("finance", "Math 10 Financial Applications", "Use percentage models, budgeting, and interest.", "financialMath", { level: 10 })
   ],
   11: [
     makeCategory("functions", "Math 20 Functions", "Polynomial, rational, logarithmic, and exponential ideas.", "functionsGraphing", { level: 11 }),
-    makeCategory("algebra", "Math 20 Algebra", "Sequences, series, and equation solving.", "algebra", { level: 11 }),
+    makeCategory("algebra", "Math 20 Algebra", "Equation solving, quadratic factoring, and exponent laws.", "algebra", { level: 11 }),
     makeCategory("trig", "Math 20 Trigonometry", "Unit circle, identities, and solving trig equations.", "trigonometry", { level: 11 }),
     makeCategory("statistics", "Math 20 Statistics", "Sampling, distributions, counting principles, and inference ideas.", "statisticsProbability", { level: 11 }),
-    makeCategory("precalc", "Math 20 Pre-Calculus", "Rates of change and model analysis.", "functionsGraphing", { level: 11.5 }),
-    makeCategory("sequences", "Math 20 Sequences & Series", "Work with arithmetic and geometric sequences.", "algebra", { level: 11 }),
-    makeCategory("logarithms", "Math 20 Exponential & Logarithmic Models", "Study growth, decay, and logarithmic behaviour.", "functionsGraphing", { level: 11.2 })
+    makeCategory("precalc", "Math 20 Pre-Calculus", "Rates of change and model analysis.", "functionsGraphing", { level: 11.5, skill: "precalc20" }),
+    makeCategory("sequences", "Math 20 Sequences & Series", "Work with arithmetic and geometric sequences.", "algebra", { level: 11, skill: "sequencesSeries" }),
+    makeCategory("logarithms", "Math 20 Exponential & Logarithmic Models", "Study growth, decay, and logarithmic behaviour.", "functionsGraphing", { level: 11.2, skill: "expLogModels" })
   ],
   12: [
     makeCategory("calculus", "Math 30 Calculus", "Limits, derivatives, and real-world applications.", "calculus", { level: 12 }),
@@ -116,8 +116,8 @@ const curriculum = {
     makeCategory("trig", "Math 30 Trigonometry", "Advanced identities and modelling.", "trigonometry", { level: 12 }),
     makeCategory("statistics", "Math 30 Statistics & Probability", "Expected value, inference, and model-based reasoning.", "statisticsProbability", { level: 12 }),
     makeCategory("financial", "Math 30 Financial Math", "Loans, annuities, and growth models.", "financialMath", { level: 12 }),
-    makeCategory("derivatives", "Math 30 Derivatives & Applications", "Use derivative rules and interpret rates of change.", "calculus", { level: 12 }),
-    makeCategory("integrated-func", "Math 30 Function Transformations", "Combine advanced functions, graphs, and modelling.", "functionsGraphing", { level: 12.2 })
+    makeCategory("derivatives", "Math 30 Derivatives & Applications", "Use derivative rules and interpret rates of change.", "calculus", { level: 12, skill: "derivativeApplications" }),
+    makeCategory("integrated-func", "Math 30 Function Transformations", "Combine advanced functions, graphs, and modelling.", "functionsGraphing", { level: 12.2, skill: "functionTransformations" })
   ]
 };
 
@@ -146,7 +146,9 @@ const state = {
   isStartingLevel: false,
   supabaseUserId: null,
   supabaseUserEmail: "",
-  supabaseHydrating: false
+  supabaseHydrating: false,
+  childViewMode: false,
+  avatarLibraryOpen: false
 };
 
 const questionBankCache = new Map();
@@ -159,9 +161,13 @@ const guestStore = loadGuestStore();
 const learnerSessionKey = "maths-mastery-learner-session-v1";
 const studyTickMs = 1000;
 const LEVEL_COUNT = 5;
-const QUESTIONS_PER_LEVEL = 10;
+const QUESTIONS_PER_LEVEL = 15;
 const QUESTIONS_PER_TOPIC = LEVEL_COUNT * QUESTIONS_PER_LEVEL;
+const WEAK_TOPIC_THRESHOLD = 70;
+const AVATAR_MAX_SIZE = 160;
+const AVATAR_JPEG_QUALITY = 0.82;
 let supabaseWriteQueue = Promise.resolve();
+let lastProfilesStoreError = "";
 
 function getSupabaseClient() {
   return window.masterySupabase?.client || null;
@@ -234,9 +240,16 @@ function addRemoteRowToBundle(bundle, row) {
   });
 
   ensureStudyTimeShape(bundle.studyTime);
-  bundle.studyTime.byCourse[categoryId] = (bundle.studyTime.byCourse[categoryId] || 0) + Number(row.study_time_seconds || 0);
+  const studySeconds = Number(row.study_time_seconds || 0);
+  const subjectFocus = getCategorySubject(grade, categoryId);
+  bundle.studyTime.byCourse[categoryId] = (bundle.studyTime.byCourse[categoryId] || 0) + studySeconds;
   const dayKey = String(completedAt).slice(0, 10);
-  bundle.studyTime.byDay[dayKey] = (bundle.studyTime.byDay[dayKey] || 0) + Number(row.study_time_seconds || 0);
+  bundle.studyTime.byDay[dayKey] = (bundle.studyTime.byDay[dayKey] || 0) + studySeconds;
+  bundle.studyTime.bySubject[subjectFocus] = (bundle.studyTime.bySubject[subjectFocus] || 0) + studySeconds;
+  if (!bundle.studyTime.byDaySubject[dayKey] || typeof bundle.studyTime.byDaySubject[dayKey] !== "object") {
+    bundle.studyTime.byDaySubject[dayKey] = {};
+  }
+  bundle.studyTime.byDaySubject[dayKey][subjectFocus] = (bundle.studyTime.byDaySubject[dayKey][subjectFocus] || 0) + studySeconds;
 }
 
 function buildBundleFromProgressRows(rows) {
@@ -302,7 +315,7 @@ async function syncSupabaseChildren(account, ownerId) {
 
   const { data: existingRows, error } = await client
     .from("mastery_children")
-    .select("id, child_name, child_email, linked_profile_id, avatar_data_url, grade")
+    .select("id, child_name, child_email, child_username, linked_profile_id, avatar_data_url, grade")
     .eq("parent_id", ownerId);
 
   if (error) {
@@ -318,6 +331,7 @@ async function syncSupabaseChildren(account, ownerId) {
     const payload = {
       child_name: child.name,
       child_email: child.childEmail || null,
+      child_username: child.childUsername || null,
       linked_profile_id: child.linkedProfileId || null,
       avatar_data_url: child.avatarDataUrl || null,
       grade: Number(child.grade)
@@ -332,6 +346,7 @@ async function syncSupabaseChildren(account, ownerId) {
       if (
         existing.child_name !== child.name ||
         existing.child_email !== (child.childEmail || null) ||
+        existing.child_username !== (child.childUsername || null) ||
         existing.linked_profile_id !== (child.linkedProfileId || null) ||
         existing.avatar_data_url !== (child.avatarDataUrl || null) ||
         Number(existing.grade) !== Number(child.grade)
@@ -534,14 +549,17 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
     progressByChildId.get(childId).push(row);
   }
 
+  const remoteNames = new Set();
   for (const childRow of childrenRows) {
     const childLocalId = buildProfileId(childRow.child_name);
+    remoteNames.add(childRow.child_name.trim().toLowerCase());
     const fallbackChild = fallbackAccount?.children?.[childLocalId];
     const child = createLearnerRecord({
       id: childLocalId,
       name: childRow.child_name,
       grade: Number(childRow.grade || fallbackChild?.grade || 1),
       childEmail: childRow.child_email || fallbackChild?.childEmail || "",
+      childUsername: childRow.child_username || fallbackChild?.childUsername || "",
       avatarDataUrl: childRow.avatar_data_url || fallbackChild?.avatarDataUrl || "",
       supabaseChildId: childRow.id,
       linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null
@@ -551,6 +569,16 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
     child.scoreHistory = bundle.scoreHistory;
     child.studyTime = bundle.studyTime;
     account.children[child.id] = child;
+  }
+
+  // Keep any locally-added child that hasn't made it to Supabase yet (e.g. the
+  // background sync hadn't finished before this page reloaded). Without this,
+  // a remote snapshot that's missing a just-added child would silently erase it.
+  for (const [childId, fallbackChild] of Object.entries(fallbackAccount?.children || {})) {
+    const normalizedName = (fallbackChild?.name || "").trim().toLowerCase();
+    if (!remoteNames.has(normalizedName) && !account.children[childId]) {
+      account.children[childId] = fallbackChild;
+    }
   }
 
   const childIds = Object.keys(account.children);
@@ -617,6 +645,19 @@ async function loadSupabaseAccountData(session) {
   }
 
   ensureAccountShape(localAccount);
+  // Adopt the signed-in account immediately so the app header/profile stops showing Guest
+  // while the fuller Supabase sync is still loading in the background.
+  profilesStore.profiles[profileId] = localAccount;
+  profilesStore.currentProfileId = profileId;
+  saveProfilesStore();
+  state.currentProfileId = profileId;
+  applyCurrentProfile();
+  renderGradeButtons();
+  renderCategories();
+  if (role === "parent" && Object.keys(localAccount.children || {}).length) {
+    setParentDashboardVisible(true);
+  }
+
   await ensureSupabaseProfileRow(localAccount, user);
 
   if (role === "learner" && user.email) {
@@ -712,6 +753,16 @@ async function loadSupabaseAccountData(session) {
 
   if (!hasRemoteLearningData) {
     await syncSupabaseAccountSnapshot(account, user);
+  } else if (role === "parent") {
+    // Push any children that were recovered locally but aren't in the remote
+    // snapshot yet, so they don't get lost again on the next reload.
+    queueSupabaseWrite(async (_client, ownerId) => {
+      await syncSupabaseChildren(account, ownerId);
+    });
+  }
+
+  if (role === "parent" && Object.keys(account.children || {}).length) {
+    setParentDashboardVisible(true);
   }
 
   state.supabaseHydrating = false;
@@ -760,11 +811,27 @@ const elements = {
   parentPanel: document.getElementById("parent-panel"),
   parentChildSelect: document.getElementById("parent-child-select"),
   switchChildButton: document.getElementById("switch-child-button"),
+  headerChildSelect: document.getElementById("header-child-select"),
+  headerChildSwitchButton: document.getElementById("header-child-switch-button"),
   childNameInput: document.getElementById("child-name"),
   childGradeInput: document.getElementById("child-grade"),
   childEmailInput: document.getElementById("child-email"),
+  childUsernameInput: document.getElementById("child-username"),
+  childPasswordInput: document.getElementById("child-password"),
+  childUsernameGroup: document.getElementById("child-username-group"),
+  childUsernameNote: document.getElementById("child-username-note"),
   childPhotoInput: document.getElementById("child-photo"),
   childPhotoPreview: document.getElementById("child-photo-preview"),
+  avatarSection: document.getElementById("avatar-section"),
+  currentAvatarPreview: document.getElementById("current-avatar-preview"),
+  currentAvatarPlaceholder: document.getElementById("current-avatar-placeholder"),
+  currentAvatarName: document.getElementById("current-avatar-name"),
+  toggleAvatarLibraryButton: document.getElementById("toggle-avatar-library-button"),
+  currentAvatarUpload: document.getElementById("current-avatar-upload"),
+  clearAvatarButton: document.getElementById("clear-avatar-button"),
+  avatarLibraryPanel: document.getElementById("avatar-library-panel"),
+  avatarLibraryEmpty: document.getElementById("avatar-library-empty"),
+  avatarLibraryGrid: document.getElementById("avatar-library-grid"),
   addChildButton: document.getElementById("add-child-button"),
   saveChildButton: document.getElementById("save-child-button"),
   parentKidsDashboard: document.getElementById("parent-kids-dashboard"),
@@ -780,12 +847,44 @@ const elements = {
   parentDashboardWeekTime: document.getElementById("parent-dashboard-week-time"),
   parentDashboardLevels: document.getElementById("parent-dashboard-levels"),
   parentDashboardAverage: document.getElementById("parent-dashboard-average"),
+  parentDashboardStreak: document.getElementById("parent-dashboard-streak"),
+  parentDashboardWeekAverage: document.getElementById("parent-dashboard-week-average"),
   parentDashboardChart: document.getElementById("parent-dashboard-chart"),
   parentDashboardAnalysis: document.getElementById("parent-dashboard-analysis"),
+  parentDashboardWeakAreas: document.getElementById("parent-dashboard-weak-areas"),
+  parentGoalSubjectInput: document.getElementById("parent-goal-subject"),
+  parentGoalDailyMinutesInput: document.getElementById("parent-goal-daily-minutes"),
+  parentGoalDailyLevelsInput: document.getElementById("parent-goal-daily-levels"),
+  parentGoalsApplyAllInput: document.getElementById("parent-goals-apply-all"),
+  parentGoalsSaveButton: document.getElementById("parent-goals-save-button"),
+  parentGoalEditorName: document.getElementById("parent-goal-editor-name"),
+  parentGoalEditorCurrent: document.getElementById("parent-goal-editor-current"),
+  parentGoalMathStatus: document.getElementById("parent-goal-math-status"),
+  parentGoalMathMeta: document.getElementById("parent-goal-math-meta"),
+  parentGoalEnglishStatus: document.getElementById("parent-goal-english-status"),
+  parentGoalEnglishMeta: document.getElementById("parent-goal-english-meta"),
+  parentGoalSubjectChart: document.getElementById("parent-goal-subject-chart"),
+  parentGoalMathMinutesLabel: document.getElementById("parent-goal-math-minutes-label"),
+  parentGoalMathMinutesStatus: document.getElementById("parent-goal-math-minutes-status"),
+  parentGoalMathMinutesBar: document.getElementById("parent-goal-math-minutes-bar"),
+  parentGoalMathLevelsLabel: document.getElementById("parent-goal-math-levels-label"),
+  parentGoalMathLevelsStatus: document.getElementById("parent-goal-math-levels-status"),
+  parentGoalMathLevelsBar: document.getElementById("parent-goal-math-levels-bar"),
+  parentGoalEnglishMinutesLabel: document.getElementById("parent-goal-english-minutes-label"),
+  parentGoalEnglishMinutesStatus: document.getElementById("parent-goal-english-minutes-status"),
+  parentGoalEnglishMinutesBar: document.getElementById("parent-goal-english-minutes-bar"),
+  parentGoalEnglishLevelsLabel: document.getElementById("parent-goal-english-levels-label"),
+  parentGoalEnglishLevelsStatus: document.getElementById("parent-goal-english-levels-status"),
+  parentGoalEnglishLevelsBar: document.getElementById("parent-goal-english-levels-bar"),
   accountToolsSection: document.getElementById("account-tools-section"),
   openAccountToolsButton: document.getElementById("open-account-tools-button"),
+  backToParentButton: document.getElementById("back-to-parent-button"),
   authAccountName: document.getElementById("auth-account-name"),
   authAccountMeta: document.getElementById("auth-account-meta"),
+  headerAccountAvatar: document.getElementById("header-account-avatar"),
+  headerAccountAvatarPlaceholder: document.getElementById("header-account-avatar-placeholder"),
+  headerAvatarUploadLabel: document.getElementById("header-avatar-upload-label"),
+  headerAvatarUploadInput: document.getElementById("header-avatar-upload"),
   openLoginLink: document.getElementById("open-login-link"),
   logoutAuthButton: document.getElementById("logout-auth-button"),
   toggleHeroCopyButton: document.getElementById("toggle-hero-copy-button"),
@@ -800,6 +899,7 @@ const elements = {
   profilePanelContent: document.getElementById("profile-panel-content"),
   toggleGradePanelButton: document.getElementById("toggle-grade-panel-button"),
   gradePanelContent: document.getElementById("grade-panel-content"),
+  gradePanelSection: document.getElementById("grade-panel-section"),
   gradeButtons: document.getElementById("grade-buttons"),
   mathCategorySelect: document.getElementById("math-category-select"),
   englishCategorySelect: document.getElementById("english-category-select"),
@@ -810,6 +910,7 @@ const elements = {
   toggleSearchPanelButton: document.getElementById("toggle-search-panel-button"),
   topicSearchPanelContent: document.getElementById("topic-search-panel-content"),
   categoryCurrentCard: document.getElementById("category-current-card"),
+  topicsEmptyState: document.getElementById("topics-empty-state"),
   patTabSection: document.getElementById("pat-tab-section"),
   patTabTitle: document.getElementById("pat-tab-title"),
   patTabDescription: document.getElementById("pat-tab-description"),
@@ -868,7 +969,15 @@ const elements = {
   reviewEmpty: document.getElementById("review-empty"),
   reviewDetails: document.getElementById("review-details"),
   reviewSummary: document.getElementById("review-summary"),
-  reviewBreakdown: document.getElementById("review-breakdown")
+  reviewBreakdown: document.getElementById("review-breakdown"),
+  parentPasswordModal: document.getElementById("parent-password-modal"),
+  parentPasswordModalOverlay: document.getElementById("parent-password-modal-overlay"),
+  parentPasswordModalTitle: document.getElementById("parent-password-modal-title"),
+  parentPasswordModalMessage: document.getElementById("parent-password-modal-message"),
+  parentPasswordModalInput: document.getElementById("parent-password-modal-input"),
+  parentPasswordModalError: document.getElementById("parent-password-modal-error"),
+  parentPasswordModalCancel: document.getElementById("parent-password-modal-cancel"),
+  parentPasswordModalSubmit: document.getElementById("parent-password-modal-submit")
 };
 
 init();
@@ -895,70 +1004,91 @@ function init() {
   startStudyTimer();
 }
 
+function bindClick(element, handler) {
+  if (!element || typeof handler !== "function") {
+    return;
+  }
+  element.addEventListener("click", handler);
+}
+
+function bindChange(element, handler) {
+  if (!element || typeof handler !== "function") {
+    return;
+  }
+  element.addEventListener("change", handler);
+}
+
 function attachEvents() {
-  elements.saveProfileButton?.addEventListener("click", handleSaveProfileSettings);
-  elements.createProfileButton.addEventListener("click", handleCreateProfile);
-  elements.loginProfileButton.addEventListener("click", handleLoginProfile);
-  elements.logoutProfileButton.addEventListener("click", handleLogoutProfile);
-  elements.profileRoleInput?.addEventListener("change", renderAccountFormMode);
-  elements.addChildButton?.addEventListener("click", handleAddChild);
-  elements.saveChildButton?.addEventListener("click", handleSaveChildSettings);
-  elements.switchChildButton?.addEventListener("click", handleSwitchChild);
-  elements.childPhotoInput?.addEventListener("change", handleChildPhotoSelected);
-  elements.openAccountToolsButton?.addEventListener("click", () => {
-    const account = getCurrentAccount();
-    if (account?.type === "parent") {
-      setParentDashboardVisible(true);
+  bindClick(elements.saveProfileButton, handleSaveProfileSettings);
+  bindClick(elements.createProfileButton, handleCreateProfile);
+  bindClick(elements.loginProfileButton, handleLoginProfile);
+  bindClick(elements.logoutProfileButton, handleLogoutProfile);
+  bindChange(elements.profileRoleInput, renderAccountFormMode);
+  bindClick(elements.addChildButton, handleAddChild);
+  bindClick(elements.saveChildButton, handleSaveChildSettings);
+  bindClick(elements.switchChildButton, handleSwitchChild);
+  bindChange(elements.headerChildSelect, handleHeaderChildSwitch);
+  bindClick(elements.headerChildSwitchButton, handleHeaderChildSwitch);
+  bindClick(elements.backToParentButton, handleBackToParent);
+  bindChange(elements.childPhotoInput, handleChildPhotoSelected);
+  bindChange(elements.headerAvatarUploadInput, handleHeaderAvatarSelected);
+  bindClick(elements.toggleAvatarLibraryButton, toggleAvatarLibraryPanel);
+  bindChange(elements.currentAvatarUpload, handleCurrentAvatarUploadSelected);
+  bindClick(elements.clearAvatarButton, handleClearCurrentAvatar);
+  bindClick(elements.avatarLibraryGrid, handleAvatarLibraryGridClick);
+  bindClick(elements.parentGoalsSaveButton, handleSaveParentGoals);
+  bindClick(elements.openAccountToolsButton, () => {
+    if (!getCurrentAccount()) {
+      // Guests don't have a local account to open — send them to the real (Supabase) sign-in
+      // page instead, since that's the account system going forward. index.html is now the
+      // login page.
+      window.location.href = "login.html";
       return;
     }
-    setAccountToolsVisible(true);
+    const shouldShow = elements.accountToolsSection?.classList.contains("hidden") ?? true;
+    setAccountToolsVisible(shouldShow);
   });
-  elements.previousButton.addEventListener("click", moveToPreviousQuestion);
-  elements.nextButton.addEventListener("click", moveToNextQuestion);
-  elements.submitWritingButton?.addEventListener("click", submitWritingAnswer);
-  elements.retryLevelButton.addEventListener("click", () => startLevel(state.selectedLevel));
-  elements.nextLevelButton.addEventListener("click", moveToNextLevel);
-  elements.openReviewButton.addEventListener("click", openSelectedReview);
-  elements.resetTopicProgressButton?.addEventListener("click", resetSelectedTopicProgress);
-  elements.hintButton?.addEventListener("click", toggleHint);
-  elements.mathCategorySelect?.addEventListener("change", (event) => handleCategorySelect(event, "maths"));
-  elements.englishCategorySelect?.addEventListener("change", (event) => handleCategorySelect(event, "english"));
+  bindClick(elements.logoutAuthButton, handleHeaderLogout);
+  bindClick(elements.previousButton, moveToPreviousQuestion);
+  bindClick(elements.nextButton, moveToNextQuestion);
+  bindClick(elements.submitWritingButton, submitWritingAnswer);
+  bindClick(elements.retryLevelButton, () => startLevel(state.selectedLevel));
+  bindClick(elements.nextLevelButton, moveToNextLevel);
+  bindClick(elements.openReviewButton, openSelectedReview);
+  bindClick(elements.resetTopicProgressButton, resetSelectedTopicProgress);
+  bindClick(elements.hintButton, toggleHint);
+  bindChange(elements.mathCategorySelect, (event) => handleCategorySelect(event, "maths"));
+  bindChange(elements.englishCategorySelect, (event) => handleCategorySelect(event, "english"));
   elements.levelGrid?.addEventListener("click", handleLevelGridClick);
   elements.topicSearchInput?.addEventListener("input", (event) => {
     state.searchQuery = event.target.value;
     renderTopicSearch();
   });
-  elements.topicSearchButton?.addEventListener("click", renderTopicSearch);
-  elements.clearSearchButton?.addEventListener("click", clearTopicSearch);
+  elements.topicSearchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      state.searchQuery = event.target.value;
+      renderTopicSearch();
+      elements.topicSearchInput.blur();
+    }
+  });
+  bindClick(elements.topicSearchButton, () => {
+    state.searchQuery = elements.topicSearchInput?.value || "";
+    renderTopicSearch();
+  });
+  bindClick(elements.clearSearchButton, clearTopicSearch);
   elements.topicSearchResults?.addEventListener("click", handleTopicSearchJump);
-  if (elements.toggleProfilePanelButton) {
-    elements.toggleProfilePanelButton.addEventListener("click", toggleProfilePanel);
-  }
-  if (elements.toggleHeroPanelButton) {
-    elements.toggleHeroPanelButton.addEventListener("click", toggleHeroPanel);
-  }
-  if (elements.toggleHeroCopyButton) {
-    elements.toggleHeroCopyButton.addEventListener("click", toggleHeroCopy);
-  }
-  if (elements.openHeroPanelButton) {
-    elements.openHeroPanelButton.addEventListener("click", openHeroPanel);
-  }
-  if (elements.heroPanelOverlay) {
-    elements.heroPanelOverlay.addEventListener("click", closeHeroPanel);
-  }
-  if (elements.toggleGradePanelButton) {
-    elements.toggleGradePanelButton.addEventListener("click", toggleGradePanel);
-  }
-  if (elements.toggleParentDashboardButton) {
-    elements.toggleParentDashboardButton.addEventListener("click", toggleParentDashboard);
-  }
+  bindClick(elements.toggleProfilePanelButton, toggleProfilePanel);
+  bindClick(elements.toggleHeroPanelButton, toggleHeroPanel);
+  bindClick(elements.toggleHeroCopyButton, toggleHeroCopy);
+  bindClick(elements.toggleGradePanelButton, toggleGradePanel);
+  bindClick(elements.toggleParentDashboardButton, toggleParentDashboard);
   elements.parentDashboardLearnerGrid?.addEventListener("click", handleParentDashboardLearnerClick);
-  if (elements.toggleSearchPanelButton) {
-    elements.toggleSearchPanelButton.addEventListener("click", toggleSearchPanel);
-  }
+  bindClick(elements.toggleSearchPanelButton, toggleSearchPanel);
   document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener("beforeunload", flushStudyTime);
 }
+
 
 function toggleProfilePanel() {
   const isHidden = elements.profilePanelContent.classList.toggle("hidden");
@@ -990,33 +1120,20 @@ function toggleHeroCopy() {
   setHeroCopyCollapsed(collapsed);
 }
 
-function openHeroPanel() {
-  if (!elements.heroPanel || !elements.heroPanelOverlay || !elements.openHeroPanelButton) {
+function setHeroPanelVisible(visible) {
+  if (!elements.heroPanelContent || !elements.toggleHeroPanelButton) {
     return;
   }
-  elements.heroPanel.classList.add("is-open");
-  elements.heroPanelOverlay.classList.remove("hidden");
-  elements.openHeroPanelButton.setAttribute("aria-expanded", "true");
-}
-
-function closeHeroPanel() {
-  if (!elements.heroPanel || !elements.heroPanelOverlay || !elements.openHeroPanelButton) {
-    return;
-  }
-  elements.heroPanel.classList.remove("is-open");
-  elements.heroPanelOverlay.classList.add("hidden");
-  elements.openHeroPanelButton.setAttribute("aria-expanded", "false");
+  elements.heroPanelContent.classList.toggle("hidden", !visible);
+  elements.toggleHeroPanelButton.textContent = visible ? "Hide Performance" : "Show Performance";
+  elements.toggleHeroPanelButton.setAttribute("aria-expanded", String(visible));
 }
 
 function toggleHeroPanel() {
-  if (!elements.heroPanel) {
+  if (!elements.heroPanelContent) {
     return;
   }
-  if (elements.heroPanel.classList.contains("is-open")) {
-    closeHeroPanel();
-    return;
-  }
-  openHeroPanel();
+  setHeroPanelVisible(elements.heroPanelContent.classList.contains("hidden"));
 }
 
 function setAccountToolsVisible(visible) {
@@ -1024,6 +1141,13 @@ function setAccountToolsVisible(visible) {
     return;
   }
   elements.accountToolsSection.classList.toggle("hidden", !visible);
+  if (elements.profilePanelContent) {
+    elements.profilePanelContent.classList.toggle("hidden", !visible);
+  }
+  if (elements.toggleProfilePanelButton) {
+    elements.toggleProfilePanelButton.textContent = visible ? "Hide Tools" : "Show Tools";
+    elements.toggleProfilePanelButton.setAttribute("aria-expanded", String(visible));
+  }
   if (visible) {
     elements.accountToolsSection.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -1033,11 +1157,128 @@ function setParentDashboardVisible(visible) {
   if (!elements.parentDashboardSection) {
     return;
   }
-  elements.parentDashboardSection.classList.toggle("hidden", !visible);
-  if (visible) {
+  const effectiveVisible = visible && !state.childViewMode;
+  elements.parentDashboardSection.classList.toggle("hidden", !effectiveVisible);
+  if (effectiveVisible) {
     renderParentDashboard();
     elements.parentDashboardSection.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+}
+
+// Once a parent explicitly hands the device off to a child (via the child switcher), hide every
+// parent-only control (Manage Learners, Family Dashboard) so the child only sees the learning
+// area. A small "Back to Parent" control is the only way back in, keeping this a deliberate,
+// two-step action rather than something a curious kid can undo with one tap.
+function setChildViewMode(enabled) {
+  state.childViewMode = enabled;
+  if (enabled) {
+    setParentDashboardVisible(false);
+    setAccountToolsVisible(false);
+  }
+  elements.backToParentButton?.classList.toggle("hidden", !enabled);
+  // A learner only ever plays at the grade their parent assigned them, so the grade picker
+  // is parent-only tooling and should disappear along with the rest of the admin controls.
+  elements.gradePanelSection?.classList.toggle("hidden", enabled);
+  // The performance/activity panel is progress-tracking for parents, not something a kid needs
+  // to see while practicing. Force it closed and hide the toggle entirely in child view.
+  if (enabled) {
+    setHeroPanelVisible(false);
+  }
+  elements.toggleHeroPanelButton?.classList.toggle("hidden", enabled);
+  renderProfilePanel();
+}
+
+function askParentPassword(actionLabel) {
+  return new Promise((resolve) => {
+    if (!elements.parentPasswordModal || !elements.parentPasswordModalInput) {
+      resolve(window.prompt(`Enter the parent password to ${actionLabel}.`));
+      return;
+    }
+
+    elements.parentPasswordModalMessage.textContent = `Enter the parent password to ${actionLabel}.`;
+    elements.parentPasswordModalInput.value = "";
+    if (elements.parentPasswordModalError) {
+      elements.parentPasswordModalError.textContent = "";
+      elements.parentPasswordModalError.classList.add("hidden");
+    }
+    elements.parentPasswordModal.classList.remove("hidden");
+
+    let settled = false;
+    const cleanup = () => {
+      elements.parentPasswordModal.classList.add("hidden");
+      elements.parentPasswordModalSubmit?.removeEventListener("click", onSubmit);
+      elements.parentPasswordModalCancel?.removeEventListener("click", onCancel);
+      elements.parentPasswordModalOverlay?.removeEventListener("click", onCancel);
+      elements.parentPasswordModalInput?.removeEventListener("keydown", onKeydown);
+    };
+    const finish = (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+    const onSubmit = () => finish(elements.parentPasswordModalInput.value);
+    const onCancel = () => finish(null);
+    const onKeydown = (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        onSubmit();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel();
+      }
+    };
+
+    elements.parentPasswordModalSubmit?.addEventListener("click", onSubmit);
+    elements.parentPasswordModalCancel?.addEventListener("click", onCancel);
+    elements.parentPasswordModalOverlay?.addEventListener("click", onCancel);
+    elements.parentPasswordModalInput?.addEventListener("keydown", onKeydown);
+
+    window.requestAnimationFrame(() => {
+      elements.parentPasswordModalInput?.focus();
+    });
+  });
+}
+
+async function verifyParentPasswordForAction(actionLabel = "continue") {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent") {
+    return false;
+  }
+
+  const password = await askParentPassword(actionLabel);
+  if (!password) {
+    showProfileMessage("Parent password is required for that action.", "error");
+    return false;
+  }
+
+  if (account.passwordHash) {
+    const matches = account.passwordHash === hashPassword(password);
+    if (!matches) {
+      showProfileMessage("That parent password is not correct.", "error");
+    }
+    return matches;
+  }
+
+  const client = getSupabaseClient();
+  if (!client || !state.supabaseUserEmail) {
+    showProfileMessage("Parent password check is not available right now. Please sign in again.", "error");
+    return false;
+  }
+
+  const { error } = await client.auth.signInWithPassword({
+    email: state.supabaseUserEmail,
+    password
+  });
+
+  if (error) {
+    showProfileMessage("That parent password is not correct.", "error");
+    return false;
+  }
+
+  return true;
 }
 
 function toggleGradePanel() {
@@ -1141,6 +1382,7 @@ function renderCategorySelector(categories) {
     elements.patTabSection?.classList.add("hidden");
     elements.probabilityModeSection?.classList.add("hidden");
     elements.probabilityExampleSection?.classList.add("hidden");
+    elements.topicsEmptyState?.classList.remove("hidden");
     return;
   }
 
@@ -1174,12 +1416,14 @@ function renderCategorySelector(categories) {
     elements.patTabSection?.classList.add("hidden");
     elements.probabilityModeSection?.classList.add("hidden");
     elements.probabilityExampleSection?.classList.add("hidden");
+    elements.topicsEmptyState?.classList.remove("hidden");
     if (elements.categoryCurrentCard) {
       elements.categoryCurrentCard.innerHTML = "";
     }
     return;
   }
 
+  elements.topicsEmptyState?.classList.add("hidden");
   if (elements.categoryCurrentCard) {
     elements.categoryCurrentCard.classList.remove("hidden");
     elements.categoryCurrentCard.innerHTML = `
@@ -1670,6 +1914,7 @@ function checkAnswer(selectedIndex, selectedButton) {
 
   if (isCorrect) {
     state.score += 1;
+    triggerConfetti(16);
   }
 
   state.questionResults[state.currentIndex] = {
@@ -1820,6 +2065,10 @@ function completeLevel() {
   elements.progressBar.style.width = "100%";
 
   const percentage = Math.round((state.score / state.currentQuestions.length) * 100);
+  triggerConfetti(percentage >= 70 ? 70 : 30);
+  showCelebrationToast(
+    percentage === 100 ? "🏆 Perfect score!" : percentage >= 70 ? "🎉 Great job!" : "✨ Level complete!"
+  );
   const saveMessage = savedToProfile
     ? currentProfile
       ? `Saved to ${currentProfile.name}'s profile.`
@@ -1937,46 +2186,9 @@ function showFeedback(isCorrect, explanation) {
     .replace("ðŸ˜…", "\u{1F605}");
 }
 
-function playAnswerFeedback(isCorrect) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (isCorrect) {
-    playGuitarSuccess();
-  }
-}
-
-function playGuitarSuccess() {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) {
-    return;
-  }
-
-  if (!playGuitarSuccess.audioContext) {
-    playGuitarSuccess.audioContext = new AudioContextClass();
-  }
-
-  const context = playGuitarSuccess.audioContext;
-  if (context.state === "suspended") {
-    context.resume().catch(() => {});
-  }
-
-  const now = context.currentTime;
-  [392, 494, 587].forEach((frequency, index) => {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(frequency, now);
-    oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.98, now + 0.35);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.14 - (index * 0.025), now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now + (index * 0.03));
-    oscillator.stop(now + 0.5);
-  });
+function playAnswerFeedback() {
+  // Sound and spoken feedback were tried and removed by request. Kept as a no-op so the
+  // existing call sites in checkAnswer()/submitWritingAnswer() don't need to change.
 }
 
 function renderReviewOptions() {
@@ -2271,7 +2483,7 @@ function renderTopicSearch() {
   }
 
   if (!query) {
-    elements.topicSearchResults.innerHTML = `<div class="topic-search-empty">Search a topic or keyword to see matching courses and question levels.</div>`;
+    elements.topicSearchResults.innerHTML = "";
     return;
   }
 
@@ -2463,7 +2675,7 @@ function handleTopicSearchJump(event) {
   renderLevels();
   renderReviewOptions();
   renderStudyTime();
-  renderTopicSearch();
+  clearTopicSearch();
 
   if (button.dataset.action === "open-level") {
     const level = Number(button.dataset.level);
@@ -2499,6 +2711,44 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+const CONFETTI_COLORS = ["#f43f5e", "#f59e0b", "#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#06b6d4"];
+
+function triggerConfetti(count = 24) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  const pieces = [];
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    const size = 6 + Math.random() * 8;
+    piece.style.left = `${Math.random() * 100}vw`;
+    piece.style.width = `${size}px`;
+    piece.style.height = `${size}px`;
+    piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    piece.style.animationDuration = `${1100 + Math.random() * 700}ms`;
+    piece.style.animationDelay = `${Math.random() * 200}ms`;
+    fragment.appendChild(piece);
+    pieces.push(piece);
+  }
+  document.body.appendChild(fragment);
+  window.setTimeout(() => {
+    pieces.forEach((piece) => piece.remove());
+  }, 2200);
+}
+
+function showCelebrationToast(message) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const toast = document.createElement("div");
+  toast.className = "celebration-toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  window.setTimeout(() => toast.remove(), 1600);
 }
 
 function normalizeQuestionPrompt(prompt) {
@@ -2773,14 +3023,19 @@ function uniquifyQuestionPrompt(question, occurrence) {
     (text) => text.replace(/^What is\b/i, "Find"),
     (text) => text.replace(/^What\b/i, "Choose what"),
     (text) => text.replace(/^Choose\b/i, "Select"),
-    (text) => text.replace(/^A\b/i, "Practice: a"),
-    (text) => `Practice version ${occurrence}: ${text}`
+    (text) => text.replace(/^A\b/i, "Practice: a")
   ];
 
+  // Try the word-swap variants first (keeps phrasing natural), but always fall
+  // back to a guaranteed-different prefix so this can never produce the same
+  // text twice in a row (that would stall the caller's dedup loop forever).
   const variantBuilder = replacements[Math.min(occurrence - 1, replacements.length - 1)];
+  const variant = variantBuilder(prompt);
+  const nextPrompt = variant !== prompt ? variant : `Practice version ${occurrence}: ${prompt}`;
+
   return {
     ...question,
-    prompt: variantBuilder(prompt)
+    prompt: nextPrompt
   };
 }
 
@@ -2791,11 +3046,13 @@ function enforceUniqueQuestionPrompts(bank) {
     let nextQuestion = question;
     let normalizedPrompt = normalizeQuestionPrompt(nextQuestion.prompt);
     let occurrence = (seen.get(normalizedPrompt) || 0) + 1;
+    let safetyCounter = 0;
 
-    while (occurrence > 1) {
+    while (occurrence > 1 && safetyCounter < 25) {
       nextQuestion = uniquifyQuestionPrompt(nextQuestion, occurrence);
       normalizedPrompt = normalizeQuestionPrompt(nextQuestion.prompt);
       occurrence = (seen.get(normalizedPrompt) || 0) + 1;
+      safetyCounter += 1;
     }
 
     seen.set(normalizedPrompt, occurrence);
@@ -2924,7 +3181,15 @@ function loadGuestStore() {
 }
 
 function saveProfilesStore() {
-  localStorage.setItem(profilesStoreKey, JSON.stringify(profilesStore));
+  try {
+    localStorage.setItem(profilesStoreKey, JSON.stringify(profilesStore));
+    lastProfilesStoreError = "";
+    return true;
+  } catch (error) {
+    lastProfilesStoreError = error?.message || "Could not save this profile in browser storage.";
+    console.error("Saving profiles store failed", error);
+    return false;
+  }
 }
 
 function saveGuestStore() {
@@ -2987,9 +3252,19 @@ function renderProfilePanel() {
       ? account.type === "parent" ? `${account.name} / ${learner.name}` : learner.name
       : account.name;
     elements.logoutProfileButton.classList.remove("hidden");
-    elements.parentPanel?.classList.toggle("hidden", account.type !== "parent");
+    elements.parentPanel?.classList.toggle("hidden", account.type !== "parent" || state.childViewMode);
     if (elements.openAccountToolsButton) {
-      elements.openAccountToolsButton.textContent = account.type === "parent" ? "Family Dashboard" : "Manage Account";
+      if (account.type === "parent" && !state.childViewMode) {
+        elements.openAccountToolsButton.textContent = "Manage Learners";
+        elements.openAccountToolsButton.classList.remove("hidden");
+      } else {
+        elements.openAccountToolsButton.textContent = "Profile";
+        elements.openAccountToolsButton.classList.remove("hidden");
+      }
+    }
+    if (account.type !== "parent") {
+      setAccountToolsVisible(false);
+      setParentDashboardVisible(false);
     }
     if (elements.profileRoleInput) {
       elements.profileRoleInput.value = account.type || "learner";
@@ -3016,7 +3291,10 @@ function renderProfilePanel() {
     elements.logoutProfileButton.classList.add("hidden");
     elements.parentPanel?.classList.add("hidden");
     if (elements.openAccountToolsButton) {
-      elements.openAccountToolsButton.textContent = "Manage Learners";
+      // Guests need a visible way in now that the separate online Parent/Learner Login
+      // links are gone — this is the only entry point to the local Create Profile / Log In form.
+      elements.openAccountToolsButton.textContent = "Sign In / Sign Up";
+      elements.openAccountToolsButton.classList.remove("hidden");
     }
     if (elements.profileRoleInput) {
       elements.profileRoleInput.value = "learner";
@@ -3033,7 +3311,63 @@ function renderProfilePanel() {
     renderParentPanel(null);
   }
 
+  renderHeaderAccountBadge(account, learner);
+  renderAvatarSection();
   renderAccountFormMode();
+}
+
+// Shows who's actually using the app right now in the top header. In child view mode this
+// swaps from the parent's name to the active learner's own name and avatar (which the learner
+// can change themselves via the "Change Photo" control) so a kid handed the device sees their
+// own identity up top, not their parent's.
+function renderHeaderAccountBadge(account, learner) {
+  const showingChild = Boolean(state.childViewMode && account?.type === "parent" && learner);
+  const learnerInControl = account?.type === "learner" ? learner : showingChild ? learner : null;
+  const displayName = learnerInControl ? learnerInControl.name : null;
+  const avatarDataUrl = learnerInControl ? learnerInControl.avatarDataUrl || "" : "";
+
+  if (elements.authAccountName) {
+    elements.authAccountName.textContent = showingChild ? (displayName || "Learner") : account?.name || "Guest";
+  }
+  if (elements.authAccountMeta) {
+    if (showingChild) {
+      elements.authAccountMeta.textContent = `Grade ${learner.grade}`;
+    } else if (account) {
+      // This app has two separate parent login systems (a local, device-only login and an
+      // email-based online login) that do NOT share data with each other. Spelling out which
+      // one is active makes it obvious when a child was added under the "other" account.
+      const accountSource = isSupabaseProfileId(account.id)
+        ? state.supabaseUserEmail || "signed in online"
+        : `${account.name} (saved on this device only)`;
+      elements.authAccountMeta.textContent = account.type === "parent"
+        ? `Parent account · ${accountSource}`
+        : "Learner account";
+    } else {
+      elements.authAccountMeta.textContent = "Open login to continue";
+    }
+  }
+
+  if (elements.headerAccountAvatar && elements.headerAccountAvatarPlaceholder) {
+    if (learnerInControl && avatarDataUrl) {
+      elements.headerAccountAvatar.src = avatarDataUrl;
+      elements.headerAccountAvatar.alt = displayName || "Learner avatar";
+      elements.headerAccountAvatar.classList.remove("hidden");
+      elements.headerAccountAvatarPlaceholder.classList.add("hidden");
+    } else if (learnerInControl) {
+      elements.headerAccountAvatarPlaceholder.textContent = (displayName || "?").charAt(0).toUpperCase();
+      elements.headerAccountAvatarPlaceholder.classList.remove("hidden");
+      elements.headerAccountAvatar.classList.add("hidden");
+    } else {
+      elements.headerAccountAvatar.classList.add("hidden");
+      elements.headerAccountAvatarPlaceholder.classList.add("hidden");
+    }
+  }
+
+  elements.headerAvatarUploadLabel?.classList.toggle("hidden", !learnerInControl);
+  elements.logoutAuthButton?.classList.toggle("hidden", !account);
+  if (elements.openAccountToolsButton) {
+    elements.openAccountToolsButton.classList.toggle("hidden", Boolean(account && state.childViewMode));
+  }
 }
 
 function renderAccountFormMode() {
@@ -3164,16 +3498,21 @@ function renderParentPanel(account) {
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
     elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Create or open a parent account to view children here.</div>`;
     setChildPhotoPreview("");
+    elements.headerChildSelect?.classList.add("hidden");
+    elements.headerChildSwitchButton?.classList.add("hidden");
     return;
   }
 
   const childEntries = Object.values(account.children || {});
+  const showParentSwitchControls = !state.childViewMode;
   if (!childEntries.length) {
     elements.parentChildSelect.innerHTML = `<option value="">No children added yet</option>`;
     elements.parentChildSelect.disabled = true;
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
     elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Add a child to start tracking progress.</div>`;
     setChildPhotoPreview("");
+    elements.headerChildSelect?.classList.add("hidden");
+    elements.headerChildSwitchButton?.classList.add("hidden");
     return;
   }
 
@@ -3183,7 +3522,16 @@ function renderParentPanel(account) {
     .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${child.name} | Grade ${child.grade}</option>`)
     .join("");
 
-  elements.parentKidsDashboard.innerHTML = childEntries
+  if (elements.headerChildSelect) {
+    elements.headerChildSelect.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
+    elements.headerChildSelect.innerHTML = childEntries
+      .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(child.name)}</option>`)
+      .join("");
+  }
+  elements.headerChildSwitchButton?.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
+
+  const childCountLabel = `<p class="profile-note">${childEntries.length} ${childEntries.length === 1 ? "child" : "children"} saved to this account.</p>`;
+  elements.parentKidsDashboard.innerHTML = childCountLabel + childEntries
     .map((child) => {
       const totalLevels = countCompletedLevelsFromProgress(child.progress || {});
       const lastEntry = Array.isArray(child.scoreHistory) && child.scoreHistory.length ? child.scoreHistory[0] : null;
@@ -3194,7 +3542,7 @@ function renderParentPanel(account) {
             ${child.avatarDataUrl ? `<img class="parent-kid-avatar" src="${child.avatarDataUrl}" alt="${escapeHtml(child.name)}" />` : `<div class="parent-kid-avatar parent-kid-avatar--placeholder">${escapeHtml((child.name || "?").charAt(0).toUpperCase())}</div>`}
             <div>
               <strong>${escapeHtml(child.name)}</strong>
-              <small>${escapeHtml(child.childEmail || "No email linked yet")}</small>
+              <small>${escapeHtml(child.childUsername ? `Username: ${child.childUsername}` : (child.childEmail || "No login set yet"))}</small>
             </div>
           </div>
           <div class="parent-kid-meta">
@@ -3215,6 +3563,22 @@ function renderParentPanel(account) {
     elements.childGradeInput && (elements.childGradeInput.value = String(activeChild.grade || state.selectedGrade || 1));
     elements.childEmailInput && (elements.childEmailInput.value = activeChild.childEmail || "");
     setChildPhotoPreview(activeChild.avatarDataUrl || "");
+
+    const hasUsername = Boolean(activeChild.childUsername);
+    if (elements.childUsernameInput) {
+      elements.childUsernameInput.value = activeChild.childUsername || "";
+      elements.childUsernameInput.disabled = hasUsername;
+    }
+    if (elements.childPasswordInput) {
+      elements.childPasswordInput.value = "";
+      elements.childPasswordInput.disabled = hasUsername;
+      elements.childPasswordInput.placeholder = hasUsername ? "Username login already set" : "Set a password for login";
+    }
+    if (elements.childUsernameNote) {
+      elements.childUsernameNote.textContent = hasUsername
+        ? `This learner already logs in with username "${activeChild.childUsername}". Username and password can't be changed here yet.`
+        : "Username and password are optional — only needed if this child wants to log in on their own on a separate device (requires Supabase).";
+    }
   }
 
   renderParentDashboard();
@@ -3247,6 +3611,23 @@ function getAverageScorePercentage(scoreHistory) {
   return Math.round(total / scoreHistory.length);
 }
 
+function getTodayCompletedLevels(scoreHistory) {
+  const todayKey = getTodayKey();
+  return (scoreHistory || []).reduce((count, entry) => {
+    return count + (formatDayKeyFromValue(entry.completedAt) === todayKey ? 1 : 0);
+  }, 0);
+}
+
+function getTodayCompletedLevelsBySubject(scoreHistory, subjectFocus = "math") {
+  const todayKey = getTodayKey();
+  return (scoreHistory || []).reduce((count, entry) => {
+    if (formatDayKeyFromValue(entry.completedAt) !== todayKey) {
+      return count;
+    }
+    return count + (getCategorySubject(entry.grade, entry.categoryId) === subjectFocus ? 1 : 0);
+  }, 0);
+}
+
 function getWeeklySeconds(studyTime) {
   if (!studyTime || typeof studyTime !== "object") {
     return 0;
@@ -3254,6 +3635,164 @@ function getWeeklySeconds(studyTime) {
   ensureStudyTimeShape(studyTime);
   const dayItems = getPastSevenDaysActivity(studyTime.byDay || {}, []);
   return dayItems.reduce((sum, item) => sum + Number(item.seconds || 0), 0);
+}
+
+function getStudyStreakDays(studyTime) {
+  if (!studyTime || typeof studyTime !== "object") {
+    return 0;
+  }
+  ensureStudyTimeShape(studyTime);
+
+  let streak = 0;
+  for (let offset = 0; offset < 365; offset += 1) {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - offset);
+    const key = buildDayKey(date);
+    const seconds = Number(studyTime.byDay?.[key] || 0);
+    if (seconds > 0) {
+      streak += 1;
+      continue;
+    }
+    break;
+  }
+  return streak;
+}
+
+function getWeeklyAverageSeconds(studyTime) {
+  return Math.round(getWeeklySeconds(studyTime) / 7);
+}
+
+function getTodaySubjectSeconds(studyTime, subjectFocus = "math", scoreHistory = []) {
+  if (!studyTime || typeof studyTime !== "object") {
+    return 0;
+  }
+
+  ensureStudyTimeShape(studyTime);
+  const todayKey = getTodayKey();
+  const todaySubjectMap = studyTime.byDaySubject?.[todayKey] || {};
+  const todaySubjectSeconds = Number(todaySubjectMap?.[subjectFocus] || 0);
+  if (todaySubjectSeconds > 0) {
+    return todaySubjectSeconds;
+  }
+
+  const todayTotalSeconds = Number(studyTime.byDay?.[todayKey] || 0);
+  if (todayTotalSeconds <= 0) {
+    return 0;
+  }
+
+  const hasAnyTrackedSubject = Object.values(todaySubjectMap).some((value) => Number(value || 0) > 0);
+  if (hasAnyTrackedSubject) {
+    return 0;
+  }
+
+  const todayEntries = (scoreHistory || []).filter((entry) => formatDayKeyFromValue(entry.completedAt) === todayKey);
+  if (!todayEntries.length) {
+    return 0;
+  }
+
+  const subjectsSeen = new Set(todayEntries.map((entry) => getCategorySubject(entry.grade, entry.categoryId)));
+  if (subjectsSeen.size === 1 && subjectsSeen.has(subjectFocus)) {
+    return todayTotalSeconds;
+  }
+
+  return 0;
+}
+
+function getCategorySubject(grade, categoryId) {
+  const normalizedId = String(categoryId || "");
+  if (!normalizedId) {
+    return "math";
+  }
+  if (normalizedId.startsWith("english-")) {
+    return "english";
+  }
+  const category = getCategoryById(normalizedId, grade);
+  if (String(category?.factory || "").startsWith("english")) {
+    return "english";
+  }
+  return "math";
+}
+
+function createSubjectSummary() {
+  return {
+    math: { levels: 0, timeSeconds: 0, totalPercentage: 0, scoredLevels: 0, averagePercentage: 0 },
+    english: { levels: 0, timeSeconds: 0, totalPercentage: 0, scoredLevels: 0, averagePercentage: 0 }
+  };
+}
+
+function formatGoalSubjectLabel(subjectFocus) {
+  return String(subjectFocus || "math") === "english" ? "English only" : "Math only";
+}
+
+function formatGoalSubjectShortLabel(subjectFocus) {
+  return String(subjectFocus || "math") === "english" ? "English" : "Maths";
+}
+
+function createSubjectGoal(minutes = 0, levels = 0, enabled = false) {
+  return {
+    dailyMinutes: Number(minutes || 0),
+    dailyLevels: Number(levels || 0),
+    enabled: Boolean(enabled)
+  };
+}
+
+function getNormalizedSubjectGoal(goal) {
+  if (!goal || typeof goal !== "object") {
+    return createSubjectGoal();
+  }
+  return createSubjectGoal(
+    Number.isFinite(Number(goal.dailyMinutes)) ? Number(goal.dailyMinutes) : 0,
+    Number.isFinite(Number(goal.dailyLevels)) ? Number(goal.dailyLevels) : 0,
+    Boolean(goal.enabled)
+  );
+}
+
+function getLearnerGoalBucket(goals, subjectFocus = "math") {
+  const subjectKey = String(subjectFocus || "math") === "english" ? "english" : "math";
+  return getNormalizedSubjectGoal(goals?.subjects?.[subjectKey]);
+}
+
+function formatSubjectGoalSummary(subjectLabel, goal) {
+  const normalized = getNormalizedSubjectGoal(goal);
+  if (!normalized.enabled) {
+    return `${subjectLabel} not set yet`;
+  }
+  return `${subjectLabel} ${normalized.dailyMinutes} minutes | ${normalized.dailyLevels} unit${normalized.dailyLevels === 1 ? "" : "s"}`;
+}
+
+function getSubjectProgressSummary(profile) {
+  const summary = createSubjectSummary();
+  const progress = profile?.progress || {};
+  const studyTime = profile?.studyTime || createEmptyStudyTime();
+  ensureStudyTimeShape(studyTime);
+
+  Object.entries(progress).forEach(([gradeKey, gradeProgress]) => {
+    Object.entries(gradeProgress || {}).forEach(([categoryId, levelEntries]) => {
+      const subject = getCategorySubject(Number(gradeKey), categoryId);
+      const bucket = summary[subject] || summary.math;
+      Object.values(levelEntries || {}).forEach((attempt) => {
+        bucket.levels += 1;
+        const score = Number(attempt?.score || 0);
+        bucket.totalPercentage += Math.round((score / QUESTIONS_PER_LEVEL) * 100);
+        bucket.scoredLevels += 1;
+      });
+    });
+  });
+
+  Object.entries(studyTime.byCourse || {}).forEach(([categoryId, seconds]) => {
+    const subject = getCategorySubject(state.selectedGrade, categoryId);
+    const bucket = summary[subject] || summary.math;
+    bucket.timeSeconds += Number(seconds || 0);
+  });
+
+  Object.values(summary).forEach((bucket) => {
+    bucket.averagePercentage = bucket.scoredLevels
+      ? Math.round(bucket.totalPercentage / bucket.scoredLevels)
+      : 0;
+  });
+
+  return summary;
 }
 
 function getTopicAnalytics(profile) {
@@ -3268,7 +3807,9 @@ function getTopicAnalytics(profile) {
       if (!attempts.length) {
         return;
       }
-      const existing = analyticsByCategory.get(categoryId) || {
+      const analyticsKey = `${gradeKey}::${categoryId}`;
+      const existing = analyticsByCategory.get(analyticsKey) || {
+        analyticsKey,
         categoryId,
         title: resolveCategoryTitle(Number(gradeKey), categoryId, categoryId),
         grade: Number(gradeKey),
@@ -3285,7 +3826,7 @@ function getTopicAnalytics(profile) {
         existing.bestPercentage = Math.max(existing.bestPercentage, percentage);
       });
       existing.timeSeconds += Number(studyTime.byCourse?.[categoryId] || 0);
-      analyticsByCategory.set(categoryId, existing);
+      analyticsByCategory.set(analyticsKey, existing);
     });
   });
 
@@ -3295,6 +3836,18 @@ function getTopicAnalytics(profile) {
     }
     return right.attempts - left.attempts;
   });
+}
+
+function getWeakestTopics(profile, { threshold = WEAK_TOPIC_THRESHOLD, limit = 6 } = {}) {
+  const topicAnalytics = getTopicAnalytics(profile);
+  const weak = topicAnalytics.filter((item) => item.bestPercentage < threshold);
+  weak.sort((left, right) => {
+    if (left.bestPercentage !== right.bestPercentage) {
+      return left.bestPercentage - right.bestPercentage;
+    }
+    return right.attempts - left.attempts;
+  });
+  return weak.slice(0, limit);
 }
 
 function renderMiniActivityChart(target, studyTime, scoreHistory) {
@@ -3324,13 +3877,102 @@ function renderMiniActivityChart(target, studyTime, scoreHistory) {
     .join("");
 }
 
+function renderSubjectProgressChart(target, subjectSummary) {
+  if (!target) {
+    return;
+  }
+
+  const math = subjectSummary?.math || createSubjectSummary().math;
+  const english = subjectSummary?.english || createSubjectSummary().english;
+  const maxTime = Math.max(math.timeSeconds, english.timeSeconds, 1);
+  const maxLevels = Math.max(math.levels, english.levels, 1);
+
+  const subjects = [
+    {
+      key: "math",
+      label: "Maths",
+      timeSeconds: math.timeSeconds,
+      levels: math.levels,
+      averagePercentage: math.averagePercentage
+    },
+    {
+      key: "english",
+      label: "English",
+      timeSeconds: english.timeSeconds,
+      levels: english.levels,
+      averagePercentage: english.averagePercentage
+    }
+  ];
+
+  target.innerHTML = subjects
+    .map((item) => {
+      const timeWidth = Math.max(8, Math.round((item.timeSeconds / maxTime) * 100));
+      const levelWidth = Math.max(8, Math.round((item.levels / maxLevels) * 100));
+      return `
+        <div class="subject-progress-chart-row subject-progress-chart-row--${item.key}">
+          <div class="subject-progress-chart-label">
+            <strong>${item.label}</strong>
+            <small>${item.averagePercentage}% avg score</small>
+          </div>
+          <div class="subject-progress-chart-bars">
+            <div class="subject-progress-chart-line">
+              <span>Time</span>
+              <div class="subject-progress-chart-track">
+                <div class="subject-progress-chart-fill subject-progress-chart-fill--time" style="width:${timeWidth}%"></div>
+              </div>
+              <strong>${formatCompactStudyTime(item.timeSeconds)}</strong>
+            </div>
+            <div class="subject-progress-chart-line">
+              <span>Levels</span>
+              <div class="subject-progress-chart-track">
+                <div class="subject-progress-chart-fill subject-progress-chart-fill--levels" style="width:${levelWidth}%"></div>
+              </div>
+              <strong>${item.levels}</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function getGoalProgressPercent(actual, target) {
+  const safeTarget = Number(target || 0);
+  if (safeTarget <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, Math.round((Number(actual || 0) / safeTarget) * 100)));
+}
+
+function setGoalProgressBar(element, actual, target) {
+  if (!element) {
+    return;
+  }
+  element.style.width = `${getGoalProgressPercent(actual, target)}%`;
+}
+
+function syncInputValueIfNotFocused(element, nextValue) {
+  if (!element) {
+    return;
+  }
+
+  if (document.activeElement === element) {
+    return;
+  }
+
+  const normalized = String(nextValue);
+  if (element.value !== normalized) {
+    element.value = normalized;
+  }
+}
+
 function renderParentDashboard() {
   const account = getCurrentAccount();
   if (!elements.parentDashboardSection) {
     return;
   }
 
-  const isParent = account?.type === "parent";
+  const isParent = account?.type === "parent" && !state.childViewMode;
   elements.parentDashboardSection.classList.toggle("hidden", !isParent);
   if (!isParent) {
     return;
@@ -3368,6 +4010,22 @@ function renderParentDashboard() {
   const completedLevels = countCompletedLevelsFromProgress(activeChild.progress || {});
   const averageScore = getAverageScorePercentage(activeChild.scoreHistory || []);
   const topicAnalytics = getTopicAnalytics(activeChild);
+  const subjectSummary = getSubjectProgressSummary(activeChild);
+  const goals = activeChild.goals || createEmptyLearnerGoals();
+  const selectedSubject = ["math", "english"].includes(String(goals.selectedSubject || "math"))
+    ? String(goals.selectedSubject || "math")
+    : "math";
+  const selectedGoal = getLearnerGoalBucket(goals, selectedSubject);
+  const mathGoal = getLearnerGoalBucket(goals, "math");
+  const englishGoal = getLearnerGoalBucket(goals, "english");
+  const todayMathSeconds = getTodaySubjectSeconds(activeChild.studyTime, "math", activeChild.scoreHistory || []);
+  const todayEnglishSeconds = getTodaySubjectSeconds(activeChild.studyTime, "english", activeChild.scoreHistory || []);
+  const todayMathMinutes = Math.round(todayMathSeconds / 60);
+  const todayEnglishMinutes = Math.round(todayEnglishSeconds / 60);
+  const todayMathLevels = getTodayCompletedLevelsBySubject(activeChild.scoreHistory || [], "math");
+  const todayEnglishLevels = getTodayCompletedLevelsBySubject(activeChild.scoreHistory || [], "english");
+  const streakDays = getStudyStreakDays(activeChild.studyTime);
+  const weekAverageSeconds = getWeeklyAverageSeconds(activeChild.studyTime);
 
   if (elements.parentDashboardName) {
     elements.parentDashboardName.textContent = activeChild.name;
@@ -3385,8 +4043,65 @@ function renderParentDashboard() {
   elements.parentDashboardWeekTime && (elements.parentDashboardWeekTime.textContent = formatStudyTime(weeklyStudy));
   elements.parentDashboardLevels && (elements.parentDashboardLevels.textContent = String(completedLevels));
   elements.parentDashboardAverage && (elements.parentDashboardAverage.textContent = `${averageScore}%`);
+  elements.parentDashboardStreak && (elements.parentDashboardStreak.textContent = `${streakDays} day${streakDays === 1 ? "" : "s"}`);
+  elements.parentDashboardWeekAverage && (elements.parentDashboardWeekAverage.textContent = formatCompactStudyTime(weekAverageSeconds));
 
   renderMiniActivityChart(elements.parentDashboardChart, activeChild.studyTime || createEmptyStudyTime(), activeChild.scoreHistory || []);
+  renderSubjectProgressChart(elements.parentGoalSubjectChart, subjectSummary);
+
+  syncInputValueIfNotFocused(elements.parentGoalDailyMinutesInput, Number(selectedGoal.dailyMinutes || 0));
+  syncInputValueIfNotFocused(
+    elements.parentGoalSubjectInput,
+    selectedSubject
+  );
+  syncInputValueIfNotFocused(elements.parentGoalDailyLevelsInput, Number(selectedGoal.dailyLevels || 0));
+  if (elements.parentGoalEditorName) {
+    elements.parentGoalEditorName.textContent = `Editing goals for: ${activeChild.name}`;
+  }
+  if (elements.parentGoalEditorCurrent) {
+    elements.parentGoalEditorCurrent.textContent = `Current goals: ${formatSubjectGoalSummary("Maths", mathGoal)} | ${formatSubjectGoalSummary("English", englishGoal)}`;
+  }
+  if (elements.parentGoalsApplyAllInput) {
+    elements.parentGoalsApplyAllInput.checked = false;
+  }
+
+  if (elements.parentGoalMathMinutesStatus) {
+    elements.parentGoalMathMinutesStatus.textContent = mathGoal.enabled
+      ? `${todayMathMinutes}m / ${Number(mathGoal.dailyMinutes || 0)}m`
+      : "Not set";
+  }
+  if (elements.parentGoalMathLevelsStatus) {
+    elements.parentGoalMathLevelsStatus.textContent = mathGoal.enabled
+      ? `${todayMathLevels} / ${Number(mathGoal.dailyLevels || 0)}`
+      : "Not set";
+  }
+  if (elements.parentGoalEnglishMinutesStatus) {
+    elements.parentGoalEnglishMinutesStatus.textContent = englishGoal.enabled
+      ? `${todayEnglishMinutes}m / ${Number(englishGoal.dailyMinutes || 0)}m`
+      : "Not set";
+  }
+  if (elements.parentGoalEnglishLevelsStatus) {
+    elements.parentGoalEnglishLevelsStatus.textContent = englishGoal.enabled
+      ? `${todayEnglishLevels} / ${Number(englishGoal.dailyLevels || 0)}`
+      : "Not set";
+  }
+  if (elements.parentGoalMathStatus) {
+    elements.parentGoalMathStatus.textContent = `${subjectSummary.math.levels} levels | ${formatCompactStudyTime(subjectSummary.math.timeSeconds)}`;
+  }
+  if (elements.parentGoalMathMeta) {
+    elements.parentGoalMathMeta.textContent = `${subjectSummary.math.averagePercentage}% average score`;
+  }
+  if (elements.parentGoalEnglishStatus) {
+    elements.parentGoalEnglishStatus.textContent = `${subjectSummary.english.levels} levels | ${formatCompactStudyTime(subjectSummary.english.timeSeconds)}`;
+  }
+  if (elements.parentGoalEnglishMeta) {
+    elements.parentGoalEnglishMeta.textContent = `${subjectSummary.english.averagePercentage}% average score`;
+  }
+
+  setGoalProgressBar(elements.parentGoalMathMinutesBar, mathGoal.enabled ? todayMathMinutes : 0, mathGoal.dailyMinutes);
+  setGoalProgressBar(elements.parentGoalMathLevelsBar, mathGoal.enabled ? todayMathLevels : 0, mathGoal.dailyLevels);
+  setGoalProgressBar(elements.parentGoalEnglishMinutesBar, englishGoal.enabled ? todayEnglishMinutes : 0, englishGoal.dailyMinutes);
+  setGoalProgressBar(elements.parentGoalEnglishLevelsBar, englishGoal.enabled ? todayEnglishLevels : 0, englishGoal.dailyLevels);
 
   if (elements.parentDashboardAnalysis) {
     if (!topicAnalytics.length) {
@@ -3410,9 +4125,87 @@ function renderParentDashboard() {
       `;
     }
   }
+
+  if (elements.parentDashboardWeakAreas) {
+    const weakTopics = getWeakestTopics(activeChild);
+    if (!topicAnalytics.length) {
+      elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">This learner has not completed any topic yet.</div>`;
+    } else if (!weakTopics.length) {
+      elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">Nice work — every topic is scoring ${WEAK_TOPIC_THRESHOLD}% or higher.</div>`;
+    } else {
+      elements.parentDashboardWeakAreas.innerHTML = `
+        <div class="parent-dashboard-analysis-table">
+          <div class="parent-dashboard-analysis-head">Topic</div>
+          <div class="parent-dashboard-analysis-head">Grade</div>
+          <div class="parent-dashboard-analysis-head">Attempts</div>
+          <div class="parent-dashboard-analysis-head">Best Score</div>
+          <div class="parent-dashboard-analysis-head">Study Time</div>
+          ${weakTopics.map((item) => `
+            <div class="parent-dashboard-analysis-cell parent-dashboard-analysis-cell--weak">${escapeHtml(item.title)}</div>
+            <div class="parent-dashboard-analysis-cell">Grade ${item.grade}</div>
+            <div class="parent-dashboard-analysis-cell">${item.attempts}</div>
+            <div class="parent-dashboard-analysis-cell parent-dashboard-analysis-cell--weak">${item.bestScore}/${QUESTIONS_PER_LEVEL} (${item.bestPercentage}%)</div>
+            <div class="parent-dashboard-analysis-cell">${formatStudyTime(item.timeSeconds)}</div>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
 }
 
-function handleAddChild() {
+function handleSaveParentGoals() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent" || state.childViewMode) {
+    showProfileMessage("Open the parent dashboard to save learner goals.", "error");
+    return;
+  }
+
+  const activeChildId = account.activeChildId;
+  const activeChild = activeChildId ? account.children?.[activeChildId] : null;
+  if (!activeChild) {
+    showProfileMessage("Choose a learner before saving goals.", "error");
+    return;
+  }
+
+  ensureLearnerShape(activeChild);
+  const subjectFocus = String(elements.parentGoalSubjectInput?.value || "math");
+  const dailyMinutes = Math.max(0, Number(elements.parentGoalDailyMinutesInput?.value || 0));
+  const dailyLevels = Math.max(0, Number(elements.parentGoalDailyLevelsInput?.value || 0));
+  const applyToAllLearners = Boolean(elements.parentGoalsApplyAllInput?.checked);
+
+  const targetChildren = applyToAllLearners
+    ? Object.values(account.children || {})
+    : [activeChild];
+
+  targetChildren.forEach((child) => {
+    ensureLearnerShape(child);
+    const selectedSubject = ["math", "english"].includes(subjectFocus) ? subjectFocus : "math";
+    child.goals.selectedSubject = selectedSubject;
+    if (!child.goals.subjects || typeof child.goals.subjects !== "object") {
+      child.goals.subjects = {
+        math: createSubjectGoal(),
+        english: createSubjectGoal()
+      };
+    }
+    child.goals.subjects[selectedSubject] = createSubjectGoal(dailyMinutes, dailyLevels, true);
+    account.children[child.id] = child;
+  });
+
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+  if (elements.parentGoalsApplyAllInput) {
+    elements.parentGoalsApplyAllInput.checked = false;
+  }
+  renderParentDashboard();
+  showProfileMessage(
+    applyToAllLearners
+      ? "Goals saved for all learners."
+      : `Goals saved for ${activeChild.name}.`,
+    "success"
+  );
+}
+
+async function handleAddChild() {
   const account = getCurrentAccount();
   if (!account || account.type !== "parent") {
     showProfileMessage("Log in to a parent account before adding children.", "error");
@@ -3422,24 +4215,65 @@ function handleAddChild() {
   const childName = elements.childNameInput?.value.trim();
   const childGrade = Number(elements.childGradeInput?.value || state.selectedGrade || 1);
   const childEmail = elements.childEmailInput?.value.trim() || "";
+  const childUsername = elements.childUsernameInput?.value.trim() || "";
+  const childPassword = elements.childPasswordInput?.value || "";
   const avatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
+
   if (!childName) {
     showProfileMessage("Enter the child's name before adding them.", "error");
     return;
   }
-  if (!childEmail) {
-    showProfileMessage("Enter the learner email before adding the child.", "error");
+  if (childUsername && !childPassword) {
+    showProfileMessage("Choose a password for the child's username login.", "error");
     return;
   }
 
   const childId = buildProfileId(childName);
   if (account.children[childId]) {
-    showProfileMessage("That child name already exists in this parent account.", "error");
+    // The child already exists in the data even though the visible list may not show it
+    // (e.g. an earlier render step failed silently) — select them and force a fresh render
+    // so the parent can actually see they're already there instead of just getting an error.
+    account.activeChildId = childId;
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+    try {
+      renderProfilePanel();
+      renderGradeButtons();
+      renderCategories();
+      renderStudyTime();
+      renderHeroActivity();
+    } catch (error) {
+      console.error("Refreshing the learner list failed", error);
+    }
+    showProfileMessage(`${childName} already exists — showing them in the list below.`, "error");
     return;
   }
-  if (findChildByEmail(childEmail)) {
+  if (childEmail && findChildByEmail(childEmail)) {
     showProfileMessage("That learner email is already linked. Please choose another one.", "error");
     return;
+  }
+
+  let linkedProfileId = null;
+  if (childUsername) {
+    if (!hasSupabasePersistence()) {
+      showProfileMessage("Sign in with your Supabase parent account before creating a child login.", "error");
+      return;
+    }
+
+    showProfileMessage("Creating the child's login...", "success");
+    const result = await createChildSupabaseLogin({
+      childName,
+      grade: childGrade,
+      username: childUsername,
+      password: childPassword
+    });
+
+    if (result.error) {
+      showProfileMessage(result.error, "error");
+      return;
+    }
+
+    linkedProfileId = result.linkedProfileId;
   }
 
   account.children[childId] = createLearnerRecord({
@@ -3447,7 +4281,9 @@ function handleAddChild() {
     name: childName,
     grade: childGrade,
     childEmail,
-    avatarDataUrl
+    childUsername: childUsername ? sanitizeUsername(childUsername) : "",
+    avatarDataUrl,
+    linkedProfileId
   });
   account.activeChildId = childId;
   profilesStore.profiles[account.id] = account;
@@ -3459,12 +4295,29 @@ function handleAddChild() {
   state.currentQuestions = [];
   hideQuizViews();
   clearProfileFields();
-  renderProfilePanel();
-  renderGradeButtons();
-  renderCategories();
-  renderStudyTime();
-  renderHeroActivity();
-  showProfileMessage(`${childName} was added and is now the active learner.`, "success");
+  // Data is already saved above at this point. Wrap the render calls so that if any one of
+  // them throws (e.g. an unexpected value on an element), it can't silently swallow the rest
+  // of this function and leave the success message and learner list stuck out of date.
+  try {
+    renderProfilePanel();
+    renderGradeButtons();
+    renderCategories();
+    renderStudyTime();
+    renderHeroActivity();
+  } catch (error) {
+    console.error("Rendering after adding a child failed", error);
+    try {
+      renderParentPanel(account);
+    } catch (fallbackError) {
+      console.error("Fallback learner list refresh also failed", fallbackError);
+    }
+  }
+  showProfileMessage(
+    childUsername
+      ? `${childName} was added. They can log in on the Learner Login page with username "${sanitizeUsername(childUsername)}".`
+      : `${childName} was added and is now the active learner.`,
+    "success"
+  );
 
   queueSupabaseWrite(async (_client, ownerId) => {
     await syncSupabaseChildren(account, ownerId);
@@ -3480,33 +4333,24 @@ function handleSaveChildSettings() {
 
   const child = account.children[account.activeChildId];
   const nextName = elements.childNameInput?.value.trim() || child.name;
-  const nextGrade = Number(elements.childGradeInput?.value || child.grade || 1);
-  const nextEmail = elements.childEmailInput?.value.trim() || "";
+  const nextGrade = Number(elements.childGradeInput?.value || child.grade || state.selectedGrade || 1);
   const nextAvatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
 
   if (!nextName) {
     showProfileMessage("Enter the child's name before saving.", "error");
     return;
   }
-  if (!nextEmail) {
-    showProfileMessage("Enter a learner email before saving.", "error");
-    return;
-  }
-
-  const emailConflict = findChildByEmail(nextEmail, account.id, child.id);
-  if (emailConflict) {
-    showProfileMessage("That learner email is already linked. Please choose another one.", "error");
-    return;
-  }
 
   child.name = nextName;
   child.grade = nextGrade;
-  child.childEmail = nextEmail;
   child.avatarDataUrl = nextAvatarDataUrl;
 
   account.children[child.id] = child;
   profilesStore.profiles[account.id] = account;
-  saveProfilesStore();
+  if (!saveProfilesStore()) {
+    showProfileMessage(lastProfilesStoreError || "Could not save this learner photo in browser storage.", "error");
+    return;
+  }
 
   state.selectedGrade = nextGrade;
   applyCurrentProfile();
@@ -3527,23 +4371,46 @@ function handleChildPhotoSelected(event) {
   if (!file) {
     return;
   }
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    setChildPhotoPreview(typeof reader.result === "string" ? reader.result : "");
-  };
-  reader.readAsDataURL(file);
+  readImageFileAsAvatarDataUrl(file)
+    .then((dataUrl) => {
+      setChildPhotoPreview(dataUrl);
+    })
+    .catch((error) => {
+      showProfileMessage(error?.message || "Could not load that image.", "error");
+    });
 }
 
-function handleSwitchChild() {
+// Lets the active learner set their own avatar directly from the header's "Change Photo"
+// control, without needing access to the parent-only Add Child / Manage Learners form. Saves
+// immediately (no separate "Save" step) since this control only appears in child view mode.
+function handleHeaderAvatarSelected(event) {
+  const file = event.target?.files?.[0];
+  if (!file) {
+    return;
+  }
+  readImageFileAsAvatarDataUrl(file)
+    .then((dataUrl) => {
+      if (persistCurrentLearnerAvatar(dataUrl)) {
+        showProfileMessage("Photo updated!", "success");
+      } else {
+        showProfileMessage(lastProfilesStoreError || "Could not save that photo.", "error");
+      }
+    })
+    .catch((error) => {
+      showProfileMessage(error?.message || "Could not load that image.", "error");
+    });
+}
+
+function switchToChild(childId, { silent = false, enterChildMode = false } = {}) {
   const account = getCurrentAccount();
   if (!account || account.type !== "parent") {
     return;
   }
 
-  const childId = elements.parentChildSelect?.value;
   if (!childId || !account.children?.[childId]) {
-    showProfileMessage("Choose a child profile to open.", "error");
+    if (!silent) {
+      showProfileMessage("Choose a child profile to open.", "error");
+    }
     return;
   }
 
@@ -3557,15 +4424,67 @@ function handleSwitchChild() {
   state.selectedLevel = null;
   state.currentQuestions = [];
   hideQuizViews();
+  setHeroPanelVisible(false);
+  if (enterChildMode) {
+    setChildViewMode(true);
+  }
   renderProfilePanel();
   renderGradeButtons();
   renderCategories();
   renderStudyTime();
   renderHeroActivity();
-  showProfileMessage(`Now viewing ${child.name}'s learning progress.`, "success");
+  if (!silent) {
+    showProfileMessage(`Now viewing ${child.name}'s learning progress.`, "success");
+  }
+}
+
+async function handleSwitchChild() {
+  switchToChild(elements.parentChildSelect?.value, { enterChildMode: true });
+}
+
+async function handleHeaderChildSwitch() {
+  switchToChild(elements.headerChildSelect?.value, { enterChildMode: true });
+}
+
+async function handleBackToParent() {
+  const canReturn = await verifyParentPasswordForAction("return to the parent view");
+  if (!canReturn) {
+    return;
+  }
+  setChildViewMode(false);
+  // setChildViewMode() only updates the profile panel/header — refresh the rest of the page
+  // (grade buttons, topics, study time, activity chart, Family Dashboard) so the parent sees
+  // everything unlocked immediately instead of needing to reload the page.
+  renderGradeButtons();
+  renderCategories();
+  renderStudyTime();
+  renderHeroActivity();
+  const account = getCurrentAccount();
+  if (account?.type === "parent" && Object.keys(account.children || {}).length) {
+    setParentDashboardVisible(true);
+  }
+  showProfileMessage("Back in parent view.", "success");
+}
+
+async function handleHeaderLogout() {
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      await client.auth.signOut({ scope: "local" });
+    } catch (error) {
+      console.error("Header logout sign-out failed", error);
+    }
+  }
+
+  clearLearnerSession();
+  handleLogoutProfile();
+  // The app itself is always open (no forced login), so logging out just returns to the
+  // regular guest state on this same page instead of redirecting anywhere.
 }
 
 function handleCreateProfile() {
+  state.childViewMode = false;
+  elements.backToParentButton?.classList.add("hidden");
   const name = elements.profileNameInput.value.trim();
   const password = elements.profilePasswordInput.value;
   const grade = Number(elements.profileGradeInput.value);
@@ -3618,6 +4537,8 @@ function handleCreateProfile() {
 }
 
 function handleLoginProfile() {
+  state.childViewMode = false;
+  elements.backToParentButton?.classList.add("hidden");
   const name = elements.profileNameInput.value.trim();
   const password = elements.profilePasswordInput.value;
 
@@ -3646,6 +4567,9 @@ function handleLoginProfile() {
   renderCategories();
   renderStudyTime();
   renderHeroActivity();
+  if (account.type === "parent" && Object.keys(account.children || {}).length) {
+    setParentDashboardVisible(true);
+  }
   showProfileMessage(`Welcome back, ${account.name}. Your saved work has been loaded.`, "success");
 }
 
@@ -3657,6 +4581,8 @@ function handleLogoutProfile() {
   state.selectedCategoryId = null;
   state.selectedLevel = null;
   state.currentQuestions = [];
+  state.childViewMode = false;
+  elements.backToParentButton?.classList.add("hidden");
   hideQuizViews();
   applyCurrentProfile();
   renderGradeButtons();
@@ -3674,6 +4600,12 @@ function clearProfileFields() {
   }
   if (elements.childEmailInput) {
     elements.childEmailInput.value = "";
+  }
+  if (elements.childUsernameInput) {
+    elements.childUsernameInput.value = "";
+  }
+  if (elements.childPasswordInput) {
+    elements.childPasswordInput.value = "";
   }
   if (elements.childPhotoInput) {
     elements.childPhotoInput.value = "";
@@ -3705,6 +4637,239 @@ function setChildPhotoPreview(src) {
   elements.childPhotoPreview.classList.remove("hidden");
 }
 
+function readImageFileAsAvatarDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      reject(new Error("No image file was selected."));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const rawDataUrl = typeof reader.result === "string" ? reader.result : "";
+      if (!rawDataUrl) {
+        reject(new Error("Could not read the selected image."));
+        return;
+      }
+
+      const image = new Image();
+      image.onload = () => {
+        const maxSide = AVATAR_MAX_SIZE;
+        const scale = Math.min(1, maxSide / Math.max(image.width || 1, image.height || 1));
+        const targetWidth = Math.max(1, Math.round((image.width || 1) * scale));
+        const targetHeight = Math.max(1, Math.round((image.height || 1) * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          resolve(rawDataUrl);
+          return;
+        }
+
+        context.drawImage(image, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL("image/jpeg", AVATAR_JPEG_QUALITY));
+      };
+      image.onerror = () => reject(new Error("The selected file is not a supported image."));
+      image.src = rawDataUrl;
+    };
+    reader.onerror = () => reject(new Error("Could not load the selected image."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function getAvatarLibraryEntries() {
+  const entries = Array.isArray(window.MASTERY_AVATAR_LIBRARY) ? window.MASTERY_AVATAR_LIBRARY : [];
+  return entries
+    .map((entry, index) => ({
+      id: String(entry?.id || `avatar-${index + 1}`),
+      label: String(entry?.label || `Avatar ${index + 1}`),
+      src: String(entry?.src || "").trim()
+    }))
+    .filter((entry) => entry.src);
+}
+
+function getEditableLearnerTarget() {
+  const account = getCurrentAccount();
+  const learner = getCurrentProfile();
+  if (!account || !learner) {
+    return null;
+  }
+
+  if (account.type === "parent") {
+    const activeChildId = account.activeChildId;
+    if (!activeChildId || !account.children?.[activeChildId]) {
+      return null;
+    }
+    return {
+      account,
+      learner: account.children[activeChildId],
+      childId: activeChildId
+    };
+  }
+
+  return {
+    account,
+    learner: account,
+    childId: null
+  };
+}
+
+function renderCurrentAvatarPreview(learner) {
+  if (!elements.currentAvatarPreview || !elements.currentAvatarPlaceholder || !elements.currentAvatarName) {
+    return;
+  }
+
+  const name = learner?.name || "Learner";
+  const avatarSrc = learner?.avatarDataUrl || "";
+  elements.currentAvatarName.textContent = `${name}'s avatar`;
+
+  if (avatarSrc) {
+    elements.currentAvatarPreview.src = avatarSrc;
+    elements.currentAvatarPreview.classList.remove("hidden");
+    elements.currentAvatarPlaceholder.classList.add("hidden");
+  } else {
+    elements.currentAvatarPreview.removeAttribute("src");
+    elements.currentAvatarPreview.classList.add("hidden");
+    elements.currentAvatarPlaceholder.textContent = name.charAt(0).toUpperCase();
+    elements.currentAvatarPlaceholder.classList.remove("hidden");
+  }
+}
+
+function renderAvatarLibraryGrid() {
+  if (!elements.avatarLibraryGrid || !elements.avatarLibraryEmpty) {
+    return;
+  }
+
+  const entries = getAvatarLibraryEntries();
+  if (!entries.length) {
+    elements.avatarLibraryGrid.innerHTML = "";
+    elements.avatarLibraryEmpty.textContent = "No avatar images are loaded yet. Add file paths in avatar-library.js to build the library.";
+    elements.avatarLibraryEmpty.classList.remove("hidden");
+    return;
+  }
+
+  elements.avatarLibraryEmpty.classList.add("hidden");
+  elements.avatarLibraryGrid.innerHTML = entries
+    .map((entry) => `
+      <button type="button" class="avatar-library-item" data-avatar-src="${escapeHtml(entry.src)}" data-avatar-label="${escapeHtml(entry.label)}">
+        <img src="${escapeHtml(entry.src)}" alt="${escapeHtml(entry.label)}" />
+        <span>${escapeHtml(entry.label)}</span>
+      </button>
+    `)
+    .join("");
+}
+
+function renderAvatarSection() {
+  const target = getEditableLearnerTarget();
+  if (!elements.avatarSection) {
+    return;
+  }
+
+  if (!target) {
+    state.avatarLibraryOpen = false;
+    elements.avatarSection.classList.add("hidden");
+    return;
+  }
+
+  elements.avatarSection.classList.remove("hidden");
+  renderCurrentAvatarPreview(target.learner);
+  renderAvatarLibraryGrid();
+  elements.avatarLibraryPanel?.classList.toggle("hidden", !state.avatarLibraryOpen);
+  if (elements.toggleAvatarLibraryButton) {
+    elements.toggleAvatarLibraryButton.textContent = state.avatarLibraryOpen ? "Hide Library" : "Choose from Library";
+  }
+}
+
+function toggleAvatarLibraryPanel() {
+  const target = getEditableLearnerTarget();
+  if (!target) {
+    return;
+  }
+  state.avatarLibraryOpen = !state.avatarLibraryOpen;
+  renderAvatarSection();
+}
+
+function persistCurrentLearnerAvatar(nextAvatarDataUrl) {
+  const target = getEditableLearnerTarget();
+  if (!target) {
+    return false;
+  }
+
+  const { account, learner, childId } = target;
+  learner.avatarDataUrl = nextAvatarDataUrl;
+
+  if (account.type === "parent" && childId) {
+    account.children[childId] = learner;
+  }
+  profilesStore.profiles[account.id] = account;
+  if (!saveProfilesStore()) {
+    return false;
+  }
+
+  renderProfilePanel();
+  renderParentDashboard();
+
+  queueSupabaseWrite(async (_client, ownerId) => {
+    if (account.type === "parent") {
+      await syncSupabaseChildren(account, ownerId);
+      return;
+    }
+    await ensureSupabaseProfileRow(account, {
+      id: ownerId,
+      email: state.supabaseUserEmail,
+      user_metadata: {
+        user_name: account.name,
+        account_type: account.type,
+        grade: account.grade
+      }
+    });
+  });
+
+  return true;
+}
+
+function handleCurrentAvatarUploadSelected(event) {
+  const file = event.target?.files?.[0];
+  if (!file) {
+    return;
+  }
+  readImageFileAsAvatarDataUrl(file)
+    .then((dataUrl) => {
+      if (persistCurrentLearnerAvatar(dataUrl)) {
+        showProfileMessage("Profile image updated from this device.", "success");
+      } else {
+        showProfileMessage(lastProfilesStoreError || "Could not save that photo.", "error");
+      }
+    })
+    .catch((error) => {
+      showProfileMessage(error?.message || "Could not load that image.", "error");
+    });
+}
+
+function handleClearCurrentAvatar() {
+  if (persistCurrentLearnerAvatar("")) {
+    showProfileMessage("Profile image removed.", "success");
+  }
+}
+
+function handleAvatarLibraryGridClick(event) {
+  const button = event.target.closest("[data-avatar-src]");
+  if (!button) {
+    return;
+  }
+
+  const avatarSrc = button.getAttribute("data-avatar-src") || "";
+  if (!avatarSrc) {
+    return;
+  }
+
+  if (persistCurrentLearnerAvatar(avatarSrc)) {
+    showProfileMessage("Avatar selected from the library.", "success");
+  }
+}
+
 function findChildByEmail(email, excludedParentId = "", excludedChildId = "") {
   const normalizedEmail = String(email || "").trim().toLowerCase();
   if (!normalizedEmail) {
@@ -3733,19 +4898,137 @@ function buildProfileId(name) {
   return name.trim().toLowerCase();
 }
 
-function createLearnerRecord({ id, name, grade, childEmail = "", avatarDataUrl = "", supabaseChildId = null, linkedProfileId = null }) {
+// Kids log in with a plain username instead of an email. Supabase Auth still needs an
+// email under the hood, so we deterministically turn the username into a hidden internal
+// address nobody ever sees or emails. This same domain/logic must match learner-login.js.
+const CHILD_LOGIN_EMAIL_DOMAIN = "childlogin.mathshub.internal";
+
+function sanitizeUsername(rawUsername) {
+  return String(rawUsername || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "");
+}
+
+function deriveChildEmailFromUsername(rawUsername) {
+  const clean = sanitizeUsername(rawUsername);
+  return clean ? `${clean}@${CHILD_LOGIN_EMAIL_DOMAIN}` : "";
+}
+
+// Creates a real Supabase Auth account for a child so they can log in on their own with a
+// username + password. Calling supabase.auth.signUp() switches the shared client's active
+// session to the newly created user, which would silently log the parent out mid-flow. We
+// save the parent's session first and restore it right after, so the parent stays signed in
+// in this browser tab. The child's own mastery_profiles row is written while briefly
+// authenticated as the child (their own row-level-security policy allows that); the
+// mastery_children link row is written back on the parent's session afterwards.
+async function createChildSupabaseLogin({ childName, grade, username, password }) {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { error: "Supabase is not configured yet." };
+  }
+
+  const cleanUsername = sanitizeUsername(username);
+  if (!cleanUsername) {
+    return { error: "Choose a username using letters, numbers, dots, dashes, or underscores." };
+  }
+  if (!password || password.length < 6) {
+    return { error: "Choose a password with at least 6 characters." };
+  }
+
+  const parentSessionResponse = await client.auth.getSession();
+  const parentSession = parentSessionResponse?.data?.session || null;
+  if (!parentSession) {
+    return { error: "Your parent session expired. Please log in again." };
+  }
+  const parentUserId = parentSession.user.id;
+  const childEmail = deriveChildEmailFromUsername(cleanUsername);
+
+  const restoreParentSession = () => client.auth.setSession({
+    access_token: parentSession.access_token,
+    refresh_token: parentSession.refresh_token
+  });
+
+  try {
+    const { data: signUpData, error: signUpError } = await client.auth.signUp({
+      email: childEmail,
+      password,
+      options: {
+        data: {
+          user_name: childName,
+          account_type: "learner",
+          grade: Number(grade)
+        }
+      }
+    });
+
+    if (signUpError) {
+      await restoreParentSession();
+      const friendly = /already registered|already exists/i.test(signUpError.message)
+        ? "That username is already taken. Please choose another one."
+        : signUpError.message;
+      return { error: friendly };
+    }
+
+    const childUserId = signUpData?.user?.id;
+    if (!childUserId) {
+      await restoreParentSession();
+      return { error: "Could not create the child's login. Please try again." };
+    }
+
+    // Still briefly authenticated as the new child here: write their own profile row.
+    const { error: childProfileError } = await client.from("mastery_profiles").upsert({
+      id: childUserId,
+      email: childEmail,
+      display_name: childName,
+      account_type: "learner",
+      parent_id: parentUserId,
+      grade: Number(grade),
+      updated_at: new Date().toISOString()
+    }, { onConflict: "id" });
+
+    await restoreParentSession();
+
+    if (childProfileError) {
+      return { error: childProfileError.message };
+    }
+
+    return { linkedProfileId: childUserId, childEmail, username: cleanUsername };
+  } catch (error) {
+    await restoreParentSession();
+    return { error: error?.message || "Could not create the child's login." };
+  }
+}
+
+function createLearnerRecord({ id, name, grade, childEmail = "", childUsername = "", avatarDataUrl = "", supabaseChildId = null, linkedProfileId = null, goals = null }) {
   return {
     id,
     type: "learner",
     name,
     grade,
     childEmail,
+    childUsername,
     avatarDataUrl,
     supabaseChildId,
     linkedProfileId,
     progress: {},
     scoreHistory: [],
-    studyTime: createEmptyStudyTime()
+    studyTime: createEmptyStudyTime(),
+    goals: goals && typeof goals === "object"
+      ? {
+        selectedSubject: ["math", "english"].includes(String(goals.selectedSubject || goals.subjectFocus || "math"))
+          ? String(goals.selectedSubject || goals.subjectFocus || "math")
+          : "math",
+        subjects: {
+          math: getNormalizedSubjectGoal(goals.subjects?.math || (String(goals.subjectFocus || "math") === "math"
+            ? createSubjectGoal(goals.dailyMinutes, goals.dailyLevels, true)
+            : null)),
+          english: getNormalizedSubjectGoal(goals.subjects?.english || (String(goals.subjectFocus || "math") === "english"
+            ? createSubjectGoal(goals.dailyMinutes, goals.dailyLevels, true)
+            : null))
+        }
+      }
+      : createEmptyLearnerGoals()
   };
 }
 
@@ -3987,6 +5270,40 @@ function ensureLearnerShape(profile) {
   } else {
     ensureStudyTimeShape(profile.studyTime);
   }
+  if (!profile.goals || typeof profile.goals !== "object") {
+    profile.goals = createEmptyLearnerGoals();
+  } else {
+    const hasLegacyShape = Object.prototype.hasOwnProperty.call(profile.goals, "subjectFocus")
+      || Object.prototype.hasOwnProperty.call(profile.goals, "dailyMinutes")
+      || Object.prototype.hasOwnProperty.call(profile.goals, "dailyLevels");
+
+    if (hasLegacyShape) {
+      const legacySubject = ["math", "english"].includes(String(profile.goals.subjectFocus || "math"))
+        ? String(profile.goals.subjectFocus || "math")
+        : "math";
+      const legacyMinutes = Number.isFinite(Number(profile.goals.dailyMinutes)) ? Number(profile.goals.dailyMinutes) : 0;
+      const legacyLevels = Number.isFinite(Number(profile.goals.dailyLevels)) ? Number(profile.goals.dailyLevels) : 0;
+      profile.goals = {
+        selectedSubject: legacySubject,
+        subjects: {
+          math: legacySubject === "math" ? createSubjectGoal(legacyMinutes, legacyLevels, true) : createSubjectGoal(),
+          english: legacySubject === "english" ? createSubjectGoal(legacyMinutes, legacyLevels, true) : createSubjectGoal()
+        }
+      };
+    } else {
+      profile.goals.selectedSubject = ["math", "english"].includes(String(profile.goals.selectedSubject || "math"))
+        ? String(profile.goals.selectedSubject || "math")
+        : "math";
+      if (!profile.goals.subjects || typeof profile.goals.subjects !== "object") {
+        profile.goals.subjects = {
+          math: createSubjectGoal(),
+          english: createSubjectGoal()
+        };
+      }
+      profile.goals.subjects.math = getNormalizedSubjectGoal(profile.goals.subjects.math);
+      profile.goals.subjects.english = getNormalizedSubjectGoal(profile.goals.subjects.english);
+    }
+  }
 }
 
 function ensureAccountShape(account) {
@@ -4061,7 +5378,19 @@ function getSavedAttemptsForSelection() {
 function createEmptyStudyTime() {
   return {
     byCourse: {},
-    byDay: {}
+    byDay: {},
+    bySubject: {},
+    byDaySubject: {}
+  };
+}
+
+function createEmptyLearnerGoals() {
+  return {
+    selectedSubject: "math",
+    subjects: {
+      math: createSubjectGoal(),
+      english: createSubjectGoal()
+    }
   };
 }
 
@@ -4079,6 +5408,12 @@ function ensureStudyTimeShape(studyTime) {
   }
   if (!studyTime.byDay || typeof studyTime.byDay !== "object") {
     studyTime.byDay = {};
+  }
+  if (!studyTime.bySubject || typeof studyTime.bySubject !== "object") {
+    studyTime.bySubject = {};
+  }
+  if (!studyTime.byDaySubject || typeof studyTime.byDaySubject !== "object") {
+    studyTime.byDaySubject = {};
   }
 }
 
@@ -4175,10 +5510,16 @@ function addStudyTime(elapsedMs) {
 
   const studyTime = getActiveStudyTimeStore();
   ensureStudyTimeShape(studyTime);
+  const subjectFocus = getCategorySubject(state.selectedGrade, activeContext.key);
 
   studyTime.byCourse[activeContext.key] = (studyTime.byCourse[activeContext.key] || 0) + secondsToAdd;
   const todayKey = getTodayKey();
   studyTime.byDay[todayKey] = (studyTime.byDay[todayKey] || 0) + secondsToAdd;
+  studyTime.bySubject[subjectFocus] = (studyTime.bySubject[subjectFocus] || 0) + secondsToAdd;
+  if (!studyTime.byDaySubject[todayKey] || typeof studyTime.byDaySubject[todayKey] !== "object") {
+    studyTime.byDaySubject[todayKey] = {};
+  }
+  studyTime.byDaySubject[todayKey][subjectFocus] = (studyTime.byDaySubject[todayKey][subjectFocus] || 0) + secondsToAdd;
 
   persistStudyTime();
   renderStudyTime();
@@ -4515,7 +5856,7 @@ function number(min, max, rng) {
 
 function lerpRange(min, max, difficulty) {
   const span = max - min;
-  const scaledMax = min + Math.max(1, Math.round((span * difficulty) / 10));
+  const scaledMax = min + Math.max(1, Math.round((span * difficulty) / LEVEL_COUNT));
   return Math.max(min, scaledMax);
 }
 
@@ -4699,10 +6040,10 @@ function pick(list, rng) {
 }
 
 function difficultyTier(difficulty) {
-  if (difficulty <= 3) {
+  if (difficulty <= Math.ceil(LEVEL_COUNT / 3)) {
     return 1;
   }
-  if (difficulty <= 7) {
+  if (difficulty <= Math.ceil((2 * LEVEL_COUNT) / 3)) {
     return 2;
   }
   return 3;
@@ -4713,7 +6054,8 @@ function progressivePool(pool, difficulty, minimum = 4) {
     return [];
   }
 
-  const unlockedRatio = 0.3 + ((Math.max(1, difficulty) - 1) * 0.08);
+  const step = LEVEL_COUNT > 1 ? 0.7 / (LEVEL_COUNT - 1) : 0.7;
+  const unlockedRatio = 0.3 + ((Math.max(1, difficulty) - 1) * step);
   const unlockedCount = Math.min(
     pool.length,
     Math.max(Math.min(minimum, pool.length), Math.ceil(pool.length * unlockedRatio))
@@ -5064,47 +6406,82 @@ const englishQuestionPools = {
 
 const englishSkillPools = {
   grammar: {
-    lower: englishQuestionPools.lower.filter((item) => [
-      "Which word is a noun in the sentence: 'The puppy barked loudly'?",
-      "Which word is a verb in the sentence: 'Birds fly high'?",
-      "Choose the sentence with the correct capital letter.",
-      "Choose the sentence with the correct ending punctuation.",
-      "Choose the correct pronoun: 'Lebo has a book. ___ is reading.'",
-      "Which word is an adjective in the sentence: 'We saw a bright star'?",
-      "Choose the correct plural form of 'box'.",
-      "Which sentence is complete?",
-      "Choose the correct word: 'I ___ to school every day.'"
-    ].includes(item.prompt)),
-    upper: englishQuestionPools.upper.filter((item) => [
-      "Which sentence uses the correct subject-verb agreement?",
-      "Which word is an adverb in the sentence: 'The player moved quickly'?",
-      "Choose the conjunction that completes the sentence: 'I wanted to go, ___ it started raining.'",
-      "Which sentence uses a comma correctly?",
-      "Choose the correct pronoun: 'The science books are on the desk. Put ___ away.'",
-      "Which sentence is written in the past tense?",
-      "Choose the sentence with the correct comparative adjective.",
-      "Which word is a preposition in the sentence: 'The keys are under the chair'?"
-    ].includes(item.prompt)),
-    middle: englishQuestionPools.middle.filter((item) => [
-      "Which sentence uses the correct pronoun-antecedent agreement?",
-      "Which sentence contains an independent clause?",
-      "Which sentence uses the semicolon correctly?",
-      "Which sentence has the correct verb tense?",
-      "Which revision removes the double negative?",
-      "Which sentence uses an adjective clause?",
-      "Which sentence is written in active voice?",
-      "Which sentence uses parallel structure correctly?"
-    ].includes(item.prompt)),
-    senior: englishQuestionPools.senior.filter((item) => [
-      "Which sentence uses the subjunctive mood correctly?",
-      "Which revision fixes the dangling modifier?",
-      "Which sentence uses parallel structure correctly?",
-      "Which sentence uses a colon correctly?",
-      "Which sentence uses the apostrophe correctly?",
-      "Which sentence avoids a comma splice?",
-      "Which sentence uses active voice more effectively?",
-      "Which sentence uses standard formal grammar?"
-    ].includes(item.prompt))
+    lower: [
+      ...englishQuestionPools.lower.filter((item) => [
+        "Which word is a noun in the sentence: 'The puppy barked loudly'?",
+        "Which word is a verb in the sentence: 'Birds fly high'?",
+        "Choose the sentence with the correct capital letter.",
+        "Choose the sentence with the correct ending punctuation.",
+        "Choose the correct pronoun: 'Lebo has a book. ___ is reading.'",
+        "Which word is an adjective in the sentence: 'We saw a bright star'?",
+        "Choose the correct plural form of 'box'.",
+        "Which sentence is complete?",
+        "Choose the correct word: 'I ___ to school every day.'"
+      ].includes(item.prompt)),
+      { prompt: "Which word is a noun in the sentence: 'The teacher wrote on the board'?", correct: "teacher", distractors: ["wrote", "on", "the"], hint: "A noun names a person, place, or thing.", explanation: "'Teacher' names a person, so it is the noun." },
+      { prompt: "Choose the correct plural form of 'city'.", correct: "cities", distractors: ["citys", "citties", "city's"], hint: "Words ending in a consonant plus y change y to i and add es.", explanation: "'City' becomes 'cities' in the plural." },
+      { prompt: "Which sentence uses the correct verb: 'She ___ her homework every night.'", correct: "does", distractors: ["do", "doing", "did do"], hint: "Match the verb to the singular subject 'she'.", explanation: "'She does' is the correct singular present-tense form." },
+      { prompt: "Choose the sentence with the correct capital letter for a name.", correct: "We met Mr. Osei at the store.", distractors: ["We met mr. Osei at the store.", "we met Mr. Osei at the store.", "We met Mr. osei at the store."], hint: "Titles and names always start with a capital letter.", explanation: "'Mr. Osei' is a proper name and must be capitalized correctly." },
+      { prompt: "Which word is a pronoun in the sentence: 'They walked to the park'?", correct: "They", distractors: ["walked", "to", "park"], hint: "A pronoun takes the place of a noun.", explanation: "'They' replaces the names of the people, so it is a pronoun." },
+      { prompt: "Choose the sentence that uses 'a' or 'an' correctly.", correct: "She ate an apple.", distractors: ["She ate a apple.", "She ate an apples.", "She ate apple."], hint: "Use 'an' before a word that starts with a vowel sound.", explanation: "'Apple' starts with a vowel sound, so 'an' is correct." }
+    ],
+    upper: [
+      ...englishQuestionPools.upper.filter((item) => [
+        "Which sentence uses the correct subject-verb agreement?",
+        "Which word is an adverb in the sentence: 'The player moved quickly'?",
+        "Choose the conjunction that completes the sentence: 'I wanted to go, ___ it started raining.'",
+        "Which sentence uses a comma correctly?",
+        "Choose the correct pronoun: 'The science books are on the desk. Put ___ away.'",
+        "Which sentence is written in the past tense?",
+        "Choose the sentence with the correct comparative adjective.",
+        "Which word is a preposition in the sentence: 'The keys are under the chair'?"
+      ].includes(item.prompt)),
+      { prompt: "Which sentence uses the correct superlative adjective?", correct: "This is the tallest building in the city.", distractors: ["This is the more tallest building in the city.", "This is the tallest-est building in the city.", "This is the most tallest building in the city."], hint: "For short adjectives, add '-est' for the superlative.", explanation: "'Tallest' is the correct superlative form of 'tall'." },
+      { prompt: "Choose the sentence written in future tense.", correct: "We will visit the museum tomorrow.", distractors: ["We visit the museum tomorrow.", "We visited the museum tomorrow.", "We are visiting the museum yesterday."], hint: "Future tense often uses 'will' plus the base verb.", explanation: "'Will visit' correctly shows an action that has not happened yet." },
+      { prompt: "Which word is a conjunction in the sentence: 'I like tea and coffee'?", correct: "and", distractors: ["I", "like", "tea"], hint: "A conjunction joins words or ideas together.", explanation: "'And' joins 'tea' and 'coffee', so it is the conjunction." },
+      { prompt: "Choose the sentence with correct subject-verb agreement.", correct: "Each of the students has a locker.", distractors: ["Each of the students have a locker.", "Each of the students are having a locker.", "Each of the students having a locker."], hint: "'Each' is treated as singular.", explanation: "'Each' takes the singular verb 'has'." },
+      { prompt: "Which sentence uses quotation marks correctly?", correct: "She said, \"I will be there soon.\"", distractors: ["She said, I will be there soon.", "She said \"I will be there soon\".", "She said, \"I will be there soon\""], hint: "Quoted speech needs quotation marks and correct punctuation placement.", explanation: "The quotation is correctly marked and punctuated." },
+      { prompt: "Which word is an interjection in the sentence: 'Wow, that was an amazing goal!'?", correct: "Wow", distractors: ["that", "amazing", "goal"], hint: "An interjection shows strong feeling and is often followed by a comma or exclamation mark.", explanation: "'Wow' expresses sudden feeling, so it is the interjection." },
+      { prompt: "Choose the sentence that correctly uses an apostrophe to show possession.", correct: "The dog's leash was on the floor.", distractors: ["The dogs leash was on the floor.", "The dog's' leash was on the floor.", "The dogs' leash was on the floor."], hint: "A singular owner takes an apostrophe plus s.", explanation: "'Dog's' correctly shows that one dog owns the leash." }
+    ],
+    middle: [
+      ...englishQuestionPools.middle.filter((item) => [
+        "Which sentence uses the correct pronoun-antecedent agreement?",
+        "Which sentence contains an independent clause?",
+        "Which sentence uses the semicolon correctly?",
+        "Which sentence has the correct verb tense?",
+        "Which revision removes the double negative?",
+        "Which sentence uses an adjective clause?",
+        "Which sentence is written in active voice?",
+        "Which sentence uses parallel structure correctly?"
+      ].includes(item.prompt)),
+      { prompt: "Which sentence correctly uses a subordinating conjunction?", correct: "Although it rained, the game continued.", distractors: ["It rained, the game continued.", "It rained although the game, continued.", "The game continued, it rained."], hint: "A subordinating conjunction introduces a dependent clause.", explanation: "'Although' correctly introduces the dependent clause 'it rained'." },
+      { prompt: "Which sentence avoids a sentence fragment?", correct: "Because she was late, she missed the bus.", distractors: ["Because she was late.", "She missed the bus. Because she was late.", "Missed the bus because late."], hint: "A complete sentence needs an independent clause.", explanation: "This version joins the dependent and independent clauses into a complete sentence." },
+      { prompt: "Which sentence uses the correct form of a modal verb?", correct: "You should finish your project by Friday.", distractors: ["You should to finish your project by Friday.", "You should finishing your project by Friday.", "You should finished your project by Friday."], hint: "Modal verbs like 'should' are followed by the base form of the verb.", explanation: "'Should finish' correctly follows the modal verb with the base verb form." },
+      { prompt: "Which sentence correctly uses an appositive?", correct: "My teacher, a former athlete, coaches the track team.", distractors: ["My teacher a former athlete, coaches the track team.", "My teacher, a former athlete coaches the track team.", "My teacher a former, athlete coaches the track team."], hint: "An appositive renames a noun and is set off by commas.", explanation: "The appositive 'a former athlete' is correctly set off with commas." },
+      { prompt: "Which sentence correctly uses the past perfect tense?", correct: "She had finished her homework before dinner.", distractors: ["She has finished her homework before dinner.", "She finished her homework before dinner had.", "She was finished her homework before dinner."], hint: "Past perfect shows an action completed before another past action.", explanation: "'Had finished' correctly shows the action was completed before dinner." },
+      { prompt: "Which sentence uses a gerund phrase as the subject?", correct: "Swimming every morning improved her stamina.", distractors: ["She swims every morning.", "To swim is healthy.", "Swim every morning."], hint: "A gerund is an '-ing' verb form acting as a noun.", explanation: "'Swimming every morning' is a gerund phrase functioning as the subject." },
+      { prompt: "Which sentence correctly uses a relative clause with 'whom'?", correct: "The coach whom we admired retired this year.", distractors: ["The coach who we admired retired this year, whom.", "The coach whom admired us retired this year.", "The coach, whom, we admired retired this year."], hint: "'Whom' is used as the object of a clause.", explanation: "'Whom' correctly serves as the object of 'admired' in the relative clause." }
+    ],
+    senior: [
+      ...englishQuestionPools.senior.filter((item) => [
+        "Which sentence uses the subjunctive mood correctly?",
+        "Which revision fixes the dangling modifier?",
+        "Which sentence uses parallel structure correctly?",
+        "Which sentence uses a colon correctly?",
+        "Which sentence uses the apostrophe correctly?",
+        "Which sentence avoids a comma splice?",
+        "Which sentence uses active voice more effectively?",
+        "Which sentence uses standard formal grammar?"
+      ].includes(item.prompt)),
+      { prompt: "Which sentence correctly uses an em dash?", correct: "The results were clear—the experiment had succeeded.", distractors: ["The results were clear-the experiment had succeeded.", "The results were clear, the experiment had succeeded.", "The results were clear; the experiment—had succeeded."], hint: "An em dash can set off a dramatic clarification.", explanation: "The em dash correctly sets off the clarifying clause." },
+      { prompt: "Which sentence avoids faulty parallelism in a formal list?", correct: "The report was clear, concise, and persuasive.", distractors: ["The report was clear, concise, and persuading.", "The report was being clear, concise, and persuasive.", "The report was clear, being concise, and persuasive."], hint: "Each item in the list should share the same grammatical form.", explanation: "All three adjectives share the same form, keeping the list parallel." },
+      { prompt: "Which sentence correctly uses a restrictive clause without commas?", correct: "Students who arrive late must sign in at the office.", distractors: ["Students, who arrive late, must sign in at the office.", "Students who arrive late, must sign in at the office.", "Students, who arrive late must sign in at the office."], hint: "A restrictive clause is essential to the meaning and is not set off by commas.", explanation: "Because 'who arrive late' is essential to identifying which students, no commas are needed." },
+      { prompt: "Which sentence correctly uses the passive voice for emphasis?", correct: "The award was presented to an outstanding researcher.", distractors: ["An outstanding researcher was presenting the award.", "The award presented an outstanding researcher.", "An outstanding researcher present the award."], hint: "Passive voice puts the receiver of the action first.", explanation: "The passive construction correctly emphasizes the award being given." },
+      { prompt: "Which sentence uses correct formal register?", correct: "The committee will review the proposal at its earliest convenience.", distractors: ["The committee's gonna look at the proposal whenever.", "The committee will check out the proposal soon-ish.", "The committee is like reviewing the proposal."], hint: "Formal register avoids slang and casual phrasing.", explanation: "This sentence uses precise, professional wording appropriate for formal writing." },
+      { prompt: "Which sentence correctly uses a nominalization for a more formal tone?", correct: "The committee's decision surprised the staff.", distractors: ["The committee decided and it surprised the staff.", "The committee, deciding, surprised staff.", "Deciding by the committee surprised staff."], hint: "Nominalization turns a verb into a noun for formal writing.", explanation: "'Decision' is the nominalized form, giving the sentence a more formal tone." },
+      { prompt: "Which sentence best avoids an unclear pronoun reference?", correct: "When Sara met Priya, Sara shared her research first.", distractors: ["When Sara met Priya, she shared her research first.", "When she met her, she shared her research first.", "Sara met Priya and she shared research."], hint: "A pronoun should clearly refer to one specific noun.", explanation: "Naming 'Sara' directly removes the ambiguity of who 'she' refers to." }
+    ]
   },
   reading: {
     lower: [
@@ -5115,7 +6492,14 @@ const englishSkillPools = {
       { prompt: "Which sentence best tells the lesson of this short idea: 'Amina practiced reading every night and soon read with confidence'?", correct: "Practice helps you improve.", distractors: ["Reading should only happen at night.", "Confidence means reading very fast.", "Amina did not like books."], hint: "A lesson is a message you can learn from what happened.", explanation: "The sentence shows that regular practice helped Amina improve." },
       { prompt: "Which word helps you know this is a question: 'Why did the bird leave the nest'?", correct: "Why", distractors: ["bird", "leave", "nest"], hint: "Question words help show what a sentence is asking.", explanation: "'Why' signals that the sentence is asking a question." },
       { prompt: "What is the setting in this sentence: 'On Saturday morning, we visited Grandma at her farm'?", correct: "Saturday morning at Grandma's farm", distractors: ["we visited", "Grandma", "farm animals"], hint: "The setting includes when and where.", explanation: "The setting is given by both the time and the place." },
-      { prompt: "Which detail is most important: 'Kofi packed his boots, gloves, and helmet before the hockey game'?", correct: "Kofi packed what he needed for the hockey game.", distractors: ["Kofi likes to count his things.", "The boots were blue.", "Gloves are soft."], hint: "Choose the detail that best supports the main event.", explanation: "The important detail is that Kofi packed the gear he needed for the game." }
+      { prompt: "Which detail is most important: 'Kofi packed his boots, gloves, and helmet before the hockey game'?", correct: "Kofi packed what he needed for the hockey game.", distractors: ["Kofi likes to count his things.", "The boots were blue.", "Gloves are soft."], hint: "Choose the detail that best supports the main event.", explanation: "The important detail is that Kofi packed the gear he needed for the game." },
+      { prompt: "What happens last in this sequence: 'Zara mixed the batter, poured it into the pan, and baked the cake'?", correct: "Zara baked the cake.", distractors: ["Zara mixed the batter.", "Zara poured the batter.", "Zara bought the pan."], hint: "Look for the final action in the sentence.", explanation: "The last action described is baking the cake." },
+      { prompt: "How does the character probably feel: 'Dan dropped his ice cream and started to cry'?", correct: "sad", distractors: ["proud", "excited", "curious"], hint: "Use the clue about crying.", explanation: "Crying after dropping the ice cream shows Dan feels sad." },
+      { prompt: "Which word tells you when the story happens: 'Every winter, the pond freezes over'?", correct: "winter", distractors: ["pond", "freezes", "over"], hint: "A time word tells when something happens.", explanation: "'Winter' tells the reader when the pond freezes." },
+      { prompt: "What is the main idea of this sentence: 'Ben fed the chickens, collected the eggs, and cleaned the coop before breakfast'?", correct: "Ben did his farm chores before breakfast.", distractors: ["Ben likes eggs for breakfast.", "Ben built a new chicken coop.", "Ben went to the market."], hint: "Look at what all three actions have in common.", explanation: "All three actions are chores Ben completed before breakfast." },
+      { prompt: "Which detail tells who the story is about: 'Every Friday, Grandpa Joe tells us a new story by the fire'?", correct: "Grandpa Joe", distractors: ["Friday", "story", "fire"], hint: "Look for the name of the person.", explanation: "'Grandpa Joe' is the person the sentence is about." },
+      { prompt: "What happens in the middle of this sequence: 'Leo washed the dishes, dried them, and put them away'?", correct: "Leo dried the dishes.", distractors: ["Leo washed the dishes.", "Leo put them away.", "Leo broke a dish."], hint: "The middle event comes after the first and before the last.", explanation: "Drying the dishes happens after washing and before putting them away." },
+      { prompt: "How does the character probably feel: 'Mia clapped and laughed when her team scored the winning goal'?", correct: "excited", distractors: ["bored", "worried", "sleepy"], hint: "Use the clues from the character's actions.", explanation: "Clapping and laughing after a winning goal shows excitement." }
     ],
     upper: [
       { prompt: "What is the main idea of this passage sentence: 'School gardens teach students about science, teamwork, and responsibility'?", correct: "School gardens help students learn in several ways.", distractors: ["School gardens are only for science class.", "Students dislike working together in gardens.", "Responsibility means watering once."], hint: "The main idea combines the important details into one clear message.", explanation: "The sentence explains that school gardens support several kinds of learning." },
@@ -5125,7 +6509,14 @@ const englishSkillPools = {
       { prompt: "Why did the character probably apologize: 'After knocking over the paint jar, Nia quickly said sorry to her partner'?", correct: "She made a mistake that affected someone else.", distractors: ["She wanted more paint.", "She finished the project early.", "She was leaving the classroom."], hint: "Look at what happened just before the apology.", explanation: "Nia apologized because she caused a problem by knocking over the paint jar." },
       { prompt: "Which statement is an inference instead of a stated fact?", correct: "The hiker was tired after climbing for hours.", distractors: ["The hiker climbed for hours.", "The trail was on a mountain.", "The backpack was red."], hint: "An inference is a smart idea based on clues, not directly stated words.", explanation: "If someone has been climbing for hours, it is reasonable to infer that the person is tired." },
       { prompt: "Which sentence best summarizes this idea: 'The article explains how bees pollinate flowers and why that matters for food production'?", correct: "Bees help plants grow food by pollinating flowers.", distractors: ["Bees are yellow and black insects.", "Flowers look pretty in gardens.", "Food comes from many stores."], hint: "A summary keeps the most important ideas only.", explanation: "The best summary includes both pollination and why it matters." },
-      { prompt: "What is the author's purpose in a safety poster that explains helmet rules?", correct: "to inform and encourage safe behaviour", distractors: ["to entertain with a funny story", "to confuse the reader", "to sell a helmet collection"], hint: "Author's purpose asks why the text was created.", explanation: "A safety poster aims to give information and guide safe choices." }
+      { prompt: "What is the author's purpose in a safety poster that explains helmet rules?", correct: "to inform and encourage safe behaviour", distractors: ["to entertain with a funny story", "to confuse the reader", "to sell a helmet collection"], hint: "Author's purpose asks why the text was created.", explanation: "A safety poster aims to give information and guide safe choices." },
+      { prompt: "Which detail best supports the idea that a character is organized: 'Before the trip, Priya labeled every bag and checked her list twice'?", correct: "Priya labeled every bag and checked her list twice.", distractors: ["Priya likes to travel.", "The bags were heavy.", "The trip was long."], hint: "Choose the detail that directly shows the trait.", explanation: "Labeling bags and double-checking a list are clear signs of being organized." },
+      { prompt: "What can you infer about the setting: 'Snow crunched under their boots as they walked to the cabin'?", correct: "It is cold and snowy outside.", distractors: ["It is a hot summer day.", "They are indoors.", "It is raining heavily."], hint: "Use the details about snow and boots.", explanation: "Snow and boots suggest a cold, snowy setting." },
+      { prompt: "Which sentence states a fact rather than an opinion?", correct: "The library opens at nine in the morning.", distractors: ["The library is the best place to study.", "The library should have longer hours.", "The library is more interesting than the park."], hint: "A fact can be proven true; an opinion is a belief.", explanation: "The opening time can be checked and proven, making it a fact." },
+      { prompt: "Which text feature would help a reader quickly find a chapter in a nonfiction book?", correct: "table of contents", distractors: ["glossary", "footnote", "index card"], hint: "Think about the feature that lists chapters in order near the front of a book.", explanation: "A table of contents lists chapters and their page numbers." },
+      { prompt: "What is the main idea of a paragraph explaining how recycling reduces landfill waste and saves resources?", correct: "Recycling benefits the environment in more than one way.", distractors: ["Recycling is only about landfills.", "Landfills are always full.", "Resources are unlimited."], hint: "Combine the two benefits mentioned into one main idea.", explanation: "The paragraph's main idea covers both benefits of recycling together." },
+      { prompt: "Which detail best shows that a character is generous: 'Omar gave his extra sandwich to a classmate who forgot lunch'?", correct: "Omar gave his extra sandwich to a classmate.", distractors: ["Omar was hungry.", "The classmate liked sandwiches.", "It was lunchtime."], hint: "Choose the detail that directly shows a generous action.", explanation: "Sharing food with someone in need is a clear act of generosity." },
+      { prompt: "Which sentence best distinguishes cause from effect: 'Because the bridge was closed, traffic backed up for miles'?", correct: "The bridge closing caused the traffic to back up.", distractors: ["The traffic caused the bridge to close.", "Both events happened for no reason.", "Neither event is related to the other."], hint: "The cause happens first and makes the effect happen.", explanation: "The bridge closing is the cause; the traffic backup is the effect." }
     ],
     middle: [
       { prompt: "Which detail would be the strongest evidence that a character is determined?", correct: "She kept practicing her speech even after making several mistakes.", distractors: ["She owns a speech notebook.", "She arrived at school on time.", "She sat near the window."], hint: "Strong evidence directly proves the trait.", explanation: "Continuing to practice after mistakes is strong evidence of determination." },
@@ -5135,7 +6526,14 @@ const englishSkillPools = {
       { prompt: "What does the phrase 'a wave of relief' suggest about the speaker?", correct: "The speaker felt stress disappear.", distractors: ["The speaker went swimming.", "The speaker was angry at the weather.", "The speaker forgot the event."], hint: "Think figuratively, not literally.", explanation: "The phrase suggests a strong feeling of relief after stress." },
       { prompt: "Which evidence best supports the claim that the article is informative?", correct: "It includes facts, explanations, and clear examples.", distractors: ["It has a surprising ending.", "It rhymes in every line.", "It speaks in first person only."], hint: "Informative texts teach readers something.", explanation: "Facts and explanations are strong signs of an informative text." },
       { prompt: "Which statement best explains tone in a text?", correct: "Tone is the writer's attitude toward the subject or audience.", distractors: ["Tone is the number of paragraphs.", "Tone is the font size in the title.", "Tone is only the setting of a story."], hint: "Tone is about attitude and feeling in the writing.", explanation: "Tone shows how the writer feels or sounds while presenting the ideas." },
-      { prompt: "Which question best helps identify theme?", correct: "What message about life or people does the text reveal?", distractors: ["How many pages are in the book?", "What colour is the cover?", "Who published the text first?"], hint: "Theme is the deeper message, not a small fact.", explanation: "Theme asks what bigger idea or message the text communicates." }
+      { prompt: "Which question best helps identify theme?", correct: "What message about life or people does the text reveal?", distractors: ["How many pages are in the book?", "What colour is the cover?", "Who published the text first?"], hint: "Theme is the deeper message, not a small fact.", explanation: "Theme asks what bigger idea or message the text communicates." },
+      { prompt: "Which detail would best support a claim that a character grew braver over the story?", correct: "By the end, she spoke up in front of the whole class without hesitating.", distractors: ["She has brown hair.", "She lives near the school.", "She likes the color blue."], hint: "Choose evidence that shows a change in behaviour.", explanation: "Speaking up confidently by the end shows clear growth in bravery." },
+      { prompt: "What is the most likely purpose of a persuasive speech about recycling?", correct: "to convince the audience to recycle more", distractors: ["to describe how recycling bins are made", "to entertain with a funny story", "to give a weather report"], hint: "A persuasive text tries to change the audience's mind or actions.", explanation: "A persuasive speech aims to convince listeners to take action." },
+      { prompt: "Which statement best distinguishes a fact from an opinion in nonfiction text?", correct: "A fact can be verified with evidence; an opinion expresses a belief.", distractors: ["A fact is always longer than an opinion.", "An opinion is always found in the introduction.", "There is no real difference between them."], hint: "Think about what can be proven versus what is a personal view.", explanation: "Facts can be checked and proven, while opinions reflect personal judgment." },
+      { prompt: "Which sentence best identifies foreshadowing in a story?", correct: "A dark cloud on the horizon hinted at trouble to come.", distractors: ["The sun was shining brightly all day.", "She ate breakfast at seven.", "The house had three bedrooms."], hint: "Foreshadowing gives a hint about something that will happen later.", explanation: "The dark cloud is a hint that trouble is coming later in the story." },
+      { prompt: "What is the best way to identify the central conflict in a short story?", correct: "Find the main problem the character must overcome.", distractors: ["Count the number of characters.", "Look only at the setting.", "Find the longest paragraph."], hint: "Conflict is the core struggle driving the plot.", explanation: "The central conflict is the key problem the main character faces and must resolve." },
+      { prompt: "Which statement best explains what an unreliable narrator is?", correct: "A narrator whose account of events may not be fully trustworthy.", distractors: ["A narrator who speaks in the third person.", "A narrator who never appears in the story.", "A narrator who only describes settings."], hint: "Think about whether the reader can fully trust what the narrator says.", explanation: "An unreliable narrator's version of events may be biased, mistaken, or incomplete." },
+      { prompt: "Which evidence best supports a claim that a persuasive essay is well reasoned?", correct: "The essay addresses counterarguments and responds to them logically.", distractors: ["The essay repeats the same claim many times.", "The essay uses only emotional language.", "The essay ignores opposing views entirely."], hint: "Well-reasoned arguments engage with opposing views.", explanation: "Addressing and logically responding to counterarguments shows strong reasoning." }
     ],
     senior: [
       { prompt: "Which statement best describes the author's argument?", correct: "A clear claim supported by reasons and evidence.", distractors: ["A random collection of details.", "A summary of the title only.", "A list of unrelated quotations."], hint: "An argument combines a position with support.", explanation: "An author's argument is the main claim backed by evidence and reasoning." },
@@ -5145,33 +6543,103 @@ const englishSkillPools = {
       { prompt: "Which statement best distinguishes theme from topic?", correct: "A topic names the subject, while a theme expresses the deeper message.", distractors: ["A theme is always one word, but a topic is a sentence.", "A topic is hidden, but a theme is printed in bold.", "They mean exactly the same thing."], hint: "One names what the text is about; the other explains what it says about that subject.", explanation: "Topic is the subject area, while theme is the insight or message." },
       { prompt: "Which reading strategy best helps evaluate an argument?", correct: "checking whether the evidence is relevant, sufficient, and credible", distractors: ["counting the commas only", "skipping the reasons and reading the title", "looking only for interesting adjectives"], hint: "Evaluating argument means testing the quality of support.", explanation: "Strong evaluation focuses on how well the evidence supports the claim." },
       { prompt: "What is the strongest inference about a narrator who avoids direct answers and changes the subject often?", correct: "The narrator may be hiding something or may be unreliable.", distractors: ["The narrator is always fully objective.", "The narrator has finished the story.", "The narrator is writing a dictionary."], hint: "Think about what evasive behaviour suggests.", explanation: "Avoiding direct answers can suggest unreliability or hidden motives." },
-      { prompt: "Which statement best explains how structure affects meaning?", correct: "The organization of ideas shapes how the reader understands emphasis and connection.", distractors: ["Structure has no effect if the vocabulary is formal.", "Structure only matters in poetry.", "Structure changes spelling but not meaning."], hint: "Order matters in how readers process ideas.", explanation: "Structure influences how ideas build, connect, and stand out in a text." }
+      { prompt: "Which statement best explains how structure affects meaning?", correct: "The organization of ideas shapes how the reader understands emphasis and connection.", distractors: ["Structure has no effect if the vocabulary is formal.", "Structure only matters in poetry.", "Structure changes spelling but not meaning."], hint: "Order matters in how readers process ideas.", explanation: "Structure influences how ideas build, connect, and stand out in a text." },
+      { prompt: "Which technique would most likely signal irony in a text?", correct: "The outcome is the opposite of what the character expected.", distractors: ["The text uses many long sentences.", "The text is written in first person.", "The text includes a lot of dialogue."], hint: "Irony involves a contrast between expectation and reality.", explanation: "Irony occurs when the actual outcome contrasts with what was expected." },
+      { prompt: "What is the best way to evaluate the credibility of a source?", correct: "Check the author's expertise and the evidence provided.", distractors: ["Check how long the article is.", "Check how many images it has.", "Check whether it uses big words."], hint: "Credibility depends on expertise and support, not length or style.", explanation: "A credible source is supported by expert authorship and solid evidence." },
+      { prompt: "Which statement best describes rhetorical appeal to ethos?", correct: "It builds trust by showing the speaker's credibility or character.", distractors: ["It uses statistics to prove a point.", "It appeals to the audience's emotions.", "It uses humor to entertain."], hint: "Ethos relates to credibility and character.", explanation: "Ethos is the appeal based on the speaker's trustworthiness and credibility." },
+      { prompt: "Which statement best describes rhetorical appeal to pathos?", correct: "It persuades by appealing to the audience's emotions.", distractors: ["It persuades using only statistics.", "It persuades by citing credentials.", "It persuades through strict logic alone."], hint: "Pathos relates to feeling and emotion.", explanation: "Pathos is the appeal that works by stirring the audience's emotions." },
+      { prompt: "Which statement best distinguishes a summary from an analysis?", correct: "A summary restates the main points, while an analysis explains their significance.", distractors: ["A summary and an analysis are identical.", "An analysis is always shorter than a summary.", "A summary interprets meaning, while an analysis restates events."], hint: "One reports what happened; the other explains why it matters.", explanation: "Summary restates content; analysis interprets and explains its significance." },
+      { prompt: "What is the best way to identify an author's underlying assumption in an argument?", correct: "Find the unstated idea the argument depends on to be true.", distractors: ["Count how many paragraphs the argument has.", "Look only at the concluding sentence.", "Find the longest word in the passage."], hint: "An assumption is something the author takes for granted but doesn't state directly.", explanation: "An assumption is the unstated belief that the argument relies on." },
+      { prompt: "Which strategy best helps a reader evaluate whether a text's structure supports its purpose?", correct: "Consider whether the order and organization of ideas make the main point clearer.", distractors: ["Count how many headings the text has.", "Check only the font used in the text.", "Focus only on the number of paragraphs."], hint: "Structure should serve the text's overall purpose.", explanation: "Effective structure supports clarity and reinforces the author's main purpose." }
     ]
   },
   vocabulary: {
-    lower: englishQuestionPools.lower.filter((item) => [
-      "Which word means almost the same as 'happy'?",
-      "Which word means the opposite of 'cold'?",
-      "What does the word 'gigantic' mean?"
-    ].includes(item.prompt)),
-    upper: englishQuestionPools.upper.filter((item) => [
-      "Which word has a prefix that means 'not'?",
-      "What does the word 'predict' mean?",
-      "Which word is the best synonym for 'ancient'?",
-      "Which word completes the sentence correctly? 'Their team won ___ first game.'"
-    ].includes(item.prompt)),
-    middle: englishQuestionPools.middle.filter((item) => [
-      "Choose the word that best completes the sentence: 'Her argument was ___ because it used strong evidence.'",
-      "What is the best meaning of 'reluctant'?",
-      "Choose the best synonym for 'analyze'.",
-      "Which word best completes the sentence: 'The scientist reached a ___ after reviewing the results.'"
-    ].includes(item.prompt)),
-    senior: englishQuestionPools.senior.filter((item) => [
-      "What is the best meaning of 'mitigate'?",
-      "Which sentence demonstrates precise diction?",
-      "What is the best synonym for 'coherent'?",
-      "What does the word 'ambiguous' mean?"
-    ].includes(item.prompt))
+    lower: [
+      ...englishQuestionPools.lower.filter((item) => [
+        "Which word means almost the same as 'happy'?",
+        "Which word means the opposite of 'cold'?",
+        "What does the word 'gigantic' mean?"
+      ].includes(item.prompt)),
+      { prompt: "Which word means almost the same as 'small'?", correct: "tiny", distractors: ["huge", "loud", "fast"], hint: "Look for a size word.", explanation: "'Tiny' is a synonym for 'small'." },
+      { prompt: "Which word means the opposite of 'fast'?", correct: "slow", distractors: ["quick", "loud", "bright"], hint: "An antonym means the opposite.", explanation: "'Slow' is the opposite of 'fast'." },
+      { prompt: "What does the word 'enormous' mean?", correct: "very large", distractors: ["very quiet", "very cheap", "very old"], hint: "Think about size.", explanation: "'Enormous' means extremely large." },
+      { prompt: "Which word means almost the same as 'scared'?", correct: "afraid", distractors: ["excited", "sleepy", "hungry"], hint: "Look for a word about feelings.", explanation: "'Afraid' is a synonym for 'scared'." },
+      { prompt: "Which word means the opposite of 'begin'?", correct: "end", distractors: ["start", "open", "grow"], hint: "Think about the opposite of starting something.", explanation: "'End' is the opposite of 'begin'." },
+      { prompt: "What does the word 'chilly' mean?", correct: "a little cold", distractors: ["very hot", "very wet", "very bright"], hint: "Think about weather words.", explanation: "'Chilly' means a little bit cold." },
+      { prompt: "Which word means almost the same as 'shout'?", correct: "yell", distractors: ["whisper", "sing", "read"], hint: "Look for a loud-speaking word.", explanation: "'Yell' means to shout loudly." },
+      { prompt: "Which word means the opposite of 'wet'?", correct: "dry", distractors: ["damp", "cool", "soft"], hint: "Think about water.", explanation: "'Dry' is the opposite of 'wet'." },
+      { prompt: "What does the word 'ancient' mean in a simple sentence like 'The ancient tree was very tall'?", correct: "very old", distractors: ["very new", "very small", "very colorful"], hint: "Think about age.", explanation: "'Ancient' means extremely old." },
+      { prompt: "Which word means almost the same as 'brave'?", correct: "courageous", distractors: ["nervous", "tired", "quiet"], hint: "Think about someone who isn't afraid.", explanation: "'Courageous' is a synonym for 'brave'." },
+      { prompt: "Which word means the opposite of 'clean'?", correct: "dirty", distractors: ["neat", "shiny", "tidy"], hint: "Think about the opposite of tidy.", explanation: "'Dirty' is the opposite of 'clean'." },
+      { prompt: "What does the word 'delighted' mean?", correct: "very pleased", distractors: ["very tired", "very confused", "very cold"], hint: "Think about a strong happy feeling.", explanation: "'Delighted' means feeling very happy or pleased." },
+      { prompt: "Which word means the opposite of 'loud'?", correct: "quiet", distractors: ["bright", "heavy", "fast"], hint: "Think about the opposite of noisy.", explanation: "'Quiet' is the opposite of 'loud'." },
+      { prompt: "Which word means almost the same as 'quick'?", correct: "fast", distractors: ["slow", "heavy", "quiet"], hint: "Think about moving with speed.", explanation: "'Fast' is a synonym for 'quick'." },
+      { prompt: "What does the word 'tidy' mean?", correct: "neat and organized", distractors: ["messy and dirty", "very loud", "very old"], hint: "Think about a clean, organized room.", explanation: "'Tidy' means neat and well organized." }
+    ],
+    upper: [
+      ...englishQuestionPools.upper.filter((item) => [
+        "Which word has a prefix that means 'not'?",
+        "What does the word 'predict' mean?",
+        "Which word is the best synonym for 'ancient'?",
+        "Which word completes the sentence correctly? 'Their team won ___ first game.'"
+      ].includes(item.prompt)),
+      { prompt: "Which word is the best synonym for 'enormous'?", correct: "massive", distractors: ["tiny", "narrow", "quiet"], hint: "Think about size words.", explanation: "'Massive' means very large, like 'enormous'." },
+      { prompt: "What does the word 'reluctant' mean?", correct: "unwilling", distractors: ["excited", "confident", "curious"], hint: "Think about someone who hesitates.", explanation: "'Reluctant' means unwilling or hesitant to do something." },
+      { prompt: "Which word is the best antonym for 'generous'?", correct: "selfish", distractors: ["kind", "helpful", "friendly"], hint: "Think of the opposite of sharing freely.", explanation: "'Selfish' is the opposite of 'generous'." },
+      { prompt: "What does the word 'furious' mean?", correct: "extremely angry", distractors: ["extremely tired", "extremely happy", "extremely shy"], hint: "Think about a strong feeling of anger.", explanation: "'Furious' means extremely angry." },
+      { prompt: "Which word has a suffix that means 'full of'?", correct: "joyful", distractors: ["joyless", "enjoy", "joyfully"], hint: "Look for the ending '-ful'.", explanation: "The suffix '-ful' means 'full of', as in 'joyful' meaning full of joy." },
+      { prompt: "What does the word 'hesitate' mean?", correct: "to pause before doing something", distractors: ["to run quickly", "to speak loudly", "to finish early"], hint: "Think about someone unsure about acting.", explanation: "'Hesitate' means to pause or wait because of uncertainty." },
+      { prompt: "Which word is the best synonym for 'clever'?", correct: "intelligent", distractors: ["careless", "lazy", "shy"], hint: "Think about someone who is smart.", explanation: "'Intelligent' is a synonym for 'clever'." },
+      { prompt: "What does the word 'exhausted' mean?", correct: "extremely tired", distractors: ["extremely excited", "extremely confused", "extremely bored"], hint: "Think about how someone feels after a lot of effort.", explanation: "'Exhausted' means extremely tired." },
+      { prompt: "Which word means the opposite of 'permit'?", correct: "forbid", distractors: ["allow", "encourage", "invite"], hint: "Think about the opposite of allowing something.", explanation: "'Forbid' is the opposite of 'permit'." },
+      { prompt: "What does the word 'cautious' mean?", correct: "careful", distractors: ["careless", "curious", "confident"], hint: "Think about someone who avoids risks.", explanation: "'Cautious' means careful and avoiding danger." },
+      { prompt: "Which word is the best synonym for 'gloomy'?", correct: "dreary", distractors: ["cheerful", "bright", "excited"], hint: "Think about a dark, sad mood.", explanation: "'Dreary' means gloomy or dull, similar in meaning." },
+      { prompt: "What does the word 'reluctantly' mean in the sentence 'He reluctantly agreed to help'?", correct: "in an unwilling way", distractors: ["in a happy way", "in a fast way", "in a loud way"], hint: "Think about someone who doesn't really want to do something.", explanation: "'Reluctantly' means doing something in an unwilling or hesitant manner." },
+      { prompt: "Which word means the opposite of 'ancient'?", correct: "modern", distractors: ["old", "historic", "faded"], hint: "Think about the opposite of very old.", explanation: "'Modern' is the opposite of 'ancient'." },
+      { prompt: "What does the word 'vast' mean?", correct: "extremely large in area", distractors: ["extremely small", "extremely loud", "extremely fast"], hint: "Think about a huge open space.", explanation: "'Vast' describes something extremely large, especially in area." },
+      { prompt: "Which word is the best synonym for 'obstacle'?", correct: "barrier", distractors: ["solution", "path", "reward"], hint: "Think about something blocking your way.", explanation: "'Barrier' means something that blocks progress, like an obstacle." }
+    ],
+    middle: [
+      ...englishQuestionPools.middle.filter((item) => [
+        "Choose the word that best completes the sentence: 'Her argument was ___ because it used strong evidence.'",
+        "What is the best meaning of 'reluctant'?",
+        "Choose the best synonym for 'analyze'.",
+        "Which word best completes the sentence: 'The scientist reached a ___ after reviewing the results.'"
+      ].includes(item.prompt)),
+      { prompt: "What is the best meaning of 'skeptical'?", correct: "doubtful", distractors: ["excited", "confident", "generous"], hint: "Think about someone who questions claims.", explanation: "'Skeptical' means having doubts about something." },
+      { prompt: "Choose the best synonym for 'diligent'.", correct: "hardworking", distractors: ["lazy", "forgetful", "careless"], hint: "Think about effort and dedication.", explanation: "'Diligent' means careful and persistent in work, like 'hardworking'." },
+      { prompt: "What is the best meaning of 'inevitable'?", correct: "certain to happen", distractors: ["impossible to happen", "unlikely to happen", "already happened"], hint: "Think about something that cannot be avoided.", explanation: "'Inevitable' means certain to happen and cannot be avoided." },
+      { prompt: "Which word best completes the sentence: 'The old bridge looked ___ and unsafe to cross.'", correct: "unstable", distractors: ["reliable", "sturdy", "modern"], hint: "Think about something that isn't safe or steady.", explanation: "'Unstable' fits because it means not steady or safe." },
+      { prompt: "What is the best meaning of 'candid'?", correct: "honest and direct", distractors: ["shy and quiet", "loud and rude", "confused and unclear"], hint: "Think about someone who speaks truthfully.", explanation: "'Candid' means honest and straightforward." },
+      { prompt: "Choose the best antonym for 'concise'.", correct: "wordy", distractors: ["brief", "clear", "short"], hint: "Think about the opposite of being short and to the point.", explanation: "'Wordy' is the opposite of 'concise', which means brief and clear." },
+      { prompt: "What is the best meaning of 'ambitious'?", correct: "having strong determination to succeed", distractors: ["having no goals", "feeling nervous often", "being easily satisfied"], hint: "Think about someone who wants to achieve big things.", explanation: "'Ambitious' means having a strong desire to achieve success." },
+      { prompt: "Which word best completes the sentence: 'The committee reached a ___ decision after much debate.'", correct: "unanimous", distractors: ["divided", "confused", "hesitant"], hint: "Think about everyone agreeing together.", explanation: "'Unanimous' means everyone agreed, fitting the idea of a group decision." },
+      { prompt: "What is the best meaning of 'meticulous'?", correct: "very careful and precise", distractors: ["very careless", "very fast", "very loud"], hint: "Think about someone who pays close attention to detail.", explanation: "'Meticulous' means showing great attention to detail." },
+      { prompt: "Choose the best synonym for 'resilient'.", correct: "able to recover quickly", distractors: ["easily broken", "always tired", "quick to give up"], hint: "Think about bouncing back from difficulty.", explanation: "'Resilient' means able to recover quickly from difficulties." },
+      { prompt: "What is the best meaning of 'plausible'?", correct: "reasonable or believable", distractors: ["impossible to believe", "very entertaining", "completely proven"], hint: "Think about an explanation that seems likely to be true.", explanation: "'Plausible' means seeming reasonable or likely to be true." },
+      { prompt: "Choose the best antonym for 'optimistic'.", correct: "pessimistic", distractors: ["hopeful", "cheerful", "confident"], hint: "Think about the opposite of expecting good outcomes.", explanation: "'Pessimistic' is the opposite of 'optimistic'." },
+      { prompt: "What is the best meaning of 'articulate'?", correct: "able to express ideas clearly", distractors: ["unable to speak", "very shy", "easily confused"], hint: "Think about someone who explains things very clearly.", explanation: "'Articulate' means expressing thoughts clearly and effectively." },
+      { prompt: "Which word best completes the sentence: 'The negotiations reached a ___ that satisfied both sides.'", correct: "compromise", distractors: ["conflict", "refusal", "delay"], hint: "Think about a solution where both sides give a little.", explanation: "'Compromise' fits because it describes a solution both sides accept." },
+      { prompt: "What is the best meaning of 'innovative'?", correct: "introducing new ideas or methods", distractors: ["repeating old methods", "avoiding all change", "copying others exactly"], hint: "Think about something new and creative.", explanation: "'Innovative' describes something that introduces new ideas or methods." }
+    ],
+    senior: [
+      ...englishQuestionPools.senior.filter((item) => [
+        "What is the best meaning of 'mitigate'?",
+        "Which sentence demonstrates precise diction?",
+        "What is the best synonym for 'coherent'?",
+        "What does the word 'ambiguous' mean?"
+      ].includes(item.prompt)),
+      { prompt: "What is the best meaning of 'pragmatic'?", correct: "practical and realistic", distractors: ["idealistic and dreamy", "emotional and dramatic", "confused and uncertain"], hint: "Think about someone who deals with things sensibly.", explanation: "'Pragmatic' means dealing with things in a practical, realistic way." },
+      { prompt: "Which word is the best synonym for 'ephemeral'?", correct: "short-lived", distractors: ["permanent", "eternal", "unchanging"], hint: "Think about something that doesn't last long.", explanation: "'Ephemeral' means lasting for a very short time." },
+      { prompt: "What is the best meaning of 'ubiquitous'?", correct: "found everywhere", distractors: ["found nowhere", "rare and hidden", "recently invented"], hint: "Think about something extremely common.", explanation: "'Ubiquitous' means present or found everywhere." },
+      { prompt: "Which word is the best antonym for 'succinct'?", correct: "verbose", distractors: ["brief", "clear", "direct"], hint: "Think about the opposite of being brief.", explanation: "'Verbose' means using more words than necessary, the opposite of 'succinct'." },
+      { prompt: "What is the best meaning of 'ambivalent'?", correct: "having mixed feelings", distractors: ["completely certain", "extremely angry", "totally indifferent"], hint: "Think about feeling two ways at once.", explanation: "'Ambivalent' means having mixed or contradictory feelings about something." },
+      { prompt: "Which word best completes the sentence: 'The professor's ___ explanation left no room for misunderstanding.'", correct: "lucid", distractors: ["ambiguous", "vague", "confusing"], hint: "Think about a very clear explanation.", explanation: "'Lucid' means clear and easy to understand." },
+      { prompt: "What is the best meaning of 'tenacious'?", correct: "persistent and determined", distractors: ["easily discouraged", "indifferent", "careless"], hint: "Think about someone who doesn't give up.", explanation: "'Tenacious' means holding firmly to a purpose; persistent." },
+      { prompt: "Which word is the best synonym for 'candor'?", correct: "frankness", distractors: ["secrecy", "confusion", "hesitation"], hint: "Think about honest, open communication.", explanation: "'Candor' means openness and honesty, similar to 'frankness'." },
+      { prompt: "What is the best meaning of 'esoteric'?", correct: "understood by only a few specialists", distractors: ["understood by everyone", "completely meaningless", "very entertaining"], hint: "Think about specialized knowledge.", explanation: "'Esoteric' describes knowledge that is understood by only a small group." },
+      { prompt: "Which word is the best antonym for 'benevolent'?", correct: "malicious", distractors: ["generous", "kind", "caring"], hint: "Think about the opposite of kindness.", explanation: "'Malicious' means intending to do harm, the opposite of 'benevolent'." }
+    ]
   },
   writing: {
     lower: englishQuestionPools.lower.filter((item) => [
@@ -5196,7 +6664,16 @@ const englishWritingPools = {
     { prompt: "Fill in the gap with the best verb: The bird ___ in the sky.", correct: "flies", distractors: ["fly", "flying", "flied"], hint: "Use a present-tense verb that matches the singular subject.", explanation: "'Bird' is singular, so 'flies' is the correct verb form." },
     { prompt: "Choose the sentence written correctly.", correct: "Sam plays after school.", distractors: ["sam plays after school.", "Sam play after school.", "Sam plays after school"], hint: "Check the capital letter, verb, and full stop.", explanation: "The correct sentence has a capital letter, the right verb, and ending punctuation." },
     { prompt: "Fill in the gap: We went to nairobi on Monday. Which word should start with a capital letter?", correct: "Nairobi", distractors: ["went", "monday", "to"], hint: "Names of places need capital letters.", explanation: "'Nairobi' is a place name, so it needs a capital letter." },
-    { prompt: "Choose the best word to finish the sentence: The children ___ happy.", correct: "are", distractors: ["is", "was", "be"], hint: "A plural subject takes a plural helping verb.", explanation: "'Children' is plural, so 'are' is correct." }
+    { prompt: "Choose the best word to finish the sentence: The children ___ happy.", correct: "are", distractors: ["is", "was", "be"], hint: "A plural subject takes a plural helping verb.", explanation: "'Children' is plural, so 'are' is correct." },
+    { prompt: "Fill in the gap with the best word: My dog ___ a bone yesterday.", correct: "buried", distractors: ["bury", "burying", "buries"], hint: "This happened in the past, so use a past-tense verb.", explanation: "'Buried' is the correct past-tense form for something that already happened." },
+    { prompt: "Choose the sentence with the correct ending punctuation for an exciting sentence.", correct: "We won the game!", distractors: ["We won the game.", "We won the game?", "We won the game,"], hint: "Strong excitement uses an exclamation mark.", explanation: "An exclamation mark best matches the excitement of winning." },
+    { prompt: "Fill in the gap: The cat sat ___ the mat.", correct: "on", distractors: ["in", "under", "of"], hint: "Think about where the cat is sitting.", explanation: "'On' correctly shows the cat's position on top of the mat." },
+    { prompt: "Choose the sentence that uses capital letters correctly.", correct: "Maya and Tom went to Toronto.", distractors: ["maya and tom went to toronto.", "Maya and tom went to Toronto.", "Maya and Tom went to toronto."], hint: "Names of people and places need capital letters.", explanation: "'Maya', 'Tom', and 'Toronto' are all proper nouns and need capitals." },
+    { prompt: "Fill in the gap with the best word: There ___ three apples on the table.", correct: "are", distractors: ["is", "was", "be"], hint: "'Three apples' is plural, so use a plural verb.", explanation: "'Are' matches the plural subject 'three apples'." },
+    { prompt: "Choose the best closing sentence for a short story about finding a lost puppy.", correct: "At last, the puppy was safe back home with its family.", distractors: ["The puppy.", "It was found.", "End of story now."], hint: "A good ending sentence should feel complete and satisfying.", explanation: "This ending gives a clear, satisfying conclusion to the story." },
+    { prompt: "Fill in the gap: She ___ her shoes before going inside.", correct: "removed", distractors: ["remove", "removing", "removes"], hint: "This happened before, so use a past-tense verb.", explanation: "'Removed' is the correct past-tense form." },
+    { prompt: "Choose the sentence that best begins a story about a birthday surprise.", correct: "Ana opened the door and gasped at the balloons filling the room.", distractors: ["It was a birthday.", "Balloons were there and Ana too.", "There was a party maybe."], hint: "A strong opening puts the reader right into the moment.", explanation: "This opening creates a clear, vivid scene right away." },
+    { prompt: "Fill in the gap with the best word: The puppy ___ around the yard all afternoon.", correct: "played", distractors: ["play", "playing", "plays"], hint: "This happened in the past, so use the past-tense verb.", explanation: "'Played' correctly shows a completed past action." }
   ],
   upper: [
     { prompt: "Fill in the gap: After lunch___ we returned to class.", correct: ",", distractors: [".", "!", "?"], hint: "An opening phrase is often followed by a comma.", explanation: "A comma is needed after the introductory phrase 'After lunch'." },
@@ -5204,7 +6681,17 @@ const englishWritingPools = {
     { prompt: "Choose the sentence with correct capitalization and punctuation.", correct: "Did you visit Cape Town?", distractors: ["did you visit Cape Town?", "Did you visit cape town?", "Did you visit Cape Town."], hint: "Check the first word, place name, and punctuation.", explanation: "The correct sentence starts with a capital, capitalizes the place name, and ends with a question mark." },
     { prompt: "Fill in the gap: My brother and I ___ walking home.", correct: "are", distractors: ["is", "am", "was"], hint: "A compound subject usually takes a plural verb.", explanation: "'My brother and I' is plural, so 'are' is the correct helping verb." },
     { prompt: "Choose the best topic sentence.", correct: "Keeping our classroom clean helps everyone learn better.", distractors: ["Our classroom.", "I swept yesterday.", "The bin is blue and the floor and desks."], hint: "A topic sentence should tell the main idea clearly.", explanation: "The best topic sentence introduces the main point of the paragraph." },
-    { prompt: "Fill in the gap with the best punctuation: Wow___ that was a close game", correct: "!", distractors: [".", ",", "?"], hint: "Strong feeling often uses an exclamation mark.", explanation: "An exclamation mark fits the excitement in the sentence." }
+    { prompt: "Fill in the gap with the best punctuation: Wow___ that was a close game", correct: "!", distractors: [".", ",", "?"], hint: "Strong feeling often uses an exclamation mark.", explanation: "An exclamation mark fits the excitement in the sentence." },
+    { prompt: "Choose the sentence with the correct comparative form.", correct: "This book is more interesting than the last one.", distractors: ["This book is interestinger than the last one.", "This book is most interesting than the last one.", "This book is more interesting as the last one."], hint: "Longer adjectives use 'more' instead of '-er'.", explanation: "'More interesting' is the correct comparative form for a longer adjective." },
+    { prompt: "Fill in the gap: The team practiced hard___ they still lost the match.", correct: "but", distractors: ["and", "so", "or"], hint: "Choose a word that shows contrast.", explanation: "'But' correctly shows the contrast between practicing hard and losing." },
+    { prompt: "Fill in the gap with the best word: The mountain trail was ___ but the view was worth it.", correct: "steep", distractors: ["steeply", "steepness", "steeper than"], hint: "You need an adjective describing the trail.", explanation: "'Steep' is the adjective that correctly describes the trail." },
+    { prompt: "Choose the sentence that best supports a claim with a specific detail.", correct: "The garden produced over sixty tomatoes by the end of summer.", distractors: ["The garden did well this year.", "Tomatoes grew and it was nice.", "Gardens can grow different things."], hint: "Strong support uses a specific, concrete detail.", explanation: "This sentence gives a specific, measurable detail that supports the claim." },
+    { prompt: "Choose the strongest opening sentence for a report about recycling.", correct: "Recycling helps our community reduce waste and protect the environment.", distractors: ["Recycling.", "This report is about recycling and stuff.", "I will now talk about recycling maybe."], hint: "A strong opening should be clear and introduce the main idea.", explanation: "This opening clearly introduces the topic and its importance." },
+    { prompt: "Fill in the gap with the best word: The instructions were ___ so everyone understood them easily.", correct: "clear", distractors: ["clearly", "clearness", "clearing"], hint: "You need an adjective to describe 'instructions'.", explanation: "'Clear' is the adjective that correctly describes the instructions." },
+    { prompt: "Choose the sentence that best combines these ideas: 'The rain started. We went inside.'", correct: "When the rain started, we went inside.", distractors: ["The rain started we went inside.", "The rain started, we went inside.", "We went inside the rain started."], hint: "Use a subordinating conjunction to combine the two ideas smoothly.", explanation: "'When' correctly joins the two ideas into one clear sentence." },
+    { prompt: "Fill in the gap with the best word: The hikers followed the ___ trail up the mountain.", correct: "winding", distractors: ["winded", "winds", "wind"], hint: "You need an adjective describing the shape of the trail.", explanation: "'Winding' correctly describes a trail that curves and turns." },
+    { prompt: "Choose the strongest closing sentence for a report about the school fundraiser.", correct: "Thanks to everyone's effort, the fundraiser raised more money than ever before.", distractors: ["That is the end of the report.", "Fundraisers happen sometimes at school.", "Money was raised, I think."], hint: "A strong ending should sum up the result clearly.", explanation: "This ending clearly states the outcome and credits the effort involved." },
+    { prompt: "Fill in the gap: The museum's new exhibit ___ visitors from around the world.", correct: "attracts", distractors: ["attract", "attracting", "attracted to"], hint: "Match the verb to the singular subject 'exhibit'.", explanation: "'Attracts' is the correct present-tense verb for the singular subject." }
   ],
   middle: [
     { prompt: "Choose the sentence with the best verb agreement.", correct: "Neither of the boys was late.", distractors: ["Neither of the boys were late.", "Neither of the boys are late.", "Neither of the boys be late."], hint: "'Neither' is usually treated as singular in formal writing.", explanation: "'Neither' takes the singular verb 'was'." },
@@ -5212,7 +6699,16 @@ const englishWritingPools = {
     { prompt: "Choose the strongest concluding sentence.", correct: "For these reasons, community reading programs deserve more support.", distractors: ["That is all about reading.", "Reading is there in many places.", "People read books and programs and things."], hint: "A strong conclusion wraps up the main idea clearly.", explanation: "The best conclusion restates the point in a clear, formal way." },
     { prompt: "Fill in the gap: When the bell rang___ the students packed their bags.", correct: ",", distractors: [".", "!", ":"], hint: "A dependent clause at the start is usually followed by a comma.", explanation: "The opening clause should be followed by a comma." },
     { prompt: "Choose the sentence with correct capitalization, punctuation, and verb use.", correct: "Although it was late, Maria finished her homework.", distractors: ["although it was late Maria finished her homework.", "Although it was late Maria finished her homework", "Although it were late, Maria finished her homework."], hint: "Check the opener, comma, and correct verb.", explanation: "The correct sentence uses proper capitalization, comma placement, and verb form." },
-    { prompt: "Fill in the gap with the best word: The writer chose a more ___ tone for the formal letter.", correct: "respectful", distractors: ["respect", "respectfully", "respected"], hint: "You need an adjective to describe the noun 'tone'.", explanation: "'Respectful' is the adjective that correctly describes the tone." }
+    { prompt: "Fill in the gap with the best word: The writer chose a more ___ tone for the formal letter.", correct: "respectful", distractors: ["respect", "respectfully", "respected"], hint: "You need an adjective to describe the noun 'tone'.", explanation: "'Respectful' is the adjective that correctly describes the tone." },
+    { prompt: "Choose the sentence that best avoids wordiness.", correct: "The team finished the project early.", distractors: ["The team, in a manner of speaking, finished the project at an early point in time.", "The team finished, at an early time, the project.", "It was the team that finished the project in an early way."], hint: "A concise sentence says the same thing with fewer words.", explanation: "This sentence is direct and avoids unnecessary wordiness." },
+    { prompt: "Fill in the gap with the best transition: The study had a small sample size; ___, the results may not apply broadly.", correct: "therefore", distractors: ["however", "meanwhile", "similarly"], hint: "Choose a transition that shows a logical result.", explanation: "'Therefore' correctly shows the result of the small sample size." },
+    { prompt: "Choose the sentence that best avoids an unsupported generalization.", correct: "Three of the five trials showed a measurable improvement.", distractors: ["Everyone always improves with this method.", "This method never fails.", "Improvement always happens no matter what."], hint: "A supported claim should be specific rather than absolute.", explanation: "This sentence gives a specific, accurate result instead of an unsupported generalization." },
+    { prompt: "Fill in the gap with the best word: The debate team's ___ argument won over the judges.", correct: "compelling", distractors: ["compel", "compelled", "compellingly"], hint: "You need an adjective describing the argument.", explanation: "'Compelling' is the adjective that correctly describes a persuasive argument." },
+    { prompt: "Choose the sentence that best supports a claim with evidence.", correct: "According to the survey, 78 percent of students preferred the new schedule.", distractors: ["Most students probably like the new schedule.", "Some people think schedules matter.", "The new schedule is good, I guess."], hint: "Strong evidence includes specific, verifiable data.", explanation: "This sentence uses specific survey data to support the claim." },
+    { prompt: "Fill in the gap with the best word: The essay's ___ structure made it easy to follow the argument.", correct: "logical", distractors: ["logic", "logically", "logician"], hint: "You need an adjective to describe 'structure'.", explanation: "'Logical' is the adjective that correctly describes the structure." },
+    { prompt: "Choose the sentence that best revises this vague statement: 'The report was kind of long and had a lot of stuff in it.'", correct: "The report was thorough, covering the topic in twelve detailed sections.", distractors: ["The report was long and stuff.", "The report had things in it.", "The report was kind of big."], hint: "A strong revision replaces vague words with specific details.", explanation: "This revision replaces vague language with precise, specific description." },
+    { prompt: "Fill in the gap with the best transition: The results were promising; ___, further testing is needed.", correct: "however", distractors: ["therefore", "similarly", "for example"], hint: "Choose a transition that shows contrast.", explanation: "'However' correctly signals the contrast between promising results and the need for more testing." },
+    { prompt: "Choose the sentence that best opens a persuasive paragraph about school uniforms.", correct: "School uniforms can reduce distractions and help students focus on learning.", distractors: ["Uniforms are clothes people wear.", "This paragraph is about uniforms.", "Some schools have uniforms and some do not."], hint: "A strong opening should state a clear, arguable point.", explanation: "This opening makes a clear claim that the rest of the paragraph can support." }
   ],
   senior: [
     { prompt: "Choose the sentence with the most effective formal style.", correct: "The proposal should be revised before it is submitted to the board.", distractors: ["The proposal needs some fixing before they send it.", "The proposal is kind of not ready yet.", "They should maybe do the proposal better somehow."], hint: "Formal writing uses precise, professional language.", explanation: "The correct sentence is clear, formal, and precise." },
@@ -5220,7 +6716,16 @@ const englishWritingPools = {
     { prompt: "Choose the sentence with the strongest thesis statement.", correct: "Public transport should be expanded because it reduces traffic, lowers pollution, and improves access to jobs.", distractors: ["This essay is about public transport.", "Public transport is something many people use.", "There are buses and trains in many places."], hint: "A thesis should make a clear claim and preview the reasons.", explanation: "The best thesis states a position and gives clear supporting reasons." },
     { prompt: "Fill in the gap with the correct verb: Each of the reports ___ reviewed before publication.", correct: "was", distractors: ["were", "are", "be"], hint: "'Each' is singular in formal grammar.", explanation: "'Each of the reports' takes the singular verb 'was'." },
     { prompt: "Choose the sentence with correct punctuation and clause control.", correct: "Because the evidence was incomplete, the team delayed its decision.", distractors: ["Because the evidence was incomplete the team delayed its decision.", "Because the evidence was incomplete; the team delayed its decision.", "Because the evidence was incomplete: the team delayed its decision."], hint: "An opening dependent clause is usually followed by a comma.", explanation: "The comma correctly separates the opening clause from the main clause." },
-    { prompt: "Fill in the gap with the most precise word: The author's claim was supported by ___ data from three independent studies.", correct: "reliable", distractors: ["nicely", "rely", "trust"], hint: "Choose the adjective that best describes data you can depend on.", explanation: "'Reliable' is the precise adjective that fits the sentence." }
+    { prompt: "Fill in the gap with the most precise word: The author's claim was supported by ___ data from three independent studies.", correct: "reliable", distractors: ["nicely", "rely", "trust"], hint: "Choose the adjective that best describes data you can depend on.", explanation: "'Reliable' is the precise adjective that fits the sentence." },
+    { prompt: "Choose the sentence with the most effective use of an em dash for emphasis.", correct: "The results confirmed one thing—the hypothesis was correct.", distractors: ["The results confirmed one thing, the hypothesis was correct.", "The results confirmed one thing; the hypothesis, was correct.", "The results confirmed—one thing the hypothesis was correct."], hint: "An em dash can dramatically emphasize the final idea.", explanation: "The em dash correctly emphasizes the concluding clause." },
+    { prompt: "Fill in the gap with the best transition for contrasting ideas: The policy was popular; ___, critics raised concerns about its cost.", correct: "however", distractors: ["therefore", "similarly", "consequently"], hint: "Choose a transition that signals contrast.", explanation: "'However' correctly signals the contrast between popularity and criticism." },
+    { prompt: "Choose the sentence that best integrates a quotation smoothly into the writer's own sentence.", correct: "As the researcher explains, \"early intervention produces the strongest outcomes.\"", distractors: ["The researcher said. \"Early intervention produces the strongest outcomes.\"", "\"Early intervention produces the strongest outcomes\" the researcher.", "Early intervention, \"produces the strongest,\" outcomes researcher said."], hint: "A smoothly integrated quotation fits grammatically into the sentence around it.", explanation: "This version smoothly introduces and grammatically integrates the quotation." },
+    { prompt: "Fill in the gap with the most precise word: The editorial's ___ tone alienated readers who disagreed.", correct: "combative", distractors: ["combat", "combatively", "combats"], hint: "You need an adjective describing a confrontational tone.", explanation: "'Combative' is the adjective that precisely describes an aggressive, confrontational tone." },
+    { prompt: "Choose the sentence that best demonstrates a nuanced counterargument.", correct: "While the policy has clear benefits, its long-term costs deserve closer scrutiny.", distractors: ["The policy is good and bad I guess.", "Some people like the policy and some do not.", "The policy has some pros and some cons probably."], hint: "A nuanced counterargument acknowledges strengths while raising a specific concern.", explanation: "This sentence acknowledges the benefits while raising a specific, reasoned concern." },
+    { prompt: "Fill in the gap with the most precise word: The committee's ___ approach ensured every detail was reviewed.", correct: "meticulous", distractors: ["casual", "hasty", "vague"], hint: "Choose the adjective describing careful attention to detail.", explanation: "'Meticulous' precisely describes a careful, detail-oriented approach." },
+    { prompt: "Choose the sentence that best synthesizes two sources in an argument.", correct: "While Source A emphasizes economic growth, Source B highlights environmental costs, suggesting the issue requires balancing both concerns.", distractors: ["Source A and Source B talk about the same thing basically.", "Source A is right and Source B is wrong.", "Both sources are about the topic in general."], hint: "Synthesis combines ideas from multiple sources into one coherent point.", explanation: "This sentence integrates both sources' perspectives into a coherent, balanced point." },
+    { prompt: "Fill in the gap with the most precise word: The board's ___ decision ended months of uncertainty.", correct: "decisive", distractors: ["decisive-ish", "undecided", "hesitant"], hint: "Choose the adjective that means firm and clear.", explanation: "'Decisive' precisely describes a firm, clear decision." },
+    { prompt: "Choose the sentence that best qualifies a claim with appropriate hedging language.", correct: "The data suggests, though does not conclusively prove, a link between the two factors.", distractors: ["The data proves the two factors are linked, no question.", "The data has nothing to do with the two factors.", "The data is basically about the two factors probably."], hint: "Academic writing often hedges claims that aren't fully proven.", explanation: "This sentence appropriately qualifies the strength of the claim based on the evidence." }
   ]
 };
 
@@ -5691,6 +7196,28 @@ const patPartAIntroductionChoices = [
     ],
     hint: "An essay opening should introduce a meaningful claim, not just repeat the topic.",
     explanation: "The best choice presents a clear central idea and suggests direction for the essay."
+  },
+  {
+    prompt: "Which introduction best begins a response about the value of teamwork?",
+    correct: "When people combine different strengths toward one goal, they often accomplish more than any of them could alone.",
+    distractors: [
+      "Teamwork is something groups do together sometimes.",
+      "This essay is about teamwork, which happens in many places.",
+      "There are lots of teams in the world doing different things."
+    ],
+    hint: "A strong opening should sound focused and purposeful right away.",
+    explanation: "The best introduction connects teamwork to a clear benefit and sets up a direction for the essay."
+  },
+  {
+    prompt: "Which opening is strongest for an essay about the importance of perseverance?",
+    correct: "Every setback tests whether a person will quit or keep pushing forward, and that choice often defines who they become.",
+    distractors: [
+      "Perseverance is a word that means trying hard.",
+      "This essay will be about not giving up on things.",
+      "Some people give up and some people do not give up."
+    ],
+    hint: "An essay opening should introduce a meaningful claim, not just restate the topic.",
+    explanation: "The strongest opening frames perseverance as a meaningful choice, giving the essay direction."
   }
 ];
 
@@ -5727,6 +7254,28 @@ const patPartAThesisChoices = [
     ],
     hint: "A controlling idea should be specific enough to organize the rest of the response.",
     explanation: "The strongest thesis names the topic and gives three meaningful directions for development."
+  },
+  {
+    prompt: "Which thesis best guides an essay about the value of teamwork?",
+    correct: "Teamwork matters because it combines different strengths, builds trust, and produces results no individual could achieve alone.",
+    distractors: [
+      "Teamwork is good and this essay is about teamwork.",
+      "Groups of people sometimes work together on things.",
+      "There are many kinds of teams in different places."
+    ],
+    hint: "The best thesis should state a clear claim and preview the reasons behind it.",
+    explanation: "This thesis names the topic and gives three specific reasons the essay can develop."
+  },
+  {
+    prompt: "Which thesis is strongest for a response about the importance of perseverance?",
+    correct: "Perseverance matters because it turns setbacks into lessons, builds discipline, and ultimately leads to lasting success.",
+    distractors: [
+      "Perseverance is something people need sometimes.",
+      "This essay will talk about not giving up.",
+      "Some things are hard and some things are easy."
+    ],
+    hint: "The best thesis should do more than mention the topic.",
+    explanation: "This thesis is specific, arguable, and gives the essay a clear direction to develop."
   }
 ];
 
@@ -5763,6 +7312,28 @@ const patPartASupportChoices = [
     ],
     hint: "The best support should show how the idea works in action.",
     explanation: "This example directly illustrates failure, learning, persistence, and improvement."
+  },
+  {
+    prompt: "Which detail would best support the idea that teamwork produces better results?",
+    correct: "When the group split the research and shared their findings, they finished the project two days early with fewer mistakes.",
+    distractors: [
+      "Groups usually have more than one person in them.",
+      "Some projects are done by teams and some are not.",
+      "Meetings can happen in classrooms or online."
+    ],
+    hint: "Strong support should directly prove the paragraph's idea with a concrete example.",
+    explanation: "The best detail shows a specific action and the result it produced, proving the claim about teamwork."
+  },
+  {
+    prompt: "Which example best develops a paragraph about the value of perseverance?",
+    correct: "After failing the driving test twice, he practiced every weekend and passed on his third attempt with full marks.",
+    distractors: [
+      "Driving tests are required in most places.",
+      "Some people pass tests and some people do not.",
+      "Practice can happen at different times of day."
+    ],
+    hint: "The best support should show how the idea works in a real situation.",
+    explanation: "This example directly illustrates a setback, continued effort, and eventual success."
   }
 ];
 
@@ -6327,13 +7898,50 @@ const englishPatPartBLiteraryPool = englishPatPartBPool.filter((item) => [
   "When a question asks for the best conclusion about a character's point of view, the student should"
 ].includes(item.prompt));
 
-const englishPatPartBVisualPool = englishPatPartBPool.filter((item) => [
-  "When a word is printed in bold in a cartoon panel, it often signals",
-  "Which device is shown when a character says something wildly overstated, like defeating many opponents at once?",
-  "If a character talks bravely about one challenge but complains about a much smaller one, the author may be creating",
-  "Which reading skill is being used when a student notices how bold print, a dash, or a cartoon frame affects meaning?",
-  "If a reader is asked why an author chose a particular form, such as poem, cartoon, or job posting, the reader should think most about"
-].includes(item.prompt));
+const englishPatPartBVisualPool = [
+  ...englishPatPartBPool.filter((item) => [
+    "When a word is printed in bold in a cartoon panel, it often signals",
+    "Which device is shown when a character says something wildly overstated, like defeating many opponents at once?",
+    "If a character talks bravely about one challenge but complains about a much smaller one, the author may be creating",
+    "Which reading skill is being used when a student notices how bold print, a dash, or a cartoon frame affects meaning?",
+    "If a reader is asked why an author chose a particular form, such as poem, cartoon, or job posting, the reader should think most about"
+  ].includes(item.prompt)),
+  {
+    prompt: "In a comic strip, why might an artist draw motion lines behind a running character?",
+    correct: "To show speed and movement",
+    distractors: ["To show the character is invisible", "To show the character is asleep", "To label the setting"],
+    hint: "Motion lines help a still image suggest action.",
+    explanation: "Motion lines are a visual device cartoonists use to suggest speed or movement."
+  },
+  {
+    prompt: "Why might a cartoonist draw a character with an oversized speech bubble and tiny text?",
+    correct: "To suggest the character is speaking quietly or hesitantly despite having a lot to say",
+    distractors: ["To show the character is shouting", "To show the panel is empty", "To replace the caption"],
+    hint: "Bubble size and text size can both carry meaning.",
+    explanation: "Cartoonists use bubble and text size together to hint at tone, volume, or hesitation."
+  },
+  {
+    prompt: "What is the purpose of a caption placed beneath an image in an informational text?",
+    correct: "To explain what the image shows and connect it to the main text",
+    distractors: ["To decorate the page only", "To replace the need for a title", "To hide the image's meaning"],
+    hint: "Captions usually clarify what a reader is looking at.",
+    explanation: "A caption gives context or explanation for an image so the reader understands its relevance."
+  },
+  {
+    prompt: "In a chart or diagram, what should a reader check first to understand what is being measured?",
+    correct: "The title and labels",
+    distractors: ["The background color", "The font style", "The page number"],
+    hint: "Titles and labels tell you what the visual is about.",
+    explanation: "Titles and axis or section labels tell the reader exactly what data or ideas the visual represents."
+  },
+  {
+    prompt: "Why might a graphic novel panel show a close-up of a character's face instead of the whole scene?",
+    correct: "To emphasize the character's emotion or reaction",
+    distractors: ["To hide the setting forever", "To end the story", "To show a different character"],
+    hint: "Close-ups draw attention to feeling.",
+    explanation: "A close-up panel focuses the reader's attention on a character's expression or emotional reaction."
+  }
+];
 
 const englishPatPartBInformationalPool = englishPatPartBPool.filter((item) => [
   "In an informational job posting, where would a reader usually look to find education requirements?",
@@ -6645,33 +8253,179 @@ const englishPatGrade6PartBPool = [
   }
 ];
 
-const englishPatGrade6PartBStoryPool = englishPatGrade6PartBPool.filter((item) => [
-  "When a question asks for a stated detail in a reading passage, what should you look for first?",
-  "If characters keep looking over their shoulders and rushing, the author is most likely creating a feeling of",
-  "When a word like 'camprobbers' appears in a story, the best strategy is to",
-  "If the main problem in a story is that the characters must protect food and stay safe from danger, the conflict is most likely about",
-  "The phrase 'hangdogging' in a climbing story most likely suggests someone is",
-  "If a paragraph explains that climbing needs both technique and confidence, the main idea is that climbing is",
-  "Calling a cliff 'a vertical puzzle' is an example of",
-  "If a climber goes from discouragement to success by the end of a passage, the best description of the attitude change is"
-].includes(item.prompt));
+const englishPatGrade6PartBStoryPool = [
+  ...englishPatGrade6PartBPool.filter((item) => [
+    "When a question asks for a stated detail in a reading passage, what should you look for first?",
+    "If characters keep looking over their shoulders and rushing, the author is most likely creating a feeling of",
+    "When a word like 'camprobbers' appears in a story, the best strategy is to",
+    "If the main problem in a story is that the characters must protect food and stay safe from danger, the conflict is most likely about",
+    "The phrase 'hangdogging' in a climbing story most likely suggests someone is",
+    "If a paragraph explains that climbing needs both technique and confidence, the main idea is that climbing is",
+    "Calling a cliff 'a vertical puzzle' is an example of",
+    "If a climber goes from discouragement to success by the end of a passage, the best description of the attitude change is"
+  ].includes(item.prompt)),
+  {
+    prompt: "If a character double-checks a locked door three times before leaving, the author is most likely showing that the character feels",
+    correct: "anxious or worried about safety",
+    distractors: ["bored", "proud", "sleepy"],
+    hint: "Repeated careful actions often reveal a character's inner feelings.",
+    explanation: "Repeating a cautious action like checking a lock signals worry or anxiety to the reader."
+  },
+  {
+    prompt: "If a story's dialogue is mostly short, clipped sentences during an argument, this style most likely helps show",
+    correct: "tension between the characters",
+    distractors: ["a calm and relaxed mood", "a funny misunderstanding", "a long friendship history"],
+    hint: "Sentence length and pacing can reflect emotional tone.",
+    explanation: "Short, clipped dialogue often reflects tension, urgency, or conflict between characters."
+  },
+  {
+    prompt: "If a character shares her last snack with a hungry friend during a long hike, this action mostly shows that she is",
+    correct: "kind and generous",
+    distractors: ["careless", "impatient", "confused"],
+    hint: "Think about what sharing food when supplies are low reveals about a character.",
+    explanation: "Sharing scarce food with a friend is a clear sign of kindness and generosity."
+  },
+  {
+    prompt: "If the weather in a story suddenly turns dark and windy right before the characters get lost, this detail most likely helps build",
+    correct: "a sense of tension or danger",
+    distractors: ["a cheerful mood", "a funny moment", "a peaceful ending"],
+    hint: "Weather is often used to reflect or build the mood of a scene.",
+    explanation: "A sudden change to dark, windy weather typically signals rising tension or danger in a story."
+  },
+  {
+    prompt: "When a character repeats the same worry to themselves several times in a story, the author is most likely showing",
+    correct: "that the character cannot stop thinking about that worry",
+    distractors: ["that the character has forgotten the problem", "that the story has ended", "that the character is very relaxed"],
+    hint: "Repeated thoughts often reveal what is bothering a character most.",
+    explanation: "Repeating a worry shows it is weighing heavily on the character's mind."
+  },
+  {
+    prompt: "If a character finally admits a mistake after blaming others for most of the story, this change best shows",
+    correct: "personal growth or honesty",
+    distractors: ["that the story is unfinished", "that the character forgot what happened", "that another character caused the change"],
+    hint: "Admitting a mistake after avoiding it is often a sign of character growth.",
+    explanation: "Owning up to a mistake after avoiding responsibility shows the character has grown more honest."
+  },
+  {
+    prompt: "If a story ends with the main character helping someone who once helped them, this ending most likely emphasizes",
+    correct: "the theme of returning kindness",
+    distractors: ["a random unrelated event", "a confusing plot twist", "the end of the character's memory"],
+    hint: "Think about the message an ending built around helping others sends.",
+    explanation: "An ending where kindness is returned usually reinforces a theme about generosity coming full circle."
+  }
+];
 
-const englishPatGrade6PartBPoetryPool = englishPatGrade6PartBPool.filter((item) => [
-  "What is a cliche?",
-  "Why might a poet print some lines in italics?",
-  "The phrase 'soft as lamb's wool' is an example of",
-  "According to a poem about cliches, why do people often use cliches?",
-  "If one sister keeps criticizing another sister's habits, the poem is most likely showing",
-  "When a mother looks someone in the eye, she usually wants that person to",
-  "If insects in a poem are used to compare family members, the insects are representing the characters'"
-].includes(item.prompt));
+const englishPatGrade6PartBPoetryPool = [
+  ...englishPatGrade6PartBPool.filter((item) => [
+    "What is a cliche?",
+    "Why might a poet print some lines in italics?",
+    "The phrase 'soft as lamb's wool' is an example of",
+    "According to a poem about cliches, why do people often use cliches?",
+    "If one sister keeps criticizing another sister's habits, the poem is most likely showing",
+    "When a mother looks someone in the eye, she usually wants that person to",
+    "If insects in a poem are used to compare family members, the insects are representing the characters'"
+  ].includes(item.prompt)),
+  {
+    prompt: "Why might a poet repeat the same line at the start of every stanza?",
+    correct: "To build rhythm and emphasize an important idea",
+    distractors: ["To fill space on the page", "To confuse the reader", "To show the poem is unfinished"],
+    hint: "Repetition often draws attention to something important.",
+    explanation: "Repeated lines create rhythm and stress the poem's central idea or feeling."
+  },
+  {
+    prompt: "If a poem compares waiting for spring to waiting for a letter, this comparison is mainly used to show",
+    correct: "how long and hopeful the wait feels",
+    distractors: ["how cold the weather is", "how many letters were sent", "how fast spring arrives"],
+    hint: "Think about what both kinds of waiting have in common.",
+    explanation: "Comparing two kinds of waiting emphasizes the feeling of anticipation and hope."
+  },
+  {
+    prompt: "Why might a poet leave blank space between short lines instead of writing in full sentences?",
+    correct: "To slow the reader down and give each idea more weight",
+    distractors: ["To save paper only", "To confuse the reader on purpose", "To show the poem is unfinished"],
+    hint: "Line breaks and spacing can control the pace of reading.",
+    explanation: "Short lines with space slow the reader and make each phrase feel more important."
+  },
+  {
+    prompt: "If a poem uses the same rhyme sound at the end of every other line, this pattern is called",
+    correct: "a rhyme scheme",
+    distractors: ["a metaphor", "a caption", "a cliche"],
+    hint: "This is the pattern of matching end sounds in a poem.",
+    explanation: "A regular pattern of end rhymes is called a rhyme scheme."
+  },
+  {
+    prompt: "If a poem describes autumn leaves as 'dancing' in the wind, this is an example of",
+    correct: "personification",
+    distractors: ["a caption", "a heading", "a fact chart"],
+    hint: "Giving human actions to non-human things is a specific poetic device.",
+    explanation: "Describing leaves as 'dancing' gives them a human action, which is personification."
+  }
+];
 
-const englishPatGrade6PartBVisualPool = englishPatGrade6PartBPool.filter((item) => [
-  "When bold print is used inside a cartoon speech bubble, it usually shows",
-  "If a character says something much bigger than reality for comic effect, that is",
-  "Why might two characters exchange a knowing look in a cartoon?",
-  "If a character asks a clever question that exposes a problem in someone else's idea, that character may be described as"
-].includes(item.prompt));
+const englishPatGrade6PartBVisualPool = [
+  ...englishPatGrade6PartBPool.filter((item) => [
+    "When bold print is used inside a cartoon speech bubble, it usually shows",
+    "If a character says something much bigger than reality for comic effect, that is",
+    "Why might two characters exchange a knowing look in a cartoon?",
+    "If a character asks a clever question that exposes a problem in someone else's idea, that character may be described as"
+  ].includes(item.prompt)),
+  {
+    prompt: "In a comic panel, why might an artist draw jagged lines around a loud sound?",
+    correct: "To show that the sound is sudden and startling",
+    distractors: ["To show the sound is quiet", "To show the panel is empty", "To label the setting"],
+    hint: "Jagged shapes often suggest sharp or sudden noise.",
+    explanation: "Jagged lines around a sound effect are a visual way to show something loud or sudden."
+  },
+  {
+    prompt: "Why might a cartoonist draw a character sweating with wide eyes?",
+    correct: "To show the character feels nervous or worried",
+    distractors: ["To show the character is relaxed", "To show the character is asleep", "To show the story has ended"],
+    hint: "Facial details and small drawn effects often show feelings.",
+    explanation: "Sweat drops and wide eyes are common cartoon symbols for nervousness or worry."
+  },
+  {
+    prompt: "What is the purpose of a caption under a photo in an informational text?",
+    correct: "To explain what the photo shows and connect it to the main text",
+    distractors: ["To decorate the page only", "To replace the title", "To hide the photo's meaning"],
+    hint: "Captions usually clarify what a reader is looking at.",
+    explanation: "A caption gives context or explanation for an image so the reader understands its relevance."
+  },
+  {
+    prompt: "In a diagram, what should a reader check first to understand what is being shown?",
+    correct: "The title and labels",
+    distractors: ["The background color", "The font style", "The page number"],
+    hint: "Titles and labels tell you what the visual is about.",
+    explanation: "Titles and labels tell the reader exactly what the diagram represents."
+  },
+  {
+    prompt: "Why might a graphic story panel zoom in close on a character's face?",
+    correct: "To emphasize the character's emotion or reaction",
+    distractors: ["To hide the setting forever", "To end the story", "To show a different character"],
+    hint: "Close-ups draw attention to feeling.",
+    explanation: "A close-up panel focuses the reader's attention on a character's expression or emotional reaction."
+  },
+  {
+    prompt: "Why might an illustrator use darker colors in the background of one panel and bright colors in the next?",
+    correct: "To show a change in mood or tone between the two moments",
+    distractors: ["To use up spare paint", "To confuse the reader on purpose", "To show the story restarting"],
+    hint: "Color choices can reflect the feeling of a scene.",
+    explanation: "A shift from dark to bright colors often signals a change in mood between panels."
+  },
+  {
+    prompt: "In an instructional diagram with numbered steps, what should a reader do first?",
+    correct: "Follow the steps in the order they are numbered",
+    distractors: ["Start with the last numbered step", "Ignore the numbers", "Read only the picture"],
+    hint: "Numbered steps are meant to be followed in sequence.",
+    explanation: "Numbered steps guide the reader through a process in the correct order."
+  },
+  {
+    prompt: "Why might an infographic use icons instead of full sentences to share information?",
+    correct: "To let readers grasp key ideas quickly at a glance",
+    distractors: ["To make the information harder to find", "To replace the need for any data", "To hide the main topic"],
+    hint: "Icons are a quick visual shorthand for ideas.",
+    explanation: "Icons let readers understand key points quickly without reading long sentences."
+  }
+];
 
 const englishPatGrade6PartBInformationalPool = englishPatGrade6PartBPool.filter((item) => [
   "If a passage explains how chocolate is made and then gives steps to make it yourself, the article is written most like",
@@ -6713,24 +8467,51 @@ const probabilityMasteryGenerators = {
     (rng) => {
       const outcomes = pick([
         { label: "certain", correct: "1 or 100%" },
-        { label: "impossible", correct: "0 or 0%" }
+        { label: "impossible", correct: "0 or 0%" },
+        { label: "equally likely as unlikely", correct: "1/2 or 50%" }
       ], rng);
       return makeProbabilityQuestion({
         prompt: `Which statement correctly describes the probability of a ${outcomes.label} event?`,
         correct: outcomes.correct,
-        distractors: outcomes.label === "certain" ? ["0 or 0%", "1/2 or 50%", "1/4 or 25%"] : ["1 or 100%", "1/2 or 50%", "3/4 or 75%"],
-        hint: "A certain event always happens. An impossible event never happens.",
+        distractors: ["0 or 0%", "1/2 or 50%", "1/4 or 25%", "1 or 100%", "3/4 or 75%"].filter((item) => item !== outcomes.correct).slice(0, 3),
+        hint: "A certain event always happens. An impossible event never happens. A 50/50 event is equally likely to happen or not.",
         steps: outcomes.label === "certain"
           ? [
               "A certain event always happens.",
               "That means the number of favourable outcomes equals the total number of outcomes.",
               "So the probability is 1, which is the same as 100%."
             ]
-          : [
-              "An impossible event cannot happen.",
-              "That means there are 0 favourable outcomes.",
-              "So the probability is 0, which is the same as 0%."
-            ]
+          : outcomes.label === "impossible"
+            ? [
+                "An impossible event cannot happen.",
+                "That means there are 0 favourable outcomes.",
+                "So the probability is 0, which is the same as 0%."
+              ]
+            : [
+                "An event that is equally likely as unlikely has an equal chance of happening or not.",
+                "That means half of the outcomes are favourable.",
+                "So the probability is 1/2, which is the same as 50%."
+              ]
+      });
+    },
+    (rng) => {
+      const scenario = pick([
+        { event: "rolling a number less than 7 on a standard die", correct: "1 or 100%", type: "certain" },
+        { event: "rolling a 7 on a standard six-sided die", correct: "0 or 0%", type: "impossible" },
+        { event: "picking a red card from a full deck of playing cards", correct: "1/2 or 50%", type: "half" },
+        { event: "the sun rising tomorrow", correct: "1 or 100%", type: "certain" },
+        { event: "flipping a coin and it landing on neither heads nor tails", correct: "0 or 0%", type: "impossible" }
+      ], rng);
+      return makeProbabilityQuestion({
+        prompt: `What is the probability of ${scenario.event}?`,
+        correct: scenario.correct,
+        distractors: ["0 or 0%", "1/2 or 50%", "1/4 or 25%", "1 or 100%", "3/4 or 75%"].filter((item) => item !== scenario.correct).slice(0, 3),
+        hint: "Think about whether the event always happens, never happens, or happens about half the time.",
+        steps: [
+          `Consider the event: ${scenario.event}.`,
+          scenario.type === "certain" ? "This event always happens." : scenario.type === "impossible" ? "This event can never happen." : "This event happens about half of the time.",
+          `So the probability is ${scenario.correct}.`
+        ]
       });
     },
     (rng, difficulty) => {
@@ -7203,12 +8984,16 @@ const questionFactories = {
 
     if (stage === "grade7Fractions") {
       if (index % 3 === 0) {
-        const pair = pick([
+        const grade7SubtractPool = [
           { a: [3, 4], b: [1, 8], total: [7, 8] },
           { a: [5, 6], b: [1, 3], total: [1, 2] },
           { a: [2, 5], b: [1, 10], total: [1, 2] },
-          { a: [7, 8], b: [1, 4], total: [5, 8] }
-        ], rng);
+          { a: [7, 8], b: [1, 4], total: [5, 8] },
+          { a: [4, 5], b: [1, 3], total: [7, 15] },
+          { a: [5, 6], b: [1, 4], total: [7, 12] },
+          { a: [9, 10], b: [1, 5], total: [7, 10] }
+        ];
+        const pair = grade7SubtractPool[Math.floor(index / 3) % grade7SubtractPool.length];
         const correct = `${pair.total[0]}/${pair.total[1]}`;
         const { options, answerIndex } = buildOptions(correct, [
           `${pair.total[1]}/${pair.total[0]}`,
@@ -7224,13 +9009,17 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const selected = pick([
+        const grade7ToDecimalPool = [
           { fraction: "3/5", decimal: "0.6" },
           { fraction: "7/10", decimal: "0.7" },
           { fraction: "5/8", decimal: "0.625" },
-          { fraction: "9/20", decimal: "0.45" }
-        ], rng);
-        const { options, answerIndex } = buildOptions(selected.decimal, ["0.5", "0.75", "0.8"].filter((item) => item !== selected.decimal), rng);
+          { fraction: "9/20", decimal: "0.45" },
+          { fraction: "3/8", decimal: "0.375" },
+          { fraction: "7/8", decimal: "0.875" },
+          { fraction: "11/20", decimal: "0.55" }
+        ];
+        const selected = grade7ToDecimalPool[Math.floor(index / 3) % grade7ToDecimalPool.length];
+        const { options, answerIndex } = buildOptions(selected.decimal, ["0.5", "0.75", "0.8", "0.25", "0.6"].filter((item) => item !== selected.decimal).slice(0, 3), rng);
         return {
           prompt: `Write ${selected.fraction} as a decimal.`,
           options,
@@ -7239,18 +9028,25 @@ const questionFactories = {
         };
       }
 
-      const first = pick([
+      const firstPool = [
         [1, 2],
         [2, 3],
         [3, 4],
-        [5, 8]
-      ], rng);
-      const second = pick([
+        [5, 8],
+        [3, 5],
+        [7, 8]
+      ];
+      const secondPool = [
         [3, 5],
         [4, 5],
         [7, 10],
-        [9, 20]
-      ], rng);
+        [9, 20],
+        [5, 6],
+        [1, 3]
+      ];
+      const occurrence = Math.floor(index / 3);
+      const first = firstPool[occurrence % firstPool.length];
+      const second = secondPool[(occurrence + 2) % secondPool.length];
       const firstValue = first[0] / first[1];
       const secondValue = second[0] / second[1];
       const correct = firstValue > secondValue ? `${first[0]}/${first[1]}` : `${second[0]}/${second[1]}`;
@@ -7269,12 +9065,16 @@ const questionFactories = {
 
     if (stage === "grade7Decimals") {
       if (index % 3 === 0) {
-        const values = pick([
+        const decimalsSubtractPool = [
           [2.45, 1.8],
           [5.07, 2.39],
           [3.6, 0.78],
-          [9.25, 4.17]
-        ], rng);
+          [9.25, 4.17],
+          [6.32, 2.85],
+          [7.4, 1.66],
+          [8.05, 3.29]
+        ];
+        const values = decimalsSubtractPool[Math.floor(index / 3) % decimalsSubtractPool.length];
         const correct = formatDecimalAnswer(values[0] - values[1], 2, 1);
         const { options, answerIndex } = buildOptions(correct, [
           formatDecimalAnswer(values[0] + values[1], 2, 1),
@@ -7290,13 +9090,17 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const selected = pick([
+        const decimalToFractionPool = [
           { fraction: "1/4", decimal: "0.25" },
           { fraction: "3/4", decimal: "0.75" },
           { fraction: "1/8", decimal: "0.125" },
-          { fraction: "7/10", decimal: "0.7" }
-        ], rng);
-        const { options, answerIndex } = buildOptions(selected.fraction, ["1/2", "2/5", "5/8"].filter((item) => item !== selected.fraction), rng);
+          { fraction: "7/10", decimal: "0.7" },
+          { fraction: "3/8", decimal: "0.375" },
+          { fraction: "9/10", decimal: "0.9" },
+          { fraction: "1/5", decimal: "0.2" }
+        ];
+        const selected = decimalToFractionPool[Math.floor(index / 3) % decimalToFractionPool.length];
+        const { options, answerIndex } = buildOptions(selected.fraction, ["1/2", "2/5", "5/8", "3/5", "7/8"].filter((item) => item !== selected.fraction).slice(0, 3), rng);
         return {
           prompt: `Write ${selected.decimal} as a fraction in simplest form.`,
           options,
@@ -7371,11 +9175,11 @@ const questionFactories = {
 
     if (stage === "basicFractions") {
       const denominatorSets = [
-        [2, 3, 4],
         [2, 3, 4, 5, 6],
-        [2, 3, 4, 5, 6, 8, 10, 12]
+        [2, 3, 4, 5, 6, 8, 9, 10],
+        [2, 3, 4, 5, 6, 8, 9, 10, 12, 15]
       ];
-      const denominator = pick(denominatorSets[Math.min(2, Math.floor((difficulty - 1) / 3))], rng);
+      const denominator = pick(denominatorSets[Math.min(2, Math.floor(((difficulty - 1) * 3) / LEVEL_COUNT))], rng);
       const numerator = number(1, denominator - 1, rng);
       const correct = `${numerator}/${denominator}`;
       const { options, answerIndex } = buildOptions(correct, [
@@ -7383,6 +9187,34 @@ const questionFactories = {
         `${numerator}/${denominator + 1}`,
         `${Math.max(1, numerator - 1)}/${denominator}`
       ], rng);
+
+      if (index % 3 === 1) {
+        const unshaded = denominator - numerator;
+        const unshadedCorrect = `${unshaded}/${denominator}`;
+        const { options: unshadedOptions, answerIndex: unshadedAnswerIndex } = buildOptions(unshadedCorrect, [
+          `${Math.max(1, unshaded - 1)}/${denominator}`,
+          `${unshaded}/${denominator + 1}`,
+          correct
+        ], rng);
+        return {
+          prompt: `A shape is split into ${denominator} equal parts and ${numerator} are shaded. What fraction of the shape is NOT shaded?`,
+          options: unshadedOptions,
+          answerIndex: unshadedAnswerIndex,
+          explanation: `If ${numerator} of ${denominator} parts are shaded, then ${denominator} - ${numerator} = ${unshaded} parts are not shaded, written as ${unshadedCorrect}.`
+        };
+      }
+
+      if (index % 3 === 2) {
+        const compareCorrect = numerator === denominator - numerator ? "They are equal" : numerator > denominator - numerator ? "More parts are shaded" : "Fewer parts are shaded";
+        const { options: compareOptions, answerIndex: compareAnswerIndex } = buildOptions(compareCorrect, ["More parts are shaded", "Fewer parts are shaded", "They are equal"].filter((item) => item !== compareCorrect), rng);
+        return {
+          prompt: `A shape has ${denominator} equal parts with ${numerator} shaded. Compared to the unshaded parts, are more, fewer, or an equal number of parts shaded?`,
+          options: compareOptions,
+          answerIndex: compareAnswerIndex,
+          explanation: `${numerator} parts are shaded out of ${denominator}, and ${denominator - numerator} are not, so: ${compareCorrect}.`
+        };
+      }
+
       return {
         prompt: `Which fraction names ${numerator} shaded part(s) out of ${denominator} equal parts?`,
         options,
@@ -7401,9 +9233,16 @@ const questionFactories = {
           { decimal: "0.4", fraction: "2/5" },
           { decimal: "0.8", fraction: "4/5" },
           { decimal: "0.125", fraction: "1/8" },
-          { decimal: "0.6", fraction: "3/5" }
+          { decimal: "0.6", fraction: "3/5" },
+          { decimal: "0.1", fraction: "1/10" },
+          { decimal: "0.3", fraction: "3/10" },
+          { decimal: "0.9", fraction: "9/10" },
+          { decimal: "0.375", fraction: "3/8" },
+          { decimal: "0.625", fraction: "5/8" },
+          { decimal: "0.875", fraction: "7/8" },
+          { decimal: "0.35", fraction: "7/20" }
         ];
-        const selected = pick(decimalOptions, rng);
+        const selected = decimalOptions[Math.floor(index / 2) % decimalOptions.length];
         const { options, answerIndex } = buildOptions(selected.fraction, decimalOptions.filter((item) => item.fraction !== selected.fraction).slice(0, 3).map((item) => item.fraction), rng);
         return {
           prompt: `Write ${selected.decimal} as a fraction in simplest form.`,
@@ -7413,13 +9252,18 @@ const questionFactories = {
         };
       }
 
-      const conversionPool = difficulty >= 6
+      const conversionPool = difficulty >= 4
         ? [
             { fraction: "3/4", decimal: "0.75" },
             { fraction: "1/8", decimal: "0.125" },
             { fraction: "5/8", decimal: "0.625" },
             { fraction: "7/10", decimal: "0.7" },
-            { fraction: "9/20", decimal: "0.45" }
+            { fraction: "9/20", decimal: "0.45" },
+            { fraction: "7/8", decimal: "0.875" },
+            { fraction: "3/8", decimal: "0.375" },
+            { fraction: "11/20", decimal: "0.55" },
+            { fraction: "3/20", decimal: "0.15" },
+            { fraction: "9/10", decimal: "0.9" }
           ]
         : [
             { fraction: "1/2", decimal: "0.5" },
@@ -7427,9 +9271,13 @@ const questionFactories = {
             { fraction: "3/4", decimal: "0.75" },
             { fraction: "1/5", decimal: "0.2" },
             { fraction: "2/5", decimal: "0.4" },
-            { fraction: "4/5", decimal: "0.8" }
+            { fraction: "4/5", decimal: "0.8" },
+            { fraction: "1/10", decimal: "0.1" },
+            { fraction: "3/10", decimal: "0.3" },
+            { fraction: "9/10", decimal: "0.9" },
+            { fraction: "3/5", decimal: "0.6" }
           ];
-      const selected = pick(conversionPool, rng);
+      const selected = conversionPool[Math.floor(index / 2) % conversionPool.length];
       const { options, answerIndex } = buildOptions(selected.decimal, conversionPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal), rng);
       return {
         prompt: `What decimal is equal to ${selected.fraction}?`,
@@ -7467,9 +9315,13 @@ const questionFactories = {
           { fraction: "3/4", decimal: "0.75" },
           { fraction: "1/5", decimal: "0.2" },
           { fraction: "2/5", decimal: "0.4" },
-          { fraction: "4/5", decimal: "0.8" }
+          { fraction: "4/5", decimal: "0.8" },
+          { fraction: "3/5", decimal: "0.6" },
+          { fraction: "1/10", decimal: "0.1" },
+          { fraction: "3/10", decimal: "0.3" },
+          { fraction: "9/10", decimal: "0.9" }
         ];
-        const selected = pick(basicConversionPool, rng);
+        const selected = basicConversionPool[Math.floor(index / 2) % basicConversionPool.length];
         const { options, answerIndex } = buildOptions(selected.decimal, basicConversionPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal), rng);
         return {
           prompt: `What decimal is equal to ${selected.fraction}?`,
@@ -7481,12 +9333,17 @@ const questionFactories = {
 
       if (difficulty <= 4) {
         if (index % 3 === 0) {
-          const pair = pick([
+          const addPairPool = [
             { a: [1, 2], b: [1, 4], total: [3, 4] },
             { a: [1, 3], b: [1, 6], total: [1, 2] },
             { a: [2, 5], b: [1, 10], total: [1, 2] },
-            { a: [3, 4], b: [1, 8], total: [7, 8] }
-          ], rng);
+            { a: [3, 4], b: [1, 8], total: [7, 8] },
+            { a: [1, 4], b: [1, 2], total: [3, 4] },
+            { a: [1, 6], b: [1, 3], total: [1, 2] },
+            { a: [1, 5], b: [3, 10], total: [1, 2] },
+            { a: [1, 3], b: [1, 4], total: [7, 12] }
+          ];
+          const pair = addPairPool[Math.floor(index / 3) % addPairPool.length];
           const correct = `${pair.total[0]}/${pair.total[1]}`;
           const { options, answerIndex } = buildOptions(correct, [
             `${pair.a[0] + pair.b[0]}/${pair.a[1]}`,
@@ -7502,12 +9359,17 @@ const questionFactories = {
         }
 
         if (index % 3 === 1) {
-          const pair = pick([
+          const subtractPairPool = [
             { a: [3, 4], b: [1, 2], total: [1, 4] },
             { a: [5, 6], b: [1, 3], total: [1, 2] },
             { a: [7, 8], b: [1, 4], total: [5, 8] },
-            { a: [9, 10], b: [2, 5], total: [1, 2] }
-          ], rng);
+            { a: [9, 10], b: [2, 5], total: [1, 2] },
+            { a: [5, 6], b: [1, 2], total: [1, 3] },
+            { a: [3, 4], b: [1, 3], total: [5, 12] },
+            { a: [7, 10], b: [1, 5], total: [1, 2] },
+            { a: [11, 12], b: [1, 4], total: [2, 3] }
+          ];
+          const pair = subtractPairPool[Math.floor(index / 3) % subtractPairPool.length];
           const correct = `${pair.total[0]}/${pair.total[1]}`;
           const { options, answerIndex } = buildOptions(correct, [
             `${pair.a[0] - pair.b[0]}/${pair.a[1]}`,
@@ -7527,9 +9389,12 @@ const questionFactories = {
           { fraction: "3/5", decimal: "0.6" },
           { fraction: "5/8", decimal: "0.625" },
           { fraction: "7/10", decimal: "0.7" },
-          { fraction: "9/20", decimal: "0.45" }
+          { fraction: "9/20", decimal: "0.45" },
+          { fraction: "3/8", decimal: "0.375" },
+          { fraction: "7/8", decimal: "0.875" },
+          { fraction: "11/20", decimal: "0.55" }
         ];
-        const selected = pick(conversionPool, rng);
+        const selected = conversionPool[Math.floor(index / 3) % conversionPool.length];
         const { options, answerIndex } = buildOptions(selected.decimal, conversionPool.filter((item) => item.decimal !== selected.decimal).slice(0, 3).map((item) => item.decimal), rng);
         return {
           prompt: `What decimal is equal to ${selected.fraction}?`,
@@ -7540,12 +9405,16 @@ const questionFactories = {
       }
 
       if (index % 3 === 0) {
-        const hundredths = pick([
+        const hundredthsPool = [
           [0.35, 0.27],
           [0.48, 0.16],
           [0.62, 0.19],
-          [0.75, 0.08]
-        ], rng);
+          [0.75, 0.08],
+          [0.42, 0.33],
+          [0.56, 0.29],
+          [0.18, 0.67]
+        ];
+        const hundredths = hundredthsPool[Math.floor(index / 3) % hundredthsPool.length];
         const total = formatDecimalAnswer(hundredths[0] + hundredths[1], 2, 1);
         const { options, answerIndex } = buildOptions(total, [
           formatDecimalAnswer(hundredths[0] - hundredths[1], 2, 1),
@@ -7561,12 +9430,16 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const pair = pick([
+        const complexSubtractPool = [
           { a: [5, 6], b: [1, 4], total: [7, 12] },
           { a: [7, 8], b: [1, 3], total: [13, 24] },
           { a: [3, 5], b: [1, 4], total: [7, 20] },
-          { a: [11, 12], b: [1, 6], total: [3, 4] }
-        ], rng);
+          { a: [11, 12], b: [1, 6], total: [3, 4] },
+          { a: [4, 5], b: [1, 3], total: [7, 15] },
+          { a: [5, 8], b: [1, 6], total: [11, 24] },
+          { a: [9, 10], b: [1, 4], total: [13, 20] }
+        ];
+        const pair = complexSubtractPool[Math.floor(index / 3) % complexSubtractPool.length];
         const correct = `${pair.total[0]}/${pair.total[1]}`;
         const { options, answerIndex } = buildOptions(correct, [
           `${pair.total[0] + 1}/${pair.total[1]}`,
@@ -7581,8 +9454,8 @@ const questionFactories = {
         };
       }
 
-      const percentPool = difficulty <= 7 ? [5, 10, 20, 25, 40, 50, 75] : [5, 12, 15, 18, 20, 25, 40, 62, 75, 85];
-      const percent = pick(percentPool, rng);
+      const percentPool = difficulty <= 4 ? [5, 10, 20, 25, 40, 50, 75] : [5, 12, 15, 18, 20, 25, 40, 62, 75, 85];
+      const percent = percentPool[Math.floor(index / 3) % percentPool.length];
       const correct = percent / 100;
       const { options, answerIndex } = buildOptions(formatDecimalAnswer(correct, 2, 1), [
         formatDecimalAnswer(correct + 0.1, 2, 1),
@@ -7597,7 +9470,7 @@ const questionFactories = {
       };
     }
 
-    const denominator = pick(difficulty <= 5 ? [2, 4, 5, 10] : [2, 4, 5, 8, 10, 20], rng);
+    const denominator = pick(difficulty <= 3 ? [2, 4, 5, 10] : [2, 4, 5, 8, 10, 20], rng);
     const numerator = number(1, denominator - 1, rng);
     const correct = formatDecimalAnswer(numerator / denominator, 2, 1);
     const { options, answerIndex } = buildOptions(correct, [
@@ -7616,7 +9489,7 @@ const questionFactories = {
   measurement(rng, grade, config, index, difficulty) {
     const level = config.level;
 
-    if (level <= 2 && index % 2 === 0 && difficulty <= 6) {
+    if (level <= 2 && index % 2 === 0 && difficulty <= 3) {
       const hour = number(1, 12, rng);
       const minute = pick([0, 15, 30, 45], rng);
       const display = `${hour}:${String(minute).padStart(2, "0")}`;
@@ -7638,8 +9511,8 @@ const questionFactories = {
     }
 
     if (level >= 4 && index % 3 === 0) {
-      const length = number(3, difficultyStep(5, difficulty, 30), rng);
-      const width = number(2, difficultyStep(4, difficulty, 20), rng);
+      const length = number(3, difficultyStep(5, difficulty, 40), rng);
+      const width = number(2, difficultyStep(4, difficulty, 28), rng);
       const correct = length * width;
       const { options, answerIndex } = buildOptions(correct, [length + width, 2 * (length + width), correct + width], rng);
       return {
@@ -7650,8 +9523,8 @@ const questionFactories = {
       };
     }
 
-    const first = number(grade * difficulty, grade * difficultyStep(4, difficulty, 60) + 10, rng);
-    const second = number(grade, grade * difficultyStep(3, difficulty, 45) + 5, rng);
+    const first = number(grade * difficulty, grade * difficultyStep(4, difficulty, 80) + 10, rng);
+    const second = number(grade, grade * difficultyStep(3, difficulty, 60) + 5, rng);
     const larger = Math.max(first, second);
     const smaller = Math.min(first, second);
     const correct = larger - smaller;
@@ -7673,8 +9546,8 @@ const questionFactories = {
 
     if (config.skill === "grade7GeometryMeasurement") {
       if (index % 3 === 0) {
-        const base = number(4, difficultyStep(6, difficulty, 16), rng);
-        const height = number(3, difficultyStep(5, difficulty, 14), rng);
+        const base = number(4, difficultyStep(6, difficulty, 22), rng);
+        const height = number(3, difficultyStep(5, difficulty, 18), rng);
         const correct = (base * height) / 2;
         const { options, answerIndex } = buildOptions(correct, [base * height, base + height, correct + base], rng);
         return {
@@ -7686,8 +9559,8 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const length = number(4, difficultyStep(6, difficulty, 20), rng);
-        const width = number(3, difficultyStep(5, difficulty, 14), rng);
+        const length = number(4, difficultyStep(6, difficulty, 26), rng);
+        const width = number(3, difficultyStep(5, difficulty, 18), rng);
         const correct = 2 * (length + width);
         const { options, answerIndex } = buildOptions(correct, [length * width, length + width, correct + 4], rng);
         return {
@@ -7715,7 +9588,7 @@ const questionFactories = {
 
     if (config.skill === "grade7Circles") {
       if (index % 3 === 0) {
-        const radius = number(2, difficultyStep(4, difficulty, 12), rng);
+        const radius = number(2, difficultyStep(9, difficulty, 14), rng);
         const correct = radius * 2;
         const { options, answerIndex } = buildOptions(correct, [radius, correct + 2, correct - 2], rng);
         return {
@@ -7727,7 +9600,8 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const diameter = pick([7, 14, 21, 28], rng);
+        const diameterPool = [6, 7, 10, 12, 14, 16, 20, 21, 28];
+        const diameter = diameterPool[Math.floor(index / 3) % diameterPool.length];
         const correct = `${diameter}\u03c0`;
         const { options, answerIndex } = buildOptions(correct, [`${diameter / 2}\u03c0`, `${diameter * 2}\u03c0`, `${diameter + 3}\u03c0`], rng);
         return {
@@ -7738,7 +9612,8 @@ const questionFactories = {
         };
       }
 
-      const radius = pick([3, 4, 5, 6, 8], rng);
+      const radiusPool = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+      const radius = radiusPool[Math.floor(index / 3) % radiusPool.length];
       const correct = `${radius * radius}\u03c0`;
       const { options, answerIndex } = buildOptions(correct, [`${radius * 2}\u03c0`, `${radius + radius}\u03c0`, `${(radius * radius) + radius}\u03c0`], rng);
       return {
@@ -7749,31 +9624,58 @@ const questionFactories = {
       };
     }
 
-    if (level <= 2 && difficulty <= 5) {
+    if (level <= 2 && difficulty <= 3) {
       const shapes = [
         { name: "triangle", fact: "3 sides" },
         { name: "square", fact: "4 equal sides" },
         { name: "rectangle", fact: "4 sides" },
-        { name: "circle", fact: "no corners" }
+        { name: "circle", fact: "no corners" },
+        { name: "pentagon", fact: "5 sides" },
+        { name: "hexagon", fact: "6 sides" },
+        { name: "octagon", fact: "8 sides" },
+        { name: "cube", fact: "6 flat faces" },
+        { name: "sphere", fact: "no flat faces" },
+        { name: "cylinder", fact: "2 flat circle faces" },
+        { name: "cone", fact: "1 flat circle face and 1 point" },
+        { name: "diamond (rhombus)", fact: "4 equal slanted sides" },
+        { name: "heptagon", fact: "7 sides" },
+        { name: "trapezoid", fact: "4 sides with one pair parallel" },
+        { name: "oval", fact: "a rounded, stretched circle shape" },
+        { name: "star", fact: "points sticking out in a pattern" },
+        { name: "prism", fact: "flat faces on all sides" },
+        { name: "pyramid", fact: "a flat base and triangle sides meeting at a point" }
       ];
-      const shape = pick(shapes, rng);
-      const { options, answerIndex } = buildOptions(shape.fact, shapes.filter((item) => item.fact !== shape.fact).slice(0, 3).map((item) => item.fact), rng);
+
+      if (index % 2 === 0) {
+        const shape = shapes[Math.floor(index / 2) % shapes.length];
+        const { options, answerIndex } = buildOptions(shape.fact, shapes.filter((item) => item.fact !== shape.fact).slice(0, 3).map((item) => item.fact), rng);
+        return {
+          prompt: `Which fact describes a ${shape.name}?`,
+          options,
+          answerIndex,
+          explanation: `A ${shape.name} has ${shape.fact}.`
+        };
+      }
+
+      const shape = shapes[Math.floor(index / 2) % shapes.length];
+      const { options, answerIndex } = buildOptions(shape.name, shapes.filter((item) => item.name !== shape.name).slice(0, 3).map((item) => item.name), rng);
       return {
-        prompt: `Which fact describes a ${shape.name}?`,
+        prompt: `Which shape has ${shape.fact}?`,
         options,
         answerIndex,
-        explanation: `A ${shape.name} has ${shape.fact}.`
+        explanation: `A ${shape.name} is the shape that has ${shape.fact}.`
       };
     }
 
     if (level >= 4 && index % 5 === 2) {
-      const symmetrySet = pick([
+      const symmetrySetPool = [
         { shape: "an equilateral triangle", order: "3" },
         { shape: "a square", order: "4" },
         { shape: "a rectangle", order: "2" },
         { shape: "a regular pentagon", order: "5" },
         { shape: "a regular hexagon", order: "6" }
-      ], rng);
+      ];
+      const symmetrySet = symmetrySetPool[Math.floor(index / 5) % symmetrySetPool.length];
       const correct = symmetrySet.order;
       const distractors = ["1", "2", "3", "4", "5", "6"].filter((value) => value !== correct).slice(0, 3);
       const { options, answerIndex } = buildOptions(correct, distractors, rng);
@@ -7786,8 +9688,8 @@ const questionFactories = {
     }
 
     if (level >= 8 && index % 2 === 0) {
-      const a = number(3, difficultyStep(6, difficulty, 18), rng);
-      const b = number(4, difficultyStep(7, difficulty, 24), rng);
+      const a = number(3, difficultyStep(9, difficulty, 26), rng);
+      const b = number(4, difficultyStep(11, difficulty, 32), rng);
       const exact = Math.sqrt((a * a) + (b * b));
       const correct = (Math.round(exact * 10) / 10).toFixed(1);
       const { options, answerIndex } = buildOptions(correct, [
@@ -7805,9 +9707,9 @@ const questionFactories = {
     }
 
     if (level >= 9 && index % 4 === 1) {
-      const l = number(4, difficultyStep(6, difficulty, 18), rng);
-      const w = number(3, difficultyStep(5, difficulty, 14), rng);
-      const h = number(2, difficultyStep(4, difficulty, 12), rng);
+      const l = number(4, difficultyStep(9, difficulty, 26), rng);
+      const w = number(3, difficultyStep(8, difficulty, 20), rng);
+      const h = number(2, difficultyStep(6, difficulty, 16), rng);
       const correct = 2 * ((l * w) + (l * h) + (w * h));
       const { options, answerIndex } = buildOptions(correct, [correct + (l * w), correct - (w * h), correct + 2 * h], rng);
       return {
@@ -7820,7 +9722,7 @@ const questionFactories = {
     }
 
     if (level >= 5 && index % 3 === 0) {
-      const side = number(2, difficultyStep(5, difficulty, 20), rng);
+      const side = number(2, difficultyStep(9, difficulty, 26), rng);
       const correct = side * side * side;
       const { options, answerIndex } = buildOptions(correct, [side * side, 6 * side * side, correct + side], rng);
       return {
@@ -7832,9 +9734,46 @@ const questionFactories = {
       };
     }
 
-    const angle = pick(difficulty <= 5 ? [30, 45, 60, 90, 120] : [15, 30, 45, 60, 90, 120, 135, 150], rng);
-    const correct = angle === 90 ? "right angle" : angle < 90 ? "acute angle" : "obtuse angle";
-    const { options, answerIndex } = buildOptions(correct, ["acute angle", "right angle", "obtuse angle"].filter((item) => item !== correct), rng);
+    const anglePool = difficulty <= 3 ? [20, 30, 45, 60, 75, 90, 105, 120] : [10, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165];
+
+    if (index % 3 === 1) {
+      const occurrence = Math.floor(index / 3);
+      const first = anglePool[occurrence % anglePool.length];
+      const second = anglePool.filter((value) => value !== first)[occurrence % (anglePool.length - 1)];
+      const correct = first > second ? `${first} degrees` : `${second} degrees`;
+      const { options, answerIndex } = buildOptions(correct, [
+        first > second ? `${second} degrees` : `${first} degrees`,
+        "They are equal",
+        `${Math.max(first, second) + 15} degrees`
+      ], rng);
+      return {
+        prompt: `Which angle is larger: ${first} degrees or ${second} degrees?`,
+        options,
+        answerIndex,
+        explanation: `Compare the two measures directly. ${correct} is the larger angle.`
+      };
+    }
+
+    if (index % 3 === 2) {
+      const angleTypePool = ["acute angle", "right angle", "obtuse angle", "straight angle", "reflex angle"];
+      const angleType = angleTypePool[Math.floor(index / 3) % angleTypePool.length];
+      const correct = angleType === "reflex angle" ? "Between 180 and 360 degrees"
+        : angleType === "acute angle" ? "Less than 90 degrees"
+        : angleType === "right angle" ? "Exactly 90 degrees"
+          : angleType === "obtuse angle" ? "Between 90 and 180 degrees"
+            : "Exactly 180 degrees";
+      const { options, answerIndex } = buildOptions(correct, ["Less than 90 degrees", "Exactly 90 degrees", "Between 90 and 180 degrees", "Exactly 180 degrees", "Between 180 and 360 degrees"].filter((item) => item !== correct).slice(0, 3), rng);
+      return {
+        prompt: `What is true about the measure of a(n) ${angleType}?`,
+        options,
+        answerIndex,
+        explanation: `A(n) ${angleType} measures: ${correct}.`
+      };
+    }
+
+    const angle = anglePool[Math.floor(index / 3) % anglePool.length];
+    const correct = angle === 90 ? "right angle" : angle === 180 ? "straight angle" : angle < 90 ? "acute angle" : "obtuse angle";
+    const { options, answerIndex } = buildOptions(correct, ["acute angle", "right angle", "obtuse angle", "straight angle"].filter((item) => item !== correct), rng);
     return {
       prompt: `What kind of angle is ${angle} degrees?`,
       options,
@@ -7849,7 +9788,7 @@ const questionFactories = {
 
     if (index % 2 === 0) {
       const start = number(1, difficultyStep(6, difficulty, 50), rng);
-      const step = pick(difficulty <= 4 ? [2, 3, 4] : difficulty <= 7 ? [2, 3, 4, 5, 10] : [3, 4, 5, 6, 9, 10, 12], rng);
+      const step = pick(difficulty <= 2 ? [2, 3, 4] : difficulty <= 4 ? [2, 3, 4, 5, 10] : [3, 4, 5, 6, 9, 10, 12], rng);
       const seq = [start, start + step, start + 2 * step, start + 3 * step];
       const correct = start + 4 * step;
       const { options, answerIndex } = buildOptions(correct, [correct + step, correct - step, correct + 2], rng);
@@ -7861,7 +9800,7 @@ const questionFactories = {
       };
     }
 
-    const maxValue = difficultyStep(5, difficulty, 25);
+    const maxValue = difficultyStep(5, difficulty, 32);
     const values = [number(2, maxValue, rng), number(2, maxValue, rng), number(2, maxValue, rng)];
     const correct = values.reduce((sum, value) => sum + value, 0);
     const { options, answerIndex } = buildOptions(correct, [correct + 2, Math.max(0, correct - 2), correct + 4], rng);
@@ -7968,6 +9907,69 @@ const questionFactories = {
       };
     }
 
+    if (config.skill === "quadraticsIntro") {
+      const mode = index % 4;
+
+      if (mode === 0) {
+        const a = pick([1, 2, 3], rng);
+        const b = number(-6, 6, rng);
+        const c = number(-8, 8, rng);
+        const correct = `a = ${a}, b = ${b < 0 ? "-" : ""}${Math.abs(b)}, c = ${c < 0 ? "-" : ""}${Math.abs(c)}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `a = ${b}, b = ${a}, c = ${c}`,
+          `a = ${a}, b = ${c}, c = ${b}`,
+          `a = ${c}, b = ${b}, c = ${a}`
+        ], rng);
+        return {
+          prompt: `In the quadratic ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}, what are a, b, and c?`,
+          options,
+          answerIndex,
+          explanation: `In standard form ax^2 + bx + c, match each term to its coefficient: a = ${a}, b = ${b}, c = ${c}.`
+        };
+      }
+
+      if (mode === 1) {
+        const a = pick([1, 2, 3], rng);
+        const c = number(-6, 6, rng);
+        const correct = c;
+        const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, a], rng);
+        return {
+          prompt: `What is the y-intercept of y = ${a}x^2 ${c < 0 ? "-" : "+"} ${Math.abs(c)}?`,
+          options,
+          answerIndex,
+          explanation: `The y-intercept happens when x = 0. Substituting x = 0 leaves just the constant, so the y-intercept is ${correct}.`
+        };
+      }
+
+      if (mode === 2) {
+        const a = pick([1, 2, 3], rng);
+        const x = number(-3, 3, rng);
+        const b = number(-4, 4, rng);
+        const c = number(-5, 5, rng);
+        const correct = (a * x * x) + (b * x) + c;
+        const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, (a * x) + b + c], rng);
+        return {
+          prompt: `If y = ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}, what is y when x = ${x}?`,
+          options,
+          answerIndex,
+          explanation: `Substitute x = ${x}: ${a}(${x})^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}(${x}) ${c < 0 ? "-" : "+"} ${Math.abs(c)} = ${correct}.`
+        };
+      }
+
+      const opensUp = rng() > 0.5;
+      const a = opensUp ? pick([1, 2, 3], rng) : pick([-1, -2, -3], rng);
+      const cSign = rng() > 0.5 ? "-" : "+";
+      const cVal = number(1, 5, rng);
+      const correct = opensUp ? "Opens upward" : "Opens downward";
+      const { options, answerIndex } = buildOptions(correct, ["Opens upward", "Opens downward"].filter((item) => item !== correct), rng);
+      return {
+        prompt: `Does the parabola y = ${a}x^2 ${cSign} ${cVal} open upward or downward?`,
+        options,
+        answerIndex,
+        explanation: `When the coefficient of x^2 (a = ${a}) is positive, the parabola opens upward. When it is negative, it opens downward.`
+      };
+    }
+
     if (level <= 7) {
       if (index % 4 === 2) {
         const constant = number(2, difficultyStep(4, difficulty, 14), rng);
@@ -7987,8 +9989,8 @@ const questionFactories = {
         };
       }
 
-      const x = number(1, difficultyStep(4, difficulty, 20), rng);
-      const n = number(2, difficultyStep(5, difficulty, 25), rng);
+      const x = number(1, difficultyStep(12, difficulty, 20), rng);
+      const n = number(2, difficultyStep(10, difficulty, 25), rng);
       const correct = x + n;
       const { options, answerIndex } = buildOptions(correct, [correct + 1, Math.max(0, correct - 1), x * n], rng);
       return {
@@ -8002,8 +10004,8 @@ const questionFactories = {
     if (level <= 9) {
       if (index % 4 === 1) {
         const coefficient = pick([2, 3, 4], rng);
-        const solution = number(2, difficultyStep(4, difficulty, 10), rng);
-        const offset = number(1, difficultyStep(3, difficulty, 8), rng);
+        const solution = number(2, difficultyStep(4, difficulty, 14), rng);
+        const offset = number(1, difficultyStep(3, difficulty, 12), rng);
         const total = (coefficient * solution) + offset;
         const correct = `x <= ${solution}`;
         const { options, answerIndex } = buildOptions(correct, [
@@ -8019,8 +10021,8 @@ const questionFactories = {
         };
       }
 
-      const x = number(2, difficultyStep(6, difficulty, 30), rng);
-      const constant = number(2, difficultyStep(4, difficulty, 20), rng);
+      const x = number(2, difficultyStep(6, difficulty, 45), rng);
+      const constant = number(2, difficultyStep(4, difficulty, 28), rng);
       const total = x + constant;
       const correct = x;
       const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, total], rng);
@@ -8032,24 +10034,139 @@ const questionFactories = {
       };
     }
 
-    if (level === 10) {
-      const a = number(1, difficultyStep(2, difficulty, 8), rng);
-      const b = number(1, difficultyStep(4, difficulty, 12), rng);
-      const correct = `${a + b}x`;
-      const { options, answerIndex } = buildOptions(correct, [`${a * b}x`, `${a - b}x`, `${a + b}`], rng);
+    if (config.skill === "powersRadicals") {
+      const mode = index % 4;
+      const radicalTable = [
+        { radicand: 8, simplified: "2√2" },
+        { radicand: 12, simplified: "2√3" },
+        { radicand: 18, simplified: "3√2" },
+        { radicand: 20, simplified: "2√5" },
+        { radicand: 27, simplified: "3√3" },
+        { radicand: 32, simplified: "4√2" },
+        { radicand: 45, simplified: "3√5" },
+        { radicand: 50, simplified: "5√2" },
+        { radicand: 75, simplified: "5√3" },
+        { radicand: 98, simplified: "7√2" },
+        { radicand: 120, simplified: "2√30" },
+        { radicand: 150, simplified: "5√6" },
+        { radicand: 200, simplified: "10√2" }
+      ];
+
+      if (mode === 0) {
+        const pool = difficulty <= 2 ? radicalTable.slice(0, 5) : difficulty <= 4 ? radicalTable.slice(0, 10) : radicalTable;
+        const selected = pool[Math.floor(index / 4) % pool.length];
+        const { options, answerIndex } = buildOptions(selected.simplified, radicalTable.filter((item) => item.simplified !== selected.simplified).slice(0, 3).map((item) => item.simplified), rng);
+        return {
+          prompt: `Simplify √${selected.radicand}.`,
+          options,
+          answerIndex,
+          explanation: `Find the largest perfect square factor of ${selected.radicand} and pull it out of the radical. √${selected.radicand} = ${selected.simplified}.`
+        };
+      }
+
+      if (mode === 1) {
+        const base = pick([2, 3, 4, 5, 6, 10], rng);
+        const exponent = number(1, difficultyStep(2, difficulty, 7), rng);
+        const correct = `1/${base}^${exponent}`;
+        const { options, answerIndex } = buildOptions(correct, [`${base}^${exponent}`, `-${base}^${exponent}`, `1/${base}`], rng);
+        return {
+          prompt: `Simplify ${base}^-${exponent}.`,
+          options,
+          answerIndex,
+          explanation: `A negative exponent means take the reciprocal: ${base}^-${exponent} = ${correct}.`
+        };
+      }
+
+      if (mode === 2) {
+        const basePool = difficulty <= 3 ? [4, 9, 16, 25, 36, 49, 64] : [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144];
+        const base = basePool[Math.floor(index / 4) % basePool.length];
+        const root = Math.round(Math.sqrt(base));
+        const correct = String(root);
+        const { options, answerIndex } = buildOptions(correct, [String(root + 1), String(Math.max(1, root - 1)), String(base)], rng);
+        return {
+          prompt: `Simplify ${base}^(1/2).`,
+          options,
+          answerIndex,
+          explanation: `A power of 1/2 means square root. ${base}^(1/2) = √${base} = ${correct}.`
+        };
+      }
+
+      const a = pick([2, 3, 5], rng);
+      const b = pick([2, 3, 5].filter((value) => value !== a), rng);
+      const correct = `√${a * b}`;
+      const { options, answerIndex } = buildOptions(correct, [`√${a + b}`, `${a}√${b}`, `√${a}√${b}`], rng);
       return {
-        prompt: `Simplify: ${a}x + ${b}x`,
+        prompt: `Simplify √${a} x √${b}.`,
         options,
         answerIndex,
-        explanation: `Like terms add together, so ${a}x + ${b}x = ${a + b}x.`
+        explanation: `Multiply the radicands together: √${a} x √${b} = √${a * b}.`
       };
     }
 
-    if (level >= 11) {
-      if (index % 4 === 0) {
-        const firstTerm = number(2, 12, rng);
-        const difference = pick([2, 3, 4, 5, 6], rng);
-        const termNumber = number(6, 14, rng);
+    if (level === 10) {
+      const mode = index % 4;
+
+      if (mode === 0) {
+        const a = number(2, difficultyStep(3, difficulty, 14), rng);
+        const b = number(1, difficultyStep(4, difficulty, 18), rng);
+        const correct = `${a + b}x`;
+        const { options, answerIndex } = buildOptions(correct, [`${a * b}x`, `${a - b}x`, `${a + b}`], rng);
+        return {
+          prompt: `Simplify: ${a}x + ${b}x`,
+          options,
+          answerIndex,
+          explanation: `Like terms add together, so ${a}x + ${b}x = ${a + b}x.`
+        };
+      }
+
+      if (mode === 1) {
+        const a = number(5, difficultyStep(8, difficulty, 24), rng);
+        const b = number(1, difficultyStep(4, difficulty, 18), rng);
+        const correct = `${a - b}x`;
+        const { options, answerIndex } = buildOptions(correct, [`${a + b}x`, `${a * b}x`, `${a - b}`], rng);
+        return {
+          prompt: `Simplify: ${a}x - ${b}x`,
+          options,
+          answerIndex,
+          explanation: `Subtract the coefficients of the like terms: ${a}x - ${b}x = ${a - b}x.`
+        };
+      }
+
+      if (mode === 2) {
+        const coeff = number(2, difficultyStep(3, difficulty, 9), rng);
+        const inner = number(2, difficultyStep(3, difficulty, 12), rng);
+        const correct = `${coeff * inner}x + ${coeff * inner}`.replace(/^1x/, "x");
+        const distractA = `${coeff + inner}x + ${coeff + inner}`;
+        const distractB = `${coeff * inner}x`;
+        const distractC = `${coeff}x + ${inner}`;
+        const { options, answerIndex } = buildOptions(correct, [distractA, distractB, distractC], rng);
+        return {
+          prompt: `Expand: ${coeff}(x + ${inner})`,
+          options,
+          answerIndex,
+          explanation: `Distribute ${coeff} across both terms: ${coeff}(x + ${inner}) = ${coeff}x + ${coeff * inner}.`
+        };
+      }
+
+      const x = number(1, difficultyStep(2, difficulty, 8), rng);
+      const b = number(1, difficultyStep(3, difficulty, 12), rng);
+      const total = x + b;
+      const { options, answerIndex } = buildOptions(`x = ${x}`, [`x = ${total}`, `x = ${b}`, `x = ${x + b + 1}`], rng);
+      return {
+        prompt: `Solve for x: x + ${b} = ${total}`,
+        options,
+        answerIndex,
+        explanation: `Subtract ${b} from both sides: x = ${total} - ${b} = ${x}.`
+      };
+    }
+
+    if (config.skill === "sequencesSeries") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const firstTerm = number(2, difficultyStep(6, difficulty, 30), rng);
+        const difference = pick([2, 3, 4, 5, 6, 7, 8], rng);
+        const termNumber = number(6, difficultyStep(8, difficulty, 30), rng);
         const correct = firstTerm + ((termNumber - 1) * difference);
         const { options, answerIndex } = buildOptions(correct, [
           correct + difference,
@@ -8064,10 +10181,10 @@ const questionFactories = {
         };
       }
 
-      if (index % 4 === 1) {
+      if (mode === 1) {
         const firstTerm = pick([2, 3, 4, 5, 6], rng);
         const ratio = pick([2, 3, 4], rng);
-        const termNumber = number(4, 8, rng);
+        const termNumber = number(4, difficultyStep(4, difficulty, 10), rng);
         const correct = firstTerm * (ratio ** (termNumber - 1));
         const { options, answerIndex } = buildOptions(correct, [
           correct * ratio,
@@ -8079,6 +10196,58 @@ const questionFactories = {
           options,
           answerIndex,
           explanation: `Use a_n = a_1r^(n - 1). So a_${termNumber} = ${firstTerm}(${ratio})^${termNumber - 1} = ${correct}.`
+        };
+      }
+
+      const firstTerm = number(1, difficultyStep(5, difficulty, 16), rng);
+      const difference = pick([1, 2, 3, 4, 5], rng);
+      const numTerms = number(3, difficultyStep(4, difficulty, 14), rng);
+      const lastTerm = firstTerm + ((numTerms - 1) * difference);
+      const correct = Math.round((numTerms / 2) * (firstTerm + lastTerm));
+      const { options, answerIndex } = buildOptions(correct, [
+        correct + difference,
+        correct - numTerms,
+        firstTerm + lastTerm
+      ], rng);
+      return {
+        prompt: `An arithmetic series has first term ${firstTerm}, common difference ${difference}, and ${numTerms} terms. What is the sum of the series?`,
+        options,
+        answerIndex,
+        explanation: `Use S_n = (n/2)(a_1 + a_n). The last term is ${lastTerm}, so S_${numTerms} = (${numTerms}/2)(${firstTerm} + ${lastTerm}) = ${correct}.`
+      };
+    }
+
+    if (level >= 11) {
+      if (index % 4 === 0) {
+        const solution = number(2, difficultyStep(4, difficulty, 20), rng);
+        const leftCoefficient = pick([3, 4, 5, 6, 7], rng);
+        const rightCoefficient = pick([1, 2].filter((value) => value < leftCoefficient), rng) || 1;
+        const leftConstant = number(2, 10, rng);
+        const rightConstant = (leftCoefficient - rightCoefficient) * solution + leftConstant;
+        const { options, answerIndex } = buildOptions(solution, [solution + 1, solution - 1, leftConstant], rng);
+        return {
+          prompt: `Solve: ${leftCoefficient}x + ${leftConstant} = ${rightCoefficient}x + ${rightConstant}`,
+          options,
+          answerIndex,
+          explanation: `Move the variable terms to one side and the constants to the other, then divide. This gives x = ${solution}.`
+        };
+      }
+
+      if (index % 4 === 1) {
+        const base = pick([2, 3, 4, 5, 6], rng);
+        const largerExponent = number(4, difficultyStep(4, difficulty, 14), rng);
+        const smallerExponent = number(1, Math.max(1, largerExponent - 1), rng);
+        const correct = `${base}^${largerExponent - smallerExponent}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${base}^${largerExponent + smallerExponent}`,
+          `${base}^${smallerExponent - largerExponent}`,
+          `${base * 2}^${largerExponent - smallerExponent}`
+        ], rng);
+        return {
+          prompt: `Simplify ${base}^${largerExponent} / ${base}^${smallerExponent}.`,
+          options,
+          answerIndex,
+          explanation: `When dividing powers with the same base, subtract the exponents. So ${base}^${largerExponent} / ${base}^${smallerExponent} = ${correct}.`
         };
       }
 
@@ -8103,8 +10272,8 @@ const questionFactories = {
       }
 
       const value = number(2, 6, rng);
-      const powerA = number(2, 5, rng);
-      const powerB = number(2, 5, rng);
+      const powerA = number(2, difficultyStep(3, difficulty, 7), rng);
+      const powerB = number(2, difficultyStep(3, difficulty, 7), rng);
       const correct = `${value}^${powerA + powerB}`;
       const { options, answerIndex } = buildOptions(correct, [
         `${value}^${powerA * powerB}`,
@@ -8135,7 +10304,7 @@ const questionFactories = {
   statisticsProbability(rng, grade, config, index, difficulty) {
     if (config.skill === "grade7CentralTendency") {
       if (index % 3 === 0) {
-        const data = Array.from({ length: 5 }, () => number(4, difficultyStep(6, difficulty, 24), rng));
+        const data = Array.from({ length: 5 }, () => number(4, difficultyStep(6, difficulty, 30), rng));
         const correct = Math.round(data.reduce((sum, value) => sum + value, 0) / data.length);
         const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, data[0]], rng);
         return {
@@ -8239,8 +10408,8 @@ const questionFactories = {
 
     if (config.level >= 11) {
       if (index % 4 === 0) {
-        const n = number(5, 9, rng);
-        const r = number(2, Math.min(4, n - 1), rng);
+        const n = number(5, difficultyStep(9, difficulty, 13), rng);
+        const r = number(2, Math.min(5, n - 1), rng);
         const correct = combination(n, r);
         const { options, answerIndex } = buildOptions(correct, [
           permutation(n, r),
@@ -8274,8 +10443,8 @@ const questionFactories = {
       }
 
       if (index % 4 === 2) {
-        const mean = number(60, 85, rng);
-        const sd = pick([4, 5, 6, 8], rng);
+        const mean = number(55, 90, rng);
+        const sd = pick(difficulty <= 3 ? [4, 5, 6, 8] : [4, 5, 6, 8, 10, 12], rng);
         const score = mean + (sd * pick([-2, -1, 1, 2], rng));
         const correct = formatDecimalAnswer((score - mean) / sd, 2, 1);
         const { options, answerIndex } = buildOptions(correct, [
@@ -8311,8 +10480,8 @@ const questionFactories = {
     }
 
     if (index % 2 === 0) {
-      const dataLength = difficulty >= 7 ? 5 : 4;
-      const dataMax = difficultyStep(8, difficulty, 40);
+      const dataLength = difficulty >= 4 ? 5 : 4;
+      const dataMax = difficultyStep(8, difficulty, 55);
       const data = Array.from({ length: dataLength }, () => number(2, dataMax, rng));
       const correct = Math.round(data.reduce((sum, value) => sum + value, 0) / data.length);
       const { options, answerIndex } = buildOptions(correct, [correct + 1, Math.max(0, correct - 1), data[0]], rng);
@@ -8325,10 +10494,10 @@ const questionFactories = {
     }
 
     const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
-    const totalSections = difficulty >= 7 ? 6 : 4;
+    const totalSections = difficulty >= 4 ? 6 : 4;
     const activeColors = colors.slice(0, totalSections);
     const color = pick(activeColors, rng);
-    const repeats = difficulty >= 8 ? number(1, 2, rng) : 1;
+    const repeats = difficulty >= 5 ? number(1, 2, rng) : 1;
     const labels = Array.from({ length: totalSections }, (_, sectionIndex) =>
       sectionIndex < repeats ? color : pick(activeColors.filter((item) => item !== color), rng)
     );
@@ -8348,23 +10517,175 @@ const questionFactories = {
   },
 
   integersRational(rng, grade, config, index, difficulty) {
-    const limit = difficultyStep(4, difficulty, 40);
+    if (config.skill === "exponentsRoots") {
+      const mode = index % 4;
+
+      if (mode === 0) {
+        const base = number(2, difficultyStep(3, difficulty, 10), rng);
+        const exponent = number(2, difficultyStep(2, difficulty, 5), rng);
+        const correct = base ** exponent;
+        const { options, answerIndex } = buildOptions(correct, [
+          base * exponent,
+          correct + base,
+          base ** (exponent - 1)
+        ], rng);
+        return {
+          prompt: `What is ${base}^${exponent}?`,
+          options,
+          answerIndex,
+          explanation: `${base}^${exponent} means ${base} multiplied by itself ${exponent} times, which is ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const root = number(2, difficultyStep(3, difficulty, 15), rng);
+        const square = root * root;
+        const { options, answerIndex } = buildOptions(root, [root + 1, Math.max(1, root - 1), square], rng);
+        return {
+          prompt: `What is the square root of ${square}?`,
+          options,
+          answerIndex,
+          explanation: `${root} x ${root} = ${square}, so the square root of ${square} is ${root}.`
+        };
+      }
+
+      if (mode === 2) {
+        const cubeRoot = number(2, difficultyStep(2, difficulty, 7), rng);
+        const cube = cubeRoot ** 3;
+        const { options, answerIndex } = buildOptions(cubeRoot, [cubeRoot + 1, Math.max(1, cubeRoot - 1), cubeRoot * cubeRoot], rng);
+        return {
+          prompt: `What is the cube root of ${cube}?`,
+          options,
+          answerIndex,
+          explanation: `${cubeRoot}^3 = ${cube}, so the cube root of ${cube} is ${cubeRoot}.`
+        };
+      }
+
+      const base = pick([2, 3, 4, 5, 6, 10], rng);
+      const exponentA = number(1, difficultyStep(2, difficulty, 6), rng);
+      const exponentB = number(1, difficultyStep(2, difficulty, 6), rng);
+      const correct = `${base}^${exponentA + exponentB}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${base}^${exponentA * exponentB}`,
+        `${base * 2}^${exponentA + exponentB}`,
+        `${base}^${Math.abs(exponentA - exponentB)}`
+      ], rng);
+      return {
+        prompt: `Simplify ${base}^${exponentA} x ${base}^${exponentB}.`,
+        options,
+        answerIndex,
+        explanation: `When multiplying powers with the same base, add the exponents: ${base}^${exponentA} x ${base}^${exponentB} = ${correct}.`
+      };
+    }
+
+    if (config.skill === "rationalIrrational") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const perfectSquares = [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144];
+        const nonSquares = [2, 3, 5, 7, 8, 10, 11, 12, 15, 18, 20];
+        const isRational = rng() > 0.5;
+        const value = isRational ? pick(perfectSquares, rng) : pick(nonSquares, rng);
+        const correct = isRational ? "Rational" : "Irrational";
+        const { options, answerIndex } = buildOptions(correct, ["Rational", "Irrational"].filter((item) => item !== correct), rng);
+        return {
+          prompt: `Is the square root of ${value} rational or irrational?`,
+          options,
+          answerIndex,
+          explanation: isRational
+            ? `${value} is a perfect square, so its square root is a whole number, which is rational.`
+            : `${value} is not a perfect square, so its square root is a non-repeating, non-terminating decimal, which is irrational.`
+        };
+      }
+
+      if (mode === 1) {
+        const numerator = number(1, 9, rng);
+        const denominator = number(2, 9, rng);
+        const correct = `${numerator}/${denominator}`;
+        const { options, answerIndex } = buildOptions(correct, ["pi", "the square root of 2", "0.1010010001..."], rng);
+        const rationalPromptVariants = [
+          `Which of these is a rational number?`,
+          `Which option below is a rational number?`,
+          `Which of the following numbers is rational?`,
+          `Select the rational number from the choices below.`,
+          `Which value in this list is rational?`
+        ];
+        return {
+          prompt: rationalPromptVariants[Math.floor(index / 3) % rationalPromptVariants.length],
+          options,
+          answerIndex,
+          explanation: `${correct} can be written as a ratio of two integers, so it is rational. Numbers like pi and non-repeating decimals cannot.`
+        };
+      }
+
+      const irrationalExamples = ["pi", "the square root of 2", "the square root of 3", "the square root of 5"];
+      const correct = pick(irrationalExamples, rng);
+      const { options, answerIndex } = buildOptions(correct, ["1/2", "0.75", "the square root of 9"].filter((item) => item !== correct), rng);
+      const irrationalPromptVariants = [
+        `Which of these is an irrational number?`,
+        `Which option below is an irrational number?`,
+        `Which of the following numbers is irrational?`,
+        `Select the irrational number from the choices below.`,
+        `Which value in this list is irrational?`
+      ];
+      return {
+        prompt: irrationalPromptVariants[Math.floor(index / 3) % irrationalPromptVariants.length],
+        options,
+        answerIndex,
+        explanation: `${correct} cannot be written exactly as a ratio of two integers, so it is irrational.`
+      };
+    }
+
+    const limit = difficultyStep(4, difficulty, 55);
     const a = number(-limit, limit, rng);
     const b = number(-limit, limit, rng);
-    const correct = index % 2 === 0 ? a + b : a - b;
+    const mode = index % 4;
+
+    if (mode === 2) {
+      const factor = number(2, difficultyStep(3, difficulty, 16), rng);
+      const signedFactor = rng() > 0.5 ? factor : -factor;
+      const other = number(2, difficultyStep(3, difficulty, 16), rng);
+      const signedOther = rng() > 0.5 ? other : -other;
+      const correct = signedFactor * signedOther;
+      const { options, answerIndex } = buildOptions(correct, [-correct, correct + signedOther, correct - signedOther], rng);
+      return {
+        prompt: `What is ${signedFactor} x (${signedOther})?`,
+        options,
+        answerIndex,
+        explanation: `Multiply the values and apply the sign rule. ${signedFactor} x (${signedOther}) = ${correct}.`
+      };
+    }
+
+    if (mode === 3) {
+      const quotient = number(2, difficultyStep(3, difficulty, 16), rng);
+      const divisor = number(2, difficultyStep(2, difficulty, 10), rng);
+      const dividend = quotient * divisor;
+      const signedDividend = rng() > 0.5 ? dividend : -dividend;
+      const signedDivisor = signedDividend < 0 ? (rng() > 0.5 ? divisor : -divisor) : divisor;
+      const correct = signedDividend / signedDivisor;
+      const { options, answerIndex } = buildOptions(correct, [-correct, correct + 1, Math.max(1, correct - 1)], rng);
+      return {
+        prompt: `What is ${signedDividend} / (${signedDivisor})?`,
+        options,
+        answerIndex,
+        explanation: `Divide the values and apply the sign rule. ${signedDividend} / (${signedDivisor}) = ${correct}.`
+      };
+    }
+
+    const correct = mode === 0 ? a + b : a - b;
     const { options, answerIndex } = buildOptions(correct, [correct + 2, correct - 2, -correct], rng);
     return {
-      prompt: index % 2 === 0 ? `What is ${a} + ${b}?` : `What is ${a} - (${b})?`,
+      prompt: mode === 0 ? `What is ${a} + ${b}?` : `What is ${a} - (${b})?`,
       options,
       answerIndex,
-      explanation: index % 2 === 0 ? `${a} + ${b} = ${correct}.` : `${a} - (${b}) = ${correct}.`
+      explanation: mode === 0 ? `${a} + ${b} = ${correct}.` : `${a} - (${b}) = ${correct}.`
     };
   },
 
   ratiosProportions(rng, grade, config, index, difficulty) {
-    const ratioA = number(1, difficulty <= 5 ? 6 : 12, rng);
-    const ratioB = number(1, difficulty <= 5 ? 8 : 15, rng);
-    const multiplier = number(2, difficulty <= 5 ? 6 : 12, rng);
+    const ratioA = number(1, difficulty <= 3 ? 6 : 18, rng);
+    const ratioB = number(1, difficulty <= 3 ? 8 : 22, rng);
+    const multiplier = number(2, difficulty <= 3 ? 6 : 16, rng);
     const correct = ratioB * multiplier;
     const { options, answerIndex } = buildOptions(correct, [correct + ratioB, Math.max(1, correct - ratioB), ratioA * multiplier], rng);
     return {
@@ -8454,8 +10775,8 @@ const questionFactories = {
       if (index % 3 === 1) {
         const startX = number(-4, 4, rng);
         const startY = number(-4, 4, rng);
-        const right = number(1, difficulty <= 5 ? 3 : 5, rng);
-        const up = number(1, difficulty <= 5 ? 3 : 5, rng);
+        const right = number(1, difficulty <= 3 ? 3 : 5, rng);
+        const up = number(1, difficulty <= 3 ? 3 : 5, rng);
         const correct = `(${startX + right}, ${startY + up})`;
         const { options, answerIndex } = buildOptions(correct, [
           `(${startX - right}, ${startY + up})`,
@@ -8486,10 +10807,112 @@ const questionFactories = {
       };
     }
 
+    if (config.skill === "linearPatterns") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const start = number(1, difficultyStep(4, difficulty, 15), rng);
+        const step = pick([2, 3, 4, 5], rng);
+        const xValues = [1, 2, 3, 4];
+        const yValues = xValues.map((x) => start + ((x - 1) * step));
+        const correct = `y = ${step}x + ${start - step}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `y = ${step}x + ${start}`,
+          `y = ${start}x + ${step}`,
+          `y = ${step + 1}x + ${start - step}`
+        ], rng);
+        return {
+          prompt: `A table shows x: ${xValues.join(", ")} and y: ${yValues.join(", ")}. Which equation matches the pattern?`,
+          options,
+          answerIndex,
+          explanation: `Each time x increases by 1, y increases by ${step}, so the slope is ${step}. Checking x = 1 gives the rule ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const m = pick([2, 3, 4], rng);
+        const b = number(1, difficultyStep(3, difficulty, 10), rng);
+        const correct = `y = ${m}x + ${b}`;
+        const { options, answerIndex } = buildOptions(correct, [`y = ${b}x + ${m}`, `y = ${m}x - ${b}`, `y = ${m + b}x`], rng);
+        return {
+          prompt: `A graph crosses the y-axis at ${b} and rises ${m} units for every 1 unit right. Which equation matches this graph?`,
+          options,
+          answerIndex,
+          explanation: `The y-intercept is ${b} and the slope (rise per run) is ${m}, so the equation is ${correct}.`
+        };
+      }
+
+      const m = pick([2, 3, 4], rng);
+      const b = number(-4, 4, rng);
+      const correct = m;
+      const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, b], rng);
+      return {
+        prompt: `The equation y = ${m}x ${b < 0 ? "-" : "+"} ${Math.abs(b)} and a table both represent the same linear pattern. What is the constant rate of change (slope) shown by both?`,
+        options,
+        answerIndex,
+        explanation: `In y = mx + b, the coefficient of x is the slope. Here the slope is ${correct}, which matches the constant difference between consecutive y-values in the table.`
+      };
+    }
+
+    if (config.skill === "relationsGraphs") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const isFunction = rng() > 0.5;
+        const xValues = isFunction
+          ? shuffle([1, 2, 3, 4], rng)
+          : shuffle([1, 1, 2, 3], rng);
+        const yValues = [number(1, 10, rng), number(1, 10, rng), number(1, 10, rng), number(1, 10, rng)];
+        const pairs = xValues.map((x, i) => `(${x}, ${yValues[i]})`).join(", ");
+        const correct = isFunction ? "Yes, it is a function" : "No, it is not a function";
+        const { options, answerIndex } = buildOptions(correct, ["Yes, it is a function", "No, it is not a function"].filter((item) => item !== correct), rng);
+        return {
+          prompt: `Does this set of ordered pairs represent a function: ${pairs}?`,
+          options,
+          answerIndex,
+          explanation: isFunction
+            ? "Every x-value appears only once, so each input has exactly one output. This is a function."
+            : "At least one x-value repeats with a different y-value, so this relation is not a function."
+        };
+      }
+
+      if (mode === 1) {
+        const xValues = [number(-4, -1, rng), number(0, 3, rng), number(4, 7, rng)];
+        const correct = `{${xValues.join(", ")}}`;
+        const distractors = [
+          `{${xValues.map((v) => v + 1).join(", ")}}`,
+          `{${xValues.map((v) => -v).join(", ")}}`,
+          `{${[xValues[0], xValues[1]].join(", ")}}`
+        ];
+        const { options, answerIndex } = buildOptions(correct, distractors, rng);
+        return {
+          prompt: `A relation contains the points (${xValues[0]}, 2), (${xValues[1]}, 5), and (${xValues[2]}, 9). What is the domain of the relation?`,
+          options,
+          answerIndex,
+          explanation: `The domain is the set of all x-values (inputs) in the relation, so the domain is ${correct}.`
+        };
+      }
+
+      const yValues = [number(-5, -1, rng), number(0, 4, rng), number(5, 9, rng)];
+      const correct = `{${yValues.join(", ")}}`;
+      const distractors = [
+        `{${yValues.map((v) => v + 1).join(", ")}}`,
+        `{${yValues.map((v) => -v).join(", ")}}`,
+        `{${[yValues[0], yValues[1]].join(", ")}}`
+      ];
+      const { options, answerIndex } = buildOptions(correct, distractors, rng);
+      return {
+        prompt: `A relation contains the points (1, ${yValues[0]}), (2, ${yValues[1]}), and (3, ${yValues[2]}). What is the range of the relation?`,
+        options,
+        answerIndex,
+        explanation: `The range is the set of all y-values (outputs) in the relation, so the range is ${correct}.`
+      };
+    }
+
     if (level <= 9) {
-      const x = number(1, difficultyStep(3, difficulty, 12), rng);
-      const m = number(1, difficultyStep(2, difficulty, 8), rng);
-      const b = number(0, difficultyStep(3, difficulty, 15), rng);
+      const x = number(1, difficultyStep(3, difficulty, 16), rng);
+      const m = number(1, difficultyStep(2, difficulty, 11), rng);
+      const b = number(0, difficultyStep(3, difficulty, 20), rng);
       const correct = (m * x) + b;
       const { options, answerIndex } = buildOptions(correct, [correct + 2, Math.max(0, correct - 2), m + b], rng);
       return {
@@ -8555,6 +10978,109 @@ const questionFactories = {
       };
     }
 
+    if (config.skill === "precalc20") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const m = pick([2, 3, 4, 5], rng);
+        const b = number(-4, 4, rng);
+        const x1 = number(-3, 2, rng);
+        const x2 = x1 + number(1, difficultyStep(3, difficulty, 10), rng);
+        const y1 = (m * x1) + b;
+        const y2 = (m * x2) + b;
+        const correct = m;
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, y2 - y1], rng);
+        return {
+          prompt: `For f(x) = ${m}x ${b < 0 ? "-" : "+"} ${Math.abs(b)}, what is the average rate of change from x = ${x1} to x = ${x2}?`,
+          options,
+          answerIndex,
+          explanation: `Average rate of change = (f(${x2}) - f(${x1})) / (${x2} - ${x1}) = (${y2} - ${y1}) / (${x2 - x1}) = ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const a = pick([1, 2, 3], rng);
+        const x1 = number(1, 3, rng);
+        const x2 = x1 + number(1, difficultyStep(2, difficulty, 5), rng);
+        const y1 = a * x1 * x1;
+        const y2 = a * x2 * x2;
+        const correct = Math.round((y2 - y1) / (x2 - x1));
+        const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, y2 - y1], rng);
+        return {
+          prompt: `For f(x) = ${a}x^2, what is the average rate of change from x = ${x1} to x = ${x2}?`,
+          options,
+          answerIndex,
+          explanation: `Average rate of change = (f(${x2}) - f(${x1})) / (${x2} - ${x1}) = (${y2} - ${y1}) / ${x2 - x1} = ${correct}.`
+        };
+      }
+
+      const x1 = number(0, 3, rng);
+      const x2 = x1 + number(1, difficultyStep(3, difficulty, 8), rng);
+      const y1 = number(-6, 6, rng);
+      const y2 = y1 + (pick([2, 3, 4, 5], rng) * (x2 - x1));
+      const correct = Math.round((y2 - y1) / (x2 - x1));
+      const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, y2 - y1], rng);
+      return {
+        prompt: `A table shows f(${x1}) = ${y1} and f(${x2}) = ${y2}. What is the average rate of change over this interval?`,
+        options,
+        answerIndex,
+        explanation: `Average rate of change = (change in y) / (change in x) = (${y2} - ${y1}) / (${x2} - ${x1}) = ${correct}.`
+      };
+    }
+
+    if (config.skill === "expLogModels") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const base = pick([2, 3, 4, 5, 10], rng);
+        const exponent = number(2, difficultyStep(2, difficulty, 5), rng);
+        const value = base ** exponent;
+        const correct = `log base ${base} of ${value} = ${exponent}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `log base ${value} of ${base} = ${exponent}`,
+          `log base ${base} of ${exponent} = ${value}`,
+          `log base ${exponent} of ${value} = ${base}`
+        ], rng);
+        return {
+          prompt: `Write ${base}^${exponent} = ${value} in logarithmic form.`,
+          options,
+          answerIndex,
+          explanation: `Exponential form b^x = y converts to logarithmic form log base b of y = x. So ${base}^${exponent} = ${value} becomes ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const value = pick([8, 16, 32, 64, 100, 1000], rng);
+        const useBaseTen = value === 100 || value === 1000;
+        const base = useBaseTen ? 10 : 2;
+        const correct = useBaseTen ? (value === 100 ? 2 : 3) : Math.round(Math.log2(value));
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, Math.max(0, correct - 1), base], rng);
+        return {
+          prompt: `What is log base ${base} of ${value}?`,
+          options,
+          answerIndex,
+          explanation: `log base ${base} of ${value} asks for the exponent on ${base} that gives ${value}. That exponent is ${correct}.`
+        };
+      }
+
+      const start = pick([100, 200, 500, 1000], rng);
+      const doublingPeriod = pick([2, 3, 4], rng);
+      const periods = number(1, difficultyStep(2, difficulty, 4), rng);
+      const years = doublingPeriod * periods;
+      const correct = start * (2 ** periods);
+      const { options, answerIndex } = buildOptions(correct, [
+        start * periods * 2,
+        start * (2 ** (periods - 1)),
+        start + (start * periods)
+      ], rng);
+      return {
+        prompt: `A population of ${start} doubles every ${doublingPeriod} years. What will the population be after ${years} years?`,
+        options,
+        answerIndex,
+        explanation: `The population doubles ${periods} times, so multiply by 2 a total of ${periods} times: ${start} x 2^${periods} = ${correct}.`
+      };
+    }
+
     if (level < 12) {
       if (index % 4 === 0) {
         const h = pick([-4, -3, -2, -1, 1, 2, 3, 4], rng);
@@ -8575,7 +11101,7 @@ const questionFactories = {
 
       if (index % 4 === 1) {
         const a = pick([2, 3, 4, 5], rng);
-        const exponent = number(2, 5, rng);
+        const exponent = number(2, difficultyStep(2, difficulty, 6), rng);
         const correct = exponent;
         const { options, answerIndex } = buildOptions(correct, [
           exponent + 1,
@@ -8626,11 +11152,75 @@ const questionFactories = {
       };
     }
 
+    if (config.skill === "functionTransformations") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const baseLabel = pick(["x^2", "|x|", "sqrt(x)"], rng);
+        const right = number(1, difficultyStep(3, difficulty, 10), rng);
+        const up = number(1, difficultyStep(3, difficulty, 10), rng);
+        const correct = `f(x ${right < 0 ? "+" : "-"} ${Math.abs(right)}) ${up < 0 ? "-" : "+"} ${Math.abs(up)}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `f(x ${right < 0 ? "-" : "+"} ${Math.abs(right)}) ${up < 0 ? "-" : "+"} ${Math.abs(up)}`,
+          `f(x ${right < 0 ? "+" : "-"} ${Math.abs(right)}) ${up < 0 ? "+" : "-"} ${Math.abs(up)}`,
+          `${up}f(x ${right < 0 ? "+" : "-"} ${Math.abs(right)})`
+        ], rng);
+        return {
+          prompt: `If f(x) = ${baseLabel}, which equation shifts the graph right ${right} units and up ${up} units?`,
+          options,
+          answerIndex,
+          explanation: `Shifting right subtracts inside the function, and shifting up adds outside the function. The new equation is y = ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const point = [number(-4, 4, rng), number(-4, 4, rng)];
+        const transform = pick(["reflect over the x-axis", "reflect over the y-axis", "stretch vertically by 2"], rng);
+        let correct;
+        if (transform === "reflect over the x-axis") {
+          correct = `(${point[0]}, ${-point[1]})`;
+        } else if (transform === "reflect over the y-axis") {
+          correct = `(${-point[0]}, ${point[1]})`;
+        } else {
+          correct = `(${point[0]}, ${point[1] * 2})`;
+        }
+        const { options, answerIndex } = buildOptions(correct, [
+          `(${point[0]}, ${point[1]})`,
+          `(${-point[0]}, ${-point[1]})`,
+          `(${point[1]}, ${point[0]})`
+        ], rng);
+        return {
+          prompt: `The point (${point[0]}, ${point[1]}) is on the graph of y = f(x). After the transformation "${transform}", what is the image point?`,
+          options,
+          answerIndex,
+          explanation: `Reflecting over the x-axis negates y, reflecting over the y-axis negates x, and a vertical stretch by 2 multiplies y by 2. The image is ${correct}.`
+        };
+      }
+
+      const before = "y = f(x)";
+      const transformType = pick([
+        { after: "y = f(x) + 3", correct: "Vertical shift up 3" },
+        { after: "y = f(x) - 4", correct: "Vertical shift down 4" },
+        { after: "y = f(x - 2)", correct: "Horizontal shift right 2" },
+        { after: "y = f(x + 5)", correct: "Horizontal shift left 5" },
+        { after: "y = -f(x)", correct: "Reflection over the x-axis" },
+        { after: "y = f(-x)", correct: "Reflection over the y-axis" }
+      ], rng);
+      const allLabels = ["Vertical shift up 3", "Vertical shift down 4", "Horizontal shift right 2", "Horizontal shift left 5", "Reflection over the x-axis", "Reflection over the y-axis"];
+      const { options, answerIndex } = buildOptions(transformType.correct, allLabels.filter((item) => item !== transformType.correct).slice(0, 3), rng);
+      return {
+        prompt: `Starting from ${before}, the equation becomes ${transformType.after}. What transformation was applied?`,
+        options,
+        answerIndex,
+        explanation: `Compare the two equations. ${transformType.after} matches the pattern for: ${transformType.correct}.`
+      };
+    }
+
     if (index % 3 === 0) {
-      const a = pick([1, 2, 3], rng);
+      const a = number(1, difficultyStep(3, difficulty, 6), rng);
       const b = pick([1, 2, 4], rng);
-      const c = number(-3, 3, rng);
-      const d = number(-2, 5, rng);
+      const c = number(-difficultyStep(3, difficulty, 8), difficultyStep(3, difficulty, 8), rng);
+      const d = number(-2, difficultyStep(5, difficulty, 10), rng);
       const correct = `${a * b}x ${((a * c) + d) < 0 ? "-" : "+"} ${Math.abs((a * c) + d)}`;
       const { options, answerIndex } = buildOptions(correct, [
         `${a + b}x + ${c + d}`,
@@ -8647,8 +11237,8 @@ const questionFactories = {
 
     if (index % 3 === 1) {
       const a = pick([2, 3, 4, 5], rng);
-      const b = number(-6, 6, rng);
-      const xValue = number(-2, 4, rng);
+      const b = number(-difficultyStep(4, difficulty, 10), difficultyStep(4, difficulty, 10), rng);
+      const xValue = number(-2, difficultyStep(4, difficulty, 8), rng);
       const correct = (xValue - b) / a;
       const { options, answerIndex } = buildOptions(correct, [
         correct + 1,
@@ -8682,28 +11272,55 @@ const questionFactories = {
 
   trigonometry(rng, grade, config, index, difficulty) {
     if (config.level <= 10) {
-      const angle = pick(difficulty <= 5 ? [30, 45, 60] : [0, 30, 45, 60, 90], rng);
-      const sinMap = {
-        0: "0",
-        30: "1/2",
-        45: "sqrt(2)/2",
-        60: "sqrt(3)/2",
-        90: "1"
-      };
-      const correct = sinMap[angle];
-      const distractorPool = ["0", "1", "1/2", "sqrt(2)/2", "sqrt(3)/2"];
+      const angleSet = [0, 30, 45, 60, 90];
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const angle = angleSet[Math.floor(index / 3) % angleSet.length];
+        const sinMap = { 0: "0", 30: "1/2", 45: "sqrt(2)/2", 60: "sqrt(3)/2", 90: "1" };
+        const correct = sinMap[angle];
+        const distractorPool = ["0", "1", "1/2", "sqrt(2)/2", "sqrt(3)/2"];
+        const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+        return {
+          prompt: `What is sin(${angle} degrees)?`,
+          options,
+          answerIndex,
+          explanation: `Using special triangles, sin(${angle} degrees) = ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const angle = angleSet[Math.floor(index / 3) % angleSet.length];
+        const cosMap = { 0: "1", 30: "sqrt(3)/2", 45: "sqrt(2)/2", 60: "1/2", 90: "0" };
+        const correct = cosMap[angle];
+        const distractorPool = ["0", "1", "1/2", "sqrt(2)/2", "sqrt(3)/2"];
+        const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+        return {
+          prompt: `What is cos(${angle} degrees)?`,
+          options,
+          answerIndex,
+          explanation: `Using special triangles, cos(${angle} degrees) = ${correct}.`
+        };
+      }
+
+      const tanAngleSet = [0, 30, 45, 60];
+      const angle = tanAngleSet[Math.floor(index / 3) % tanAngleSet.length];
+      const tanMap = { 0: "0", 30: "sqrt(3)/3", 45: "1", 60: "sqrt(3)" };
+      const correct = tanMap[angle];
+      const distractorPool = ["0", "1", "sqrt(3)", "sqrt(3)/3", "1/2"];
       const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
       return {
-        prompt: `What is sin(${angle} degrees)?`,
+        prompt: `What is tan(${angle} degrees)?`,
         options,
         answerIndex,
-        explanation: `Using special triangles, sin(${angle} degrees) = ${correct}.`
+        explanation: `Using special triangles, tan(${angle} degrees) = sin/cos = ${correct}.`
       };
     }
 
     if (config.level < 12) {
       if (index % 3 === 0) {
-        const angle = pick([120, 135, 150, 210, 225, 240, 300, 315, 330], rng);
+        const wideSinAngles = [120, 135, 150, 210, 225, 240, 300, 315, 330];
+        const angle = wideSinAngles[Math.floor(index / 3) % wideSinAngles.length];
         const sinMap = {
           120: "sqrt(3)/2",
           135: "sqrt(2)/2",
@@ -8727,7 +11344,8 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const degree = pick([30, 45, 60, 90, 120, 135, 150, 180], rng);
+        const degreePool = [30, 45, 60, 90, 120, 135, 150, 180];
+        const degree = degreePool[Math.floor(index / 3) % degreePool.length];
         const radianMap = {
           30: "pi/6",
           45: "pi/4",
@@ -8748,24 +11366,46 @@ const questionFactories = {
         };
       }
 
-      const value = pick([30, 45, 60], rng);
-      const second = 180 - value;
+      const solveOccurrence = Math.floor(index / 3);
+      const solveMode = ["sinPositive", "cosPositive"][solveOccurrence % 2];
+      const value = [30, 45, 60][solveOccurrence % 3];
+      const sinVal = value === 30 ? "1/2" : value === 45 ? "sqrt(2)/2" : "sqrt(3)/2";
+      const cosVal = value === 30 ? "sqrt(3)/2" : value === 45 ? "sqrt(2)/2" : "1/2";
+
+      if (solveMode === "sinPositive") {
+        const second = 180 - value;
+        const correct = `${value} degrees and ${second} degrees`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${value} degrees only`,
+          `${second} degrees only`,
+          `${180 + value} degrees and ${360 - value} degrees`
+        ], rng);
+        return {
+          prompt: `On 0 degrees to 360 degrees, solve sin(x) = ${sinVal}.`,
+          options,
+          answerIndex,
+          explanation: `Sine is positive in Quadrants I and II. The solutions are ${value} degrees and ${second} degrees.`
+        };
+      }
+
+      const second = 360 - value;
       const correct = `${value} degrees and ${second} degrees`;
       const { options, answerIndex } = buildOptions(correct, [
         `${value} degrees only`,
         `${second} degrees only`,
-        `${180 + value} degrees and ${360 - value} degrees`
+        `${180 - value} degrees and ${180 + value} degrees`
       ], rng);
       return {
-        prompt: `On 0 degrees to 360 degrees, solve sin(x) = ${value === 30 ? "1/2" : value === 45 ? "sqrt(2)/2" : "sqrt(3)/2"}.`,
+        prompt: `On 0 degrees to 360 degrees, solve cos(x) = ${cosVal}.`,
         options,
         answerIndex,
-        explanation: `Sine is positive in Quadrants I and II. The solutions are ${value} degrees and ${second} degrees.`
+        explanation: `Cosine is positive in Quadrants I and IV. The solutions are ${value} degrees and ${second} degrees.`
       };
     }
 
     if (index % 3 === 0) {
-      const angle = pick([0, 30, 45, 60, 90, 120, 135, 150, 180], rng);
+      const wideCosAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180];
+      const angle = wideCosAngles[Math.floor(index / 3) % wideCosAngles.length];
       const cosMap = {
         0: "1",
         30: "sqrt(3)/2",
@@ -8789,9 +11429,15 @@ const questionFactories = {
     }
 
     if (index % 3 === 1) {
-      const angle = pick([30, 45, 60], rng);
-      const correct = angle === 30 ? "1/sqrt(3)" : angle === 45 ? "1" : "sqrt(3)";
-      const { options, answerIndex } = buildOptions(correct, ["1/sqrt(3)", "1", "sqrt(3)", "0"].filter((item) => item !== correct).slice(0, 3), rng);
+      const tanMap = {
+        0: "0", 30: "1/sqrt(3)", 45: "1", 60: "sqrt(3)",
+        120: "-sqrt(3)", 135: "-1", 150: "-1/sqrt(3)", 180: "0"
+      };
+      const wideTanAngles = [0, 30, 45, 60, 120, 135, 150, 180];
+      const angle = wideTanAngles[Math.floor(index / 3) % wideTanAngles.length];
+      const correct = tanMap[angle];
+      const distractorPool = ["0", "1", "-1", "sqrt(3)", "-sqrt(3)", "1/sqrt(3)", "-1/sqrt(3)"];
+      const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
       return {
         prompt: `What is tan(${angle} degrees)?`,
         options,
@@ -8800,19 +11446,130 @@ const questionFactories = {
       };
     }
 
-    const correct = "sin(x) / cos(x)";
-    const { options, answerIndex } = buildOptions(correct, ["cos(x) / sin(x)", "1 / cos(x)", "1 / sin(x)"], rng);
+    const identityQuestions = [
+      {
+        prompt: `Which identity is equal to tan(x)?`,
+        correct: "sin(x) / cos(x)",
+        distractors: ["cos(x) / sin(x)", "1 / cos(x)", "1 / sin(x)"],
+        explanation: `The quotient identity says tan(x) = sin(x) / cos(x).`
+      },
+      {
+        prompt: `Which identity always equals 1, for any angle x?`,
+        correct: "sin^2(x) + cos^2(x)",
+        distractors: ["sin(x) + cos(x)", "sin(x) - cos(x)", "tan(x) + 1"],
+        explanation: `The Pythagorean identity states sin^2(x) + cos^2(x) = 1 for every angle x.`
+      },
+      {
+        prompt: `Which expression is the reciprocal identity for sec(x)?`,
+        correct: "1 / cos(x)",
+        distractors: ["1 / sin(x)", "sin(x) / cos(x)", "cos(x) / sin(x)"],
+        explanation: `Secant is defined as the reciprocal of cosine, so sec(x) = 1 / cos(x).`
+      },
+      {
+        prompt: `Which expression is the reciprocal identity for csc(x)?`,
+        correct: "1 / sin(x)",
+        distractors: ["1 / cos(x)", "sin(x) / cos(x)", "cos(x) / sin(x)"],
+        explanation: `Cosecant is defined as the reciprocal of sine, so csc(x) = 1 / sin(x).`
+      },
+      {
+        prompt: `Which identity is equal to cot(x)?`,
+        correct: "cos(x) / sin(x)",
+        distractors: ["sin(x) / cos(x)", "1 / cos(x)", "1 / sin(x)"],
+        explanation: `Cotangent is the reciprocal of tangent, so cot(x) = cos(x) / sin(x).`
+      }
+    ];
+    const chosen = identityQuestions[Math.floor(index / 3) % identityQuestions.length];
+    const { options, answerIndex } = buildOptions(chosen.correct, chosen.distractors, rng);
     return {
-      prompt: `Which identity is equal to tan(x)?`,
+      prompt: chosen.prompt,
       options,
       answerIndex,
-      explanation: `The quotient identity says tan(x) = sin(x) / cos(x).`
+      explanation: chosen.explanation
     };
   },
 
   calculus(rng, grade, config, index, difficulty) {
-    const coefficient = number(2, difficultyStep(3, difficulty, 12), rng);
-    const power = number(2, difficulty <= 5 ? 4 : 6, rng);
+    if (config.skill === "derivativeApplications") {
+      const mode = index % 3;
+
+      if (mode === 0) {
+        const a = number(1, difficultyStep(3, difficulty, 14), rng);
+        const b = number(1, difficultyStep(4, difficulty, 16), rng);
+        const t = number(1, difficultyStep(2, difficulty, 8), rng);
+        const correct = (2 * a * t) + b;
+        const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, (a * t * t) + (b * t)], rng);
+        return {
+          prompt: `An object's position is s(t) = ${a}t^2 + ${b}t. What is its velocity (ds/dt) when t = ${t}?`,
+          options,
+          answerIndex,
+          explanation: `Velocity is the derivative of position: s'(t) = ${2 * a}t + ${b}. At t = ${t}, s'(${t}) = ${2 * a}(${t}) + ${b} = ${correct}.`
+        };
+      }
+
+      if (mode === 1) {
+        const coefficient = number(2, difficultyStep(3, difficulty, 10), rng);
+        const power = number(2, difficulty <= 3 ? 3 : 5, rng);
+        const x = number(1, difficultyStep(2, difficulty, 5), rng);
+        const derivativeCoefficient = coefficient * power;
+        const correct = derivativeCoefficient * (x ** (power - 1));
+        const { options, answerIndex } = buildOptions(correct, [correct + derivativeCoefficient, correct - derivativeCoefficient, coefficient * (x ** power)], rng);
+        return {
+          prompt: `For f(x) = ${coefficient}x^${power}, what is the slope of the tangent line at x = ${x}?`,
+          options,
+          answerIndex,
+          explanation: `First find f'(x) = ${derivativeCoefficient}x^${power - 1} using the power rule. Then substitute x = ${x}: f'(${x}) = ${correct}.`
+        };
+      }
+
+      const a = number(2, difficultyStep(3, difficulty, 8), rng);
+      const b = number(1, difficultyStep(4, difficulty, 10), rng);
+      const c = number(1, 10, rng);
+      const correct = (2 * a) + b;
+      const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, a + b], rng);
+      return {
+        prompt: `A cost function is C(x) = ${a}x^2 + ${b}x + ${c}. What is the marginal cost (C'(x)) when x = 1?`,
+        options,
+        answerIndex,
+        explanation: `Marginal cost is the derivative: C'(x) = ${2 * a}x + ${b}. At x = 1, C'(1) = ${2 * a}(1) + ${b} = ${correct}.`
+      };
+    }
+
+    const mode = index % 3;
+
+    if (mode === 1) {
+      const a = number(1, difficultyStep(3, difficulty, 10), rng);
+      const target = number(-3, 3, rng);
+      const b = number(-5, 5, rng);
+      const correct = (a * target) + b;
+      const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, a + b], rng);
+      return {
+        prompt: `What is the limit as x approaches ${target} of ${a}x ${b < 0 ? "-" : "+"} ${Math.abs(b)}?`,
+        options,
+        answerIndex,
+        explanation: `Because this function is continuous, substitute directly: ${a}(${target}) ${b < 0 ? "-" : "+"} ${Math.abs(b)} = ${correct}.`
+      };
+    }
+
+    if (mode === 2) {
+      const coefA = number(1, difficultyStep(3, difficulty, 12), rng);
+      const powerA = number(2, difficulty <= 3 ? 3 : 5, rng);
+      const coefB = number(1, difficultyStep(3, difficulty, 12), rng);
+      const correct = `${coefA * powerA}x^${powerA - 1} + ${coefB}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${coefA * powerA}x^${powerA} + ${coefB}`,
+        `${coefA}x^${powerA - 1} + ${coefB}`,
+        `${coefA * powerA}x^${powerA - 1}`
+      ], rng);
+      return {
+        prompt: `What is the derivative of ${coefA}x^${powerA} + ${coefB}x?`,
+        options,
+        answerIndex,
+        explanation: `Differentiate each term with the power rule: d/dx(${coefA}x^${powerA}) = ${coefA * powerA}x^${powerA - 1}, and d/dx(${coefB}x) = ${coefB}. So the derivative is ${correct}.`
+      };
+    }
+
+    const coefficient = number(2, difficultyStep(3, difficulty, 16), rng);
+    const power = number(2, difficulty <= 3 ? 4 : 7, rng);
     const correct = `${coefficient * power}x^${power - 1}`;
     const { options, answerIndex } = buildOptions(correct, [
       `${coefficient + power}x^${power - 1}`,
@@ -8830,9 +11587,9 @@ const questionFactories = {
   financialMath(rng, grade, config, index, difficulty) {
     if (config.level >= 12) {
       if (index % 3 === 0) {
-        const principal = number(500, 4000, rng);
-        const rate = pick([3, 4, 5, 6, 7], rng);
-        const years = number(2, 6, rng);
+        const principal = number(500, difficultyStep(1500, difficulty, 6000), rng);
+        const rate = pick(difficulty <= 3 ? [3, 4, 5, 6, 7] : [3, 4, 5, 6, 7, 8, 9, 10], rng);
+        const years = number(2, difficultyStep(4, difficulty, 10), rng);
         const correct = (principal * ((1 + rate / 100) ** years)).toFixed(2);
         const { options, answerIndex } = buildOptions(correct, [
           (principal * (1 + (rate / 100) * years)).toFixed(2),
@@ -8848,8 +11605,8 @@ const questionFactories = {
       }
 
       if (index % 3 === 1) {
-        const payment = number(100, 500, rng);
-        const months = pick([12, 24, 36], rng);
+        const payment = number(100, difficultyStep(250, difficulty, 800), rng);
+        const months = pick(difficulty <= 3 ? [12, 24, 36] : [12, 24, 36, 48, 60], rng);
         const correct = payment * months;
         const { options, answerIndex } = buildOptions(correct, [
           correct + payment,
@@ -8864,9 +11621,9 @@ const questionFactories = {
         };
       }
 
-      const currentValue = number(800, 5000, rng);
-      const growthRate = pick([2, 3, 4, 5], rng);
-      const years = number(2, 5, rng);
+      const currentValue = number(800, difficultyStep(2000, difficulty, 8000), rng);
+      const growthRate = pick(difficulty <= 3 ? [2, 3, 4, 5] : [2, 3, 4, 5, 6, 7, 8], rng);
+      const years = number(2, difficultyStep(3, difficulty, 8), rng);
       const correct = (currentValue * ((1 + growthRate / 100) ** years)).toFixed(2);
       const { options, answerIndex } = buildOptions(correct, [
         (currentValue * (1 + (growthRate / 100) * years)).toFixed(2),
@@ -8882,8 +11639,8 @@ const questionFactories = {
     }
 
     if (index % 2 === 0) {
-      const price = number(20, difficultyStep(40, difficulty, 600), rng);
-      const discount = pick(difficulty <= 5 ? [5, 10, 15, 20, 25] : [5, 10, 12, 15, 18, 20, 25, 30, 35], rng);
+      const price = number(20, difficultyStep(40, difficulty, 850), rng);
+      const discount = pick(difficulty <= 3 ? [5, 10, 15, 20, 25] : [5, 10, 12, 15, 18, 20, 25, 30, 35], rng);
       const correct = (price * (1 - discount / 100)).toFixed(2);
       const { options, answerIndex } = buildOptions(correct, [
         (price * (discount / 100)).toFixed(2),
@@ -8898,8 +11655,8 @@ const questionFactories = {
       };
     }
 
-    const principal = number(100, difficultyStep(150, difficulty, 5000), rng);
-    const rate = pick(difficulty <= 5 ? [2, 3, 4, 5, 6] : [2.5, 3, 4.5, 5, 6.5, 8], rng);
+    const principal = number(100, difficultyStep(150, difficulty, 7000), rng);
+    const rate = pick(difficulty <= 3 ? [2, 3, 4, 5, 6] : [2.5, 3, 4.5, 5, 6.5, 8], rng);
     const correct = (principal * rate / 100).toFixed(2);
     const { options, answerIndex } = buildOptions(correct, [
       (principal + principal * rate / 100).toFixed(2),
@@ -8918,9 +11675,9 @@ const questionFactories = {
     const tabId = config.patTabId || "probability-basics";
     const groupsByTab = {
       "probability-basics": [
-        probabilityMasteryGenerators.basics.slice(0, 2),
-        probabilityMasteryGenerators.basics.slice(2, 4),
-        probabilityMasteryGenerators.basics.slice(4)
+        probabilityMasteryGenerators.basics.slice(0, 3),
+        probabilityMasteryGenerators.basics.slice(3, 5),
+        probabilityMasteryGenerators.basics.slice(5)
       ],
       "organize-outcomes": [
         probabilityMasteryGenerators.organize.slice(0, 2),
@@ -8967,7 +11724,7 @@ const questionFactories = {
   englishGrammar(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.grammar[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 15);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -8982,7 +11739,7 @@ const questionFactories = {
   englishReading(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.reading[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 8);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 15);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -8997,7 +11754,7 @@ const questionFactories = {
   englishVocabulary(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishSkillPools.vocabulary[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 15);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -9012,7 +11769,7 @@ const questionFactories = {
   englishWriting(rng, grade, config, index, difficulty) {
     const band = englishBand(grade);
     const pool = englishWritingPools[band];
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 10);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 15);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -9062,7 +11819,7 @@ const questionFactories = {
       : config.patTabId === "informational"
         ? englishPatPartBInformationalPool
         : englishPatPartBLiteraryPool;
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 15);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {
@@ -9082,7 +11839,7 @@ const questionFactories = {
         : config.patTabId === "informational"
           ? englishPatGrade6PartBInformationalPool
           : englishPatGrade6PartBStoryPool;
-    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 6);
+    const item = chooseFromProgressivePool(pool, rng, difficulty, index, 15);
     const { options, answerIndex } = buildOptions(item.correct, item.distractors, rng);
 
     return {

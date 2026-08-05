@@ -1,12 +1,19 @@
-const CACHE_NAME = "grammar-maths-mastery-hub-v2";
+const CACHE_NAME = "grammar-maths-mastery-hub-v12";
 const APP_ASSETS = [
   "./",
   "./index.html",
+  "./app.html",
   "./styles.css",
   "./app.js",
+  "./auth.js",
+  "./avatar-library.js",
   "./manifest.webmanifest",
   "./icon-192.svg",
-  "./icon-512.svg"
+  "./icon-512.svg",
+  "./avatars/blue-bear.svg",
+  "./avatars/green-rocket.svg",
+  "./avatars/orange-star.svg",
+  "./avatars/purple-book.svg"
 ];
 
 self.addEventListener("install", (event) => {
@@ -18,13 +25,19 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+      await self.clients.claim();
+
+      // A newer version of the app just took over. Tell every open window/tab (including
+      // installed home-screen apps, which are otherwise easy to get stuck on a stale version)
+      // to reload itself so people actually see the update instead of sitting on old cached
+      // content indefinitely.
+      const allClients = await self.clients.matchAll({ type: "window" });
+      allClients.forEach((client) => client.postMessage({ type: "MASTERY_HUB_RELOAD" }));
+    })()
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {

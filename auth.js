@@ -2,6 +2,7 @@
   const SUPABASE_URL = window.SUPABASE_URL || "";
   const SUPABASE_KEY = window.SUPABASE_KEY || "";
   const learnerSessionKey = "maths-mastery-learner-session-v1";
+  const profilesStoreKey = "maths-mastery-profiles-v1";
   const supabaseClient =
     SUPABASE_URL && SUPABASE_KEY && window.supabase?.createClient
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -46,16 +47,57 @@
     return new URL(fileName, configuredBase || window.location.href).href;
   }
 
+  // index.html is now the login page (the default/landing page for the site) and app.html is
+  // the practice app. login.html still exists as a working alias for old links/bookmarks, but
+  // index.html is the canonical one going forward.
   function goToLogin() {
-    window.location.href = buildUrl("login.html");
+    window.location.href = buildUrl("index.html");
   }
 
   function goToApp() {
-    window.location.href = buildUrl("index.html");
+    window.location.href = buildUrl("app.html");
   }
 
   function goToLearnerLogin() {
     window.location.href = buildUrl("learner-login.html");
+  }
+
+  function getStoredCurrentProfileId() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(profilesStoreKey) || "null");
+      return stored?.currentProfileId || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function hasLearnerSession() {
+    try {
+      return Boolean(JSON.parse(localStorage.getItem(learnerSessionKey) || "null"));
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function hasLocalAccessSession() {
+    return Boolean(getStoredCurrentProfileId() || hasLearnerSession());
+  }
+
+  // Must match sanitizeUsername/deriveChildEmailFromUsername/CHILD_LOGIN_EMAIL_DOMAIN in app.js
+  // exactly, so a username typed here resolves to the same hidden email the parent's account
+  // creation flow generated.
+  const CHILD_LOGIN_EMAIL_DOMAIN = "childlogin.mathshub.internal";
+
+  function sanitizeUsername(rawUsername) {
+    return String(rawUsername || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_.-]/g, "");
+  }
+
+  function deriveChildEmailFromUsername(rawUsername) {
+    const clean = sanitizeUsername(rawUsername);
+    return clean ? `${clean}@${CHILD_LOGIN_EMAIL_DOMAIN}` : "";
   }
 
   function setText(id, value) {
@@ -79,79 +121,40 @@
   function updateRoleMode() {
     const role = getSelectedRole();
     const learnerMode = role === "learner";
-    setHidden("auth-email-label", false);
-    setHidden("auth-grade-label", !learnerMode);
-    setHidden("forgotPasswordButton", false);
+
     setHidden("parent-flow-note", learnerMode);
     setHidden("learner-flow-note", !learnerMode);
 
-    const help = document.getElementById("auth-role-help");
-    if (help) {
-      help.textContent = learnerMode
-        ? "Learners sign in with their own email and password. A parent can link the learner account and still view performance."
-        : "Parents sign in with email and password, then link and manage children inside the dashboard.";
-    }
-
+    const emailLabel = document.getElementById("auth-email-label");
+    const emailInput = document.getElementById("authEmail");
     const signupButton = document.getElementById("signupButton");
     const loginButton = document.getElementById("loginButton");
-    const emailInput = document.getElementById("authEmail");
 
+    if (emailLabel) {
+      const labelText = emailLabel.firstChild;
+      if (labelText && labelText.nodeType === Node.TEXT_NODE) {
+        labelText.textContent = learnerMode ? "Username" : "Email";
+      }
+    }
+    if (emailInput) {
+      emailInput.placeholder = learnerMode ? "Enter your username" : "Enter your email";
+      emailInput.autocomplete = learnerMode ? "off" : "email";
+      emailInput.disabled = false;
+    }
     if (signupButton) {
+      signupButton.classList.toggle("hidden", learnerMode);
       signupButton.disabled = false;
       signupButton.textContent = "Sign Up";
     }
     if (loginButton) {
       loginButton.textContent = "Log In";
     }
-    if (emailInput) {
-      emailInput.disabled = false;
-    }
   }
 
-  function updateAppHeader(session) {
-    const user = session?.user;
-    const metadata = user?.user_metadata || {};
-    const displayName = metadata.user_name || user?.email || "Learner";
-    const role = metadata.account_type === "parent" ? "Parent account" : "Learner account";
-
-    setText("auth-account-name", displayName);
-    setText("auth-account-meta", user ? role : "Open login to continue");
-    setHidden("open-login-link", Boolean(user));
-    setHidden("open-account-tools-button", !user);
-    setHidden("logout-auth-button", !user);
-  }
-
-  function updateLearnerHeaderFromSession() {
-    try {
-      const learnerSession = JSON.parse(localStorage.getItem(learnerSessionKey) || "null");
-      if (!learnerSession) {
-        return false;
-      }
-
-      setText("auth-account-name", learnerSession.childName || "Learner");
-      setText("auth-account-meta", "Learner account");
-      setHidden("open-login-link", true);
-      setHidden("open-account-tools-button", true);
-      setHidden("logout-auth-button", false);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  function bindAppButtons() {
-    const logoutButton = document.getElementById("logout-auth-button");
-    if (logoutButton) {
-      logoutButton.addEventListener("click", async () => {
-        if (authEnabled()) {
-          await supabaseClient.auth.signOut({ scope: "local" });
-        }
-        localStorage.removeItem(learnerSessionKey);
-        window.masteryApp?.clearLearnerSession?.();
-        goToLogin();
-      });
-    }
-  }
+  // Header rendering and the "Log Out" button are owned entirely by app.js on index.html (see
+  // the comment on handleAppPage below) — there used to be duplicate versions of both here,
+  // which raced against app.js and caused real bugs. Removed rather than left unused, so no one
+  // accidentally wires them back up later.
 
   function setAuthMessage(text) {
     const message = document.getElementById("authMessage");
@@ -179,11 +182,14 @@
   }
 
   async function signUpUser() {
+    if (getSelectedRole() === "learner") {
+      setAuthMessage("Learners don't sign up here. Ask your parent to create your login from their dashboard.");
+      return;
+    }
+
     const name = document.getElementById("authName")?.value.trim();
     const email = document.getElementById("authEmail")?.value.trim();
     const password = document.getElementById("authPassword")?.value;
-    const role = document.getElementById("authRole")?.value || "learner";
-    const grade = role === "learner" ? Number(document.getElementById("authGrade")?.value || 1) : null;
 
     setAuthMessage("");
     if (!authEnabled()) {
@@ -201,8 +207,7 @@
       options: {
         data: {
           user_name: name || "",
-          account_type: role,
-          grade
+          account_type: "parent"
         },
         emailRedirectTo: buildUrl("index.html")
       }
@@ -213,7 +218,7 @@
 
   async function loginUser() {
     const role = getSelectedRole();
-    const email = document.getElementById("authEmail")?.value.trim();
+    const rawLogin = document.getElementById("authEmail")?.value.trim() || "";
     const password = document.getElementById("authPassword")?.value;
 
     setAuthMessage("");
@@ -221,15 +226,33 @@
       setAuthMessage("Paste your Supabase URL and key into supabase-config.js first.");
       return;
     }
-    if (!email || !password) {
-      setAuthMessage("Please enter email and password.");
+    if (!rawLogin || !password) {
+      setAuthMessage(role === "learner" ? "Enter your username and password." : "Please enter email and password.");
       return;
     }
 
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      setAuthMessage(`Login error: ${error.message}`);
+    const email = role === "learner" ? deriveChildEmailFromUsername(rawLogin) : rawLogin;
+    if (!email) {
+      setAuthMessage(role === "learner" ? "Enter a valid username." : "Enter a valid email.");
       return;
+    }
+
+    const { data: signInData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      setAuthMessage(
+        role === "learner"
+          ? `Login error: ${error.message}. Double-check your username with your parent.`
+          : `Login error: ${error.message}`
+      );
+      return;
+    }
+
+    // Self-heal accounts created by an earlier, buggier sign-up flow that could stamp the
+    // wrong account_type into Supabase's stored user metadata. That metadata sticks forever
+    // once set, so if someone explicitly signs in through the Parent flow, make sure their
+    // account is actually labeled "parent" going forward.
+    if (role === "parent" && signInData?.user?.user_metadata?.account_type !== "parent") {
+      await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
     }
 
     setAuthMessage("Login successful. Opening app...");
@@ -238,14 +261,18 @@
 
   async function sendPasswordReset() {
     const role = getSelectedRole();
-    const email = document.getElementById("authEmail")?.value.trim();
+    const rawLogin = document.getElementById("authEmail")?.value.trim() || "";
     setAuthMessage("");
 
     if (!authEnabled()) {
       setAuthMessage("Paste your Supabase URL and key into supabase-config.js first.");
       return;
     }
-    if (!email) {
+    if (role === "learner") {
+      setAuthMessage("Username logins don't have an email on file. Ask your parent to reset your password from their dashboard.");
+      return;
+    }
+    if (!rawLogin) {
       setAuthMessage("Enter your email first, then use Forgot password.");
       return;
     }
@@ -254,8 +281,8 @@
       return;
     }
 
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: buildUrl("login.html")
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(rawLogin, {
+      redirectTo: buildUrl("index.html")
     });
     setAuthMessage(error ? `Reset error: ${error.message}` : "Password reset email sent. Open the email and return here.");
   }
@@ -288,37 +315,40 @@
     window.setTimeout(goToApp, 600);
   }
 
+  // app.html is protected: if there is no active Supabase session and no locally signed-in
+  // learner/parent profile on this device, send the visitor to the login page first.
+  // app.js still owns the header/account rendering after access is granted.
   async function handleAppPage() {
-    updateAppHeader(null);
-    bindAppButtons();
-
     if (!authEnabled()) {
-      return;
-    }
-
-    const { data } = await supabaseClient.auth.getSession();
-    const session = data?.session || null;
-    if (!session) {
-      goToLogin();
-      return;
-    }
-
-    updateAppHeader(session);
-    const applySession = () => window.masteryApp?.applySupabaseSessionToLocalProfile?.(session);
-    if (window.masteryApp?.applySupabaseSessionToLocalProfile) {
-      applySession();
-    } else {
-      window.addEventListener("mastery-app-ready", applySession, { once: true });
-    }
-
-    supabaseClient.auth.onAuthStateChange((event, nextSession) => {
-      if (!nextSession) {
+      if (!hasLocalAccessSession()) {
         goToLogin();
+      }
+      return;
+    }
+
+    try {
+      const { data } = await supabaseClient.auth.getSession();
+      const session = data?.session || null;
+      if (!session) {
+        if (!hasLocalAccessSession()) {
+          goToLogin();
+        }
         return;
       }
-      updateAppHeader(nextSession);
-      window.masteryApp?.applySupabaseSessionToLocalProfile?.(nextSession);
-    });
+
+      const applySession = () => window.masteryApp?.applySupabaseSessionToLocalProfile?.(session);
+      if (window.masteryApp?.applySupabaseSessionToLocalProfile) {
+        applySession();
+      } else {
+        window.addEventListener("mastery-app-ready", applySession, { once: true });
+      }
+
+      supabaseClient.auth.onAuthStateChange((event, nextSession) => {
+        window.masteryApp?.applySupabaseSessionToLocalProfile?.(nextSession);
+      });
+    } catch (error) {
+      console.error("Session check failed", error);
+    }
   }
 
   async function handleLoginPage() {
@@ -327,13 +357,25 @@
       return;
     }
 
+    const requestedRole = new URLSearchParams(window.location.search).get("role");
     const { data } = await supabaseClient.auth.getSession();
     if (data?.session && !inRecoveryMode()) {
-      goToApp();
-      return;
+      if (requestedRole === "learner") {
+        // Someone is already signed in on this browser (likely the parent) but explicitly
+        // asked to switch to a learner login. Sign out of that session first instead of
+        // silently bouncing back to the app, so the login form actually shows up.
+        await supabaseClient.auth.signOut({ scope: "local" });
+      } else {
+        setAuthMessage("You are already signed in. Use Log In with another account, or open the app when you are ready.");
+      }
     }
 
     setRecoveryMode(inRecoveryMode());
+
+    const authRoleSelect = document.getElementById("authRole");
+    if (authRoleSelect && requestedRole === "learner") {
+      authRoleSelect.value = "learner";
+    }
     updateRoleMode();
 
     document.getElementById("signupButton")?.addEventListener("click", signUpUser);
@@ -350,16 +392,18 @@
     document.getElementById("updatePasswordForm")?.addEventListener("submit", updatePassword);
     document.getElementById("backToLoginButton")?.addEventListener("click", () => {
       setRecoveryMode(false);
-      history.replaceState({}, document.title, buildUrl("login.html"));
+      history.replaceState({}, document.title, buildUrl("index.html"));
     });
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
     const page = getPageName();
-    if (page === "login.html") {
-      await handleLoginPage();
+    // app.html is the practice app; everything else that loads auth.js (index.html — the
+    // default/landing page — plus the legacy login.html alias) is treated as the login page.
+    if (page === "app.html") {
+      await handleAppPage();
       return;
     }
-    await handleAppPage();
+    await handleLoginPage();
   });
 })();

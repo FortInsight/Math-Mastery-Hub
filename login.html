@@ -5,11 +5,11 @@
   <script src="supabase-config.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | Alberta Curriculum Grammar & Maths Mastery Hub</title>
+  <title>Login | Grammar & Maths Mastery Hub</title>
   <meta name="theme-color" content="#12386f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Alberta Curriculum Hub" />
+  <meta name="apple-mobile-web-app-title" content="Mastery Hub" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon-192.svg" />
@@ -22,13 +22,13 @@
   <div class="auth-shell">
     <section class="hero auth-card">
       <div class="auth-copy">
-        <p class="eyebrow">Alberta Curriculum Learning Hub</p>
+        <p class="eyebrow">Grammar & Maths Learning Hub</p>
         <h1>Sign in to open the learning hub.</h1>
         <p class="hero-text">
           Parents sign in with email and password. After login, parents can add children inside the dashboard and track each child's progress separately.
         </p>
         <p class="hero-text" id="auth-role-help">
-          Learners can also sign in with their own email and password. Parents can link learner accounts in the dashboard and view their progress.
+          Parents sign in with email and password. Learners sign in with just the username and password their parent set up for them &mdash; no email, no grade, no sign up.
         </p>
       </div>
 
@@ -41,26 +41,9 @@
               <option value="learner">Learner account</option>
             </select>
           </label>
-          <label id="auth-grade-label" class="hidden">
-            Grade
-            <select id="authGrade">
-              <option value="1">Grade 1</option>
-              <option value="2">Grade 2</option>
-              <option value="3">Grade 3</option>
-              <option value="4">Grade 4</option>
-              <option value="5">Grade 5</option>
-              <option value="6">Grade 6</option>
-              <option value="7">Grade 7</option>
-              <option value="8">Grade 8</option>
-              <option value="9">Grade 9</option>
-              <option value="10">Grade 10</option>
-              <option value="11">Grade 11</option>
-              <option value="12">Grade 12</option>
-            </select>
-          </label>
           <label id="auth-email-label">
             Email
-            <input type="email" id="authEmail" placeholder="Enter your email" autocomplete="email" />
+            <input type="text" id="authEmail" placeholder="Enter your email" autocomplete="email" />
           </label>
           <label>
             Password
@@ -69,18 +52,17 @@
         </div>
 
         <p class="hero-text" id="parent-flow-note">
-          Parent flow: create one parent login here, then add children by email after signing in.
+          Parent flow: create one parent login here, then add children inside the dashboard.
         </p>
         <p class="hero-text hidden" id="learner-flow-note">
-          Learner flow: sign in with your own email and password. Your parent can still view your performance once your account is linked.
+          Learner flow: enter the username and password your parent created for you, then log in. No email, no grade, no sign up.
         </p>
 
         <div class="auth-actions">
           <button id="signupButton" type="button" class="primary-button">Sign Up</button>
           <button id="loginButton" type="submit" class="primary-button">Log In</button>
           <button id="forgotPasswordButton" type="button" class="secondary-button">Forgot Password?</button>
-          <a href="learner-login.html" class="secondary-button auth-back-link">Learner Login</a>
-          <a href="index.html" class="secondary-button auth-back-link">Back to app</a>
+          <a href="app.html" class="secondary-button auth-back-link">Back to app</a>
         </div>
 
         <p id="authMessage" class="auth-message"></p>

@@ -22,18 +22,18 @@
         <p class="eyebrow">Grammar & Maths Mastery Hub</p>
         <h1>Learner Login</h1>
         <p class="hero-text">
-          Learners can sign in with their own email and password.
+          Sign in with the username your parent gave you, or your own email.
         </p>
         <p class="hero-text">
-          After a parent links your email in the dashboard, they can still view your learning progress and performance.
+          Your parent can see your learning progress and performance in their dashboard.
         </p>
       </div>
 
       <form id="learnerLoginForm" class="profile-form auth-form">
         <div class="two-up auth-input-grid">
           <label>
-            Email
-            <input type="email" id="learnerEmail" placeholder="Enter your email" autocomplete="email" />
+            Username or Email
+            <input type="text" id="learnerEmail" placeholder="Enter your username or email" autocomplete="username" />
           </label>
           <label>
             Password
@@ -42,14 +42,14 @@
         </div>
 
         <p class="hero-text">
-          If you are new, create your learner account from the main login page, then ask your parent to link your email inside the dashboard.
+          If your parent set you up with a username, use that here. If you signed up with your own email instead, use that.
         </p>
 
         <div class="auth-actions">
           <button id="learnerLoginButton" type="submit" class="primary-button">Open Learner Hub</button>
           <button id="learnerForgotPasswordButton" type="button" class="secondary-button">Forgot Password?</button>
-          <a href="login.html" class="secondary-button auth-back-link">Parent Login</a>
-          <a href="index.html" class="secondary-button auth-back-link">Back to app</a>
+          <a href="index.html" class="secondary-button auth-back-link">Parent Login</a>
+          <a href="app.html" class="secondary-button auth-back-link">Back to app</a>
         </div>
 
         <p id="learnerAuthMessage" class="auth-message"></p>

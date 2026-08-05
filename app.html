@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grammar & Maths Mastery Hub</title>
+  <meta name="theme-color" content="#12386f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mastery Hub" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-top-row">
+          <div class="hero-topbar-title">
+            <strong>🚀 Grammar & Maths Mastery Hub</strong>
+          </div>
+          <div class="topic-search-panel hero-search-panel hero-search-panel--inline">
+            <div class="topic-search-head section-heading--collapsible">
+              <h3>🔍 Search Topics</h3>
+              <div class="topic-search-toolbar">
+                <input id="topic-search-input" class="topic-search-input" type="text" placeholder="Search across grades, topics, or PAT" />
+                <button id="toggle-hero-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="false">
+                  Show Performance
+                </button>
+              </div>
+            </div>
+            <div id="topic-search-panel-content">
+              <div id="topic-search-results" class="topic-search-results"></div>
+            </div>
+          </div>
+          <div class="hero-account-card">
+            <div class="hero-account-copy">
+              <img id="header-account-avatar" class="hero-account-avatar hidden" alt="" />
+              <div id="header-account-avatar-placeholder" class="hero-account-avatar hero-account-avatar--placeholder hidden"></div>
+              <div class="hero-account-text">
+                <span>Signed in</span>
+                <strong id="auth-account-name">Guest</strong>
+                <small id="auth-account-meta">Open login to continue</small>
+                <label id="header-avatar-upload-label" class="header-avatar-upload-label hidden" for="header-avatar-upload">
+                  Change Photo
+                  <input id="header-avatar-upload" type="file" accept="image/*" class="header-avatar-upload-input" />
+                </label>
+              </div>
+            </div>
+            <div class="hero-account-actions">
+              <select id="header-child-select" class="secondary-button hero-account-button hero-child-select hidden" aria-label="Switch child"></select>
+              <button id="header-child-switch-button" class="secondary-button hero-account-button hidden" type="button">Switch to Learner</button>
+              <button id="open-account-tools-button" class="secondary-button hero-account-button hidden" type="button">Manage Learners</button>
+              <button id="back-to-parent-button" class="secondary-button hero-account-button hidden" type="button">Back to Parent</button>
+              <button id="logout-auth-button" class="secondary-button hero-account-button hidden" type="button">Log Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="account-tools-section" class="card hidden">
+      <div id="profile-panel-content" class="hidden">
+        <div class="profile-panel">
+          <div class="profile-current">
+            <div class="summary-row">
+              <span>Current account</span>
+              <strong id="profile-name-label">Guest</strong>
+            </div>
+            <div class="summary-row">
+              <span>Account type</span>
+              <strong id="profile-type-label">Guest</strong>
+            </div>
+            <div class="summary-row">
+              <span>Active learner</span>
+              <strong id="profile-child-label">Guest</strong>
+            </div>
+            <div class="summary-row">
+              <span>Profile grade</span>
+              <strong id="profile-grade-label">Not set</strong>
+            </div>
+            <div class="summary-row">
+              <span>Login email</span>
+              <strong id="profile-email-label">Not linked yet</strong>
+            </div>
+          </div>
+
+          <div class="profile-form">
+            <label class="field-label" for="profile-role">Account Type</label>
+            <select id="profile-role">
+              <option value="learner">Learner</option>
+              <option value="parent">Parent</option>
+            </select>
+
+            <label class="field-label" for="profile-name">Name</label>
+            <input id="profile-name" type="text" placeholder="Enter learner name" />
+
+            <div id="profile-email-group">
+              <label class="field-label" for="profile-email">Login Email</label>
+              <input id="profile-email" type="email" placeholder="Enter login email" />
+            </div>
+
+            <div id="profile-grade-group">
+              <label class="field-label" for="profile-grade">Grade</label>
+              <select id="profile-grade"></select>
+            </div>
+
+            <div id="profile-password-group">
+              <label class="field-label" for="profile-password">Password</label>
+              <input id="profile-password" type="password" placeholder="Create or enter password" />
+            </div>
+
+            <p id="profile-form-note" class="profile-note">
+              Use this area to update the current account profile. Parents manage child grades and child names in the section below.
+            </p>
+
+            <div class="profile-actions">
+              <button id="save-profile-button" class="primary-button hidden" type="button">Save Profile</button>
+              <button id="create-profile-button" class="primary-button">Create Profile</button>
+              <button id="login-profile-button" class="secondary-button">Log In</button>
+              <button id="logout-profile-button" class="secondary-button hidden">Log Out</button>
+            </div>
+          </div>
+
+          <div id="avatar-section" class="avatar-section hidden">
+            <div class="section-heading compact-heading">
+              <h3>Profile Image</h3>
+            </div>
+            <p class="profile-note">Choose an avatar from the library or upload an image from this device for the active learner.</p>
+            <div class="avatar-current-card">
+              <img id="current-avatar-preview" class="current-avatar-preview hidden" alt="Current learner avatar" />
+              <div id="current-avatar-placeholder" class="current-avatar-preview current-avatar-preview--placeholder">?</div>
+              <div class="avatar-current-copy">
+                <strong id="current-avatar-name">Learner avatar</strong>
+                <small>You can change this any time.</small>
+              </div>
+            </div>
+            <div class="avatar-actions">
+              <button id="toggle-avatar-library-button" class="secondary-button" type="button">Choose from Library</button>
+              <label class="secondary-button avatar-upload-button" for="current-avatar-upload">
+                Upload from Device
+                <input id="current-avatar-upload" type="file" accept="image/*" class="header-avatar-upload-input" />
+              </label>
+              <button id="clear-avatar-button" class="secondary-button" type="button">Remove Photo</button>
+            </div>
+            <div id="avatar-library-panel" class="avatar-library-panel hidden">
+              <p class="profile-note">Add more avatar images by editing <code>avatar-library.js</code> and placing image files in the project.</p>
+              <div id="avatar-library-empty" class="feedback-box hidden"></div>
+              <div id="avatar-library-grid" class="avatar-library-grid"></div>
+            </div>
+          </div>
+
+          <div id="parent-panel" class="parent-panel hidden">
+            <div class="parent-panel-card">
+              <h3>👪 Parent Controls</h3>
+              <p class="profile-note">Add children, switch between them, and review each child's progress.</p>
+
+              <label class="field-label" for="parent-child-select">Choose Child</label>
+              <select id="parent-child-select"></select>
+
+              <div class="profile-actions">
+                <button id="switch-child-button" class="secondary-button" type="button">Open Child</button>
+              </div>
+
+              <div class="parent-add-child">
+                <label class="field-label" for="child-name">Child Name</label>
+                <input id="child-name" type="text" placeholder="Enter child name" />
+
+                <label class="field-label" for="child-grade">Grade</label>
+                <select id="child-grade"></select>
+
+                <div id="child-username-group">
+                  <label class="field-label" for="child-username">Login Username (optional)</label>
+                  <input id="child-username" type="text" placeholder="Only needed for the separate Learner Login page" autocomplete="off" />
+
+                  <label class="field-label" for="child-password">Login Password (optional)</label>
+                  <input id="child-password" type="password" placeholder="Only needed if you set a username" autocomplete="new-password" />
+                </div>
+
+                <label class="field-label" for="child-photo">Profile Photo</label>
+                <input id="child-photo" type="file" accept="image/*" />
+                <div class="child-photo-preview-wrap">
+                  <img id="child-photo-preview" class="child-photo-preview hidden" alt="Child profile preview" />
+                </div>
+                <p id="child-username-note" class="profile-note">Just enter a name and grade to add a child you can switch to from your own account. Username and password are only needed if this child wants to log in on their own on a separate device (requires Supabase).</p>
+
+                <div class="profile-actions">
+                  <button id="add-child-button" class="primary-button" type="button">Add Child</button>
+                  <button id="save-child-button" class="secondary-button" type="button">Save Selected Child</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="parent-panel-card">
+              <h3>🏅 Kids Performance</h3>
+              <div id="parent-kids-dashboard" class="parent-kids-dashboard">
+                <div class="history-empty">Create or open a parent account to view children here.</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="profile-note">Everything here is saved to this device and this browser only.</p>
+          <div id="profile-message" class="feedback-box hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="hero-panel" class="card">
+      <div id="hero-panel-content" class="hidden">
+        <div class="hero-stats">
+          <div class="hero-stat-card">
+            <span>Today</span>
+            <strong id="hero-today-time">0m 0s</strong>
+          </div>
+          <div class="hero-stat-card">
+            <span>Past 7 days</span>
+            <strong id="hero-week-achievement">0 levels</strong>
+          </div>
+        </div>
+        <div class="hero-chart-wrap">
+          <div class="hero-chart-heading">
+            <span>Past 7 days</span>
+            <small>Time spent and levels completed</small>
+          </div>
+          <div id="hero-activity-chart" class="hero-activity-chart"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="parent-dashboard-section" class="card hidden">
+      <div class="section-heading section-heading--collapsible compact-heading">
+        <div>
+          <h2>👨‍👩‍👧 Family Dashboard</h2>
+        </div>
+        <button id="toggle-parent-dashboard-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
+          Hide Dashboard
+        </button>
+      </div>
+
+      <div id="parent-dashboard-content">
+        <div id="parent-dashboard-empty" class="feedback-box">Sign in as a parent and add learners to open the family dashboard.</div>
+
+        <div id="parent-dashboard-body" class="hidden">
+          <div id="parent-dashboard-learner-grid" class="parent-dashboard-learner-grid"></div>
+
+          <div class="parent-dashboard-overview">
+            <div class="parent-dashboard-summary-card">
+              <div class="parent-dashboard-summary-head">
+                <div>
+                  <p class="eyebrow">Selected Learner</p>
+                  <h3 id="parent-dashboard-name">No learner selected</h3>
+                </div>
+                <div id="parent-dashboard-avatar" class="parent-dashboard-avatar parent-dashboard-avatar--placeholder">?</div>
+              </div>
+              <div class="parent-dashboard-summary-grid">
+                <div class="parent-dashboard-metric">
+                  <span>Total study</span>
+                  <strong id="parent-dashboard-total-time">0m 0s</strong>
+                </div>
+                <div class="parent-dashboard-metric">
+                  <span>Past 7 days</span>
+                  <strong id="parent-dashboard-week-time">0m 0s</strong>
+                </div>
+                <div class="parent-dashboard-metric">
+                  <span>Completed levels</span>
+                  <strong id="parent-dashboard-levels">0</strong>
+                </div>
+                <div class="parent-dashboard-metric">
+                  <span>Average score</span>
+                  <strong id="parent-dashboard-average">0%</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="parent-dashboard-chart-card">
+              <div class="hero-chart-heading">
+                <span>Past 7 days</span>
+                <small>Study time and levels completed</small>
+              </div>
+              <div id="parent-dashboard-chart" class="hero-activity-chart"></div>
+            </div>
+          </div>
+
+          <div class="parent-dashboard-goals-grid">
+            <div class="parent-dashboard-table-card">
+              <div class="section-heading compact-heading">
+                <h3>🎯 Goals</h3>
+                <small>Set targets for one learner or the whole family</small>
+              </div>
+              <div class="goal-editor-summary">
+                <strong id="parent-goal-editor-name">Editing goals for: No learner selected</strong>
+                <span id="parent-goal-editor-current">Current goals: Maths not set yet | English not set yet</span>
+              </div>
+              <div class="parent-dashboard-goal-form">
+                <label class="field-label" for="parent-goal-subject">Subject focus</label>
+                <select id="parent-goal-subject">
+                  <option value="math">Math only</option>
+                  <option value="english">English only</option>
+                </select>
+
+                <label class="field-label" for="parent-goal-daily-minutes">Daily study goal (minutes)</label>
+                <input id="parent-goal-daily-minutes" type="number" min="0" step="5" placeholder="30" />
+
+                <label class="field-label" for="parent-goal-daily-levels">Daily unit goal</label>
+                <input id="parent-goal-daily-levels" type="number" min="0" step="1" placeholder="2" />
+
+                <label class="goal-toggle">
+                  <input id="parent-goals-apply-all" type="checkbox" />
+                  <span>Apply these goals to all learners</span>
+                </label>
+
+                <button id="parent-goals-save-button" class="primary-button" type="button">Save Goals</button>
+              </div>
+            </div>
+
+            <div class="parent-dashboard-table-card">
+              <div class="section-heading compact-heading">
+                <h3>📈 Goal Progress</h3>
+                <small>Today vs. the learner's goals</small>
+              </div>
+              <div class="parent-dashboard-goal-metrics">
+                <div class="parent-dashboard-metric">
+                  <span>Study streak</span>
+                  <strong id="parent-dashboard-streak">0 days</strong>
+                </div>
+                <div class="parent-dashboard-metric">
+                  <span>7-day average</span>
+                  <strong id="parent-dashboard-week-average">0m</strong>
+                </div>
+              </div>
+
+              <div class="subject-progress-grid">
+                <div class="subject-progress-card subject-progress-card--math">
+                  <div class="subject-progress-head">
+                    <span>Maths progress</span>
+                    <strong id="parent-goal-math-status">0 levels | 0m</strong>
+                  </div>
+                  <small id="parent-goal-math-meta">0% average score</small>
+                </div>
+                <div class="subject-progress-card subject-progress-card--english">
+                  <div class="subject-progress-head">
+                    <span>English progress</span>
+                    <strong id="parent-goal-english-status">0 levels | 0m</strong>
+                  </div>
+                  <small id="parent-goal-english-meta">0% average score</small>
+                </div>
+              </div>
+
+              <div class="subject-progress-chart-card">
+                <div class="section-heading compact-heading">
+                  <h4>Subject chart</h4>
+                  <small>Levels completed and study time by subject</small>
+                </div>
+                <div id="parent-goal-subject-chart" class="subject-progress-chart"></div>
+              </div>
+
+              <div class="goal-progress-block">
+                <div class="goal-progress-head">
+                  <span id="parent-goal-math-minutes-label">Daily study time (Maths goal)</span>
+                  <strong id="parent-goal-math-minutes-status">0m / 0m</strong>
+                </div>
+                <div class="goal-progress-track">
+                  <div id="parent-goal-math-minutes-bar" class="goal-progress-bar"></div>
+                </div>
+              </div>
+
+              <div class="goal-progress-block">
+                <div class="goal-progress-head">
+                  <span id="parent-goal-math-levels-label">Daily units (Maths goal)</span>
+                  <strong id="parent-goal-math-levels-status">0 / 0</strong>
+                </div>
+                <div class="goal-progress-track">
+                  <div id="parent-goal-math-levels-bar" class="goal-progress-bar"></div>
+                </div>
+              </div>
+
+              <div class="goal-progress-block">
+                <div class="goal-progress-head">
+                  <span id="parent-goal-english-minutes-label">Daily study time (English goal)</span>
+                  <strong id="parent-goal-english-minutes-status">0m / 0m</strong>
+                </div>
+                <div class="goal-progress-track">
+                  <div id="parent-goal-english-minutes-bar" class="goal-progress-bar"></div>
+                </div>
+              </div>
+
+              <div class="goal-progress-block">
+                <div class="goal-progress-head">
+                  <span id="parent-goal-english-levels-label">Daily units (English goal)</span>
+                  <strong id="parent-goal-english-levels-status">0 / 0</strong>
+                </div>
+                <div class="goal-progress-track">
+                  <div id="parent-goal-english-levels-bar" class="goal-progress-bar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="parent-dashboard-table-card">
+            <div class="section-heading compact-heading">
+              <h3>📊 Course Analysis</h3>
+            </div>
+            <div id="parent-dashboard-analysis" class="parent-dashboard-analysis"></div>
+          </div>
+
+          <div class="parent-dashboard-table-card">
+            <div class="section-heading compact-heading">
+              <h3>💪 Needs Improvement</h3>
+              <small>Lowest-scoring topics for this learner</small>
+            </div>
+            <div id="parent-dashboard-weak-areas" class="parent-dashboard-analysis"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="layout">
+      <section id="grade-panel-section" class="sidebar card">
+        <div class="section-heading section-heading--collapsible compact-heading">
+          <div>
+            <h2>🎯 Choose Grade</h2>
+          </div>
+          <button id="toggle-grade-panel-button" class="secondary-button collapse-button" type="button" aria-expanded="true">
+            Hide Grades
+          </button>
+        </div>
+        <div id="grade-panel-content">
+          <div id="grade-buttons" class="grade-buttons"></div>
+        </div>
+
+        <div class="summary-panel hidden">
+          <h3>📈 Progress Snapshot</h3>
+          <div class="summary-row">
+            <span>Selected grade</span>
+            <strong id="selected-grade-label">Grade 1</strong>
+          </div>
+          <div class="summary-row">
+            <span>Saved to</span>
+            <strong id="save-status-label">Guest browser</strong>
+          </div>
+          <div class="summary-row">
+            <span>Selected topic</span>
+            <strong id="selected-category-label">None yet</strong>
+          </div>
+          <div class="summary-row">
+            <span>Completed levels</span>
+            <strong id="completed-levels-label">0</strong>
+          </div>
+          <div class="summary-row">
+            <span>Course time</span>
+            <strong id="course-time-label">0m 0s</strong>
+          </div>
+          <div class="summary-row">
+            <span>Today</span>
+            <strong id="daily-time-label">0m 0s</strong>
+          </div>
+        </div>
+
+        <div class="summary-panel hidden">
+          <h3>⭐ Score History</h3>
+          <div id="score-history-empty" class="history-empty">Log in and complete levels to save score history here.</div>
+          <div id="score-history-list" class="history-list"></div>
+        </div>
+      </section>
+
+      <section class="content">
+        <section id="topics-section" class="card">
+          <div class="section-heading compact-heading">
+            <h2>📚 Grammar & Maths Topics</h2>
+          </div>
+          <div class="topic-select-grid">
+            <div class="topic-select-wrap">
+              <label class="field-label" for="math-category-select">Maths</label>
+              <select id="math-category-select" class="topic-select"></select>
+            </div>
+            <div class="topic-select-wrap">
+              <label class="field-label" for="english-category-select">English</label>
+              <select id="english-category-select" class="topic-select"></select>
+            </div>
+          </div>
+          <div id="category-current-card" class="category-current-card hidden"></div>
+          <div id="pat-tab-section" class="pat-tab-section hidden">
+            <div class="pat-tab-heading">
+              <h3 id="pat-tab-title">Choose a Section</h3>
+              <p id="pat-tab-description">Select the PAT section you want to practice.</p>
+            </div>
+            <div id="pat-tab-bar" class="pat-tab-bar"></div>
+          </div>
+          <div id="probability-mode-section" class="pat-tab-section hidden">
+            <div class="pat-tab-heading">
+              <h3 id="probability-mode-title">Choose Study Mode</h3>
+              <p id="probability-mode-description">Start with worksheet examples, then move into mastery practice.</p>
+            </div>
+            <div id="probability-mode-bar" class="pat-tab-bar"></div>
+          </div>
+          <div id="probability-example-section" class="probability-example-section hidden">
+            <div class="pat-tab-heading">
+              <h3 id="probability-example-title">Worksheet Examples</h3>
+              <p id="probability-example-description">Study the worked examples first, then switch to Mastery Quiz to practise similar questions.</p>
+            </div>
+            <div id="probability-example-content" class="probability-example-content"></div>
+          </div>
+        </section>
+
+        <section id="level-section" class="card">
+          <div class="section-heading compact-heading">
+            <h2>🪜 Choose Level</h2>
+          </div>
+          <div id="level-grid" class="level-grid"></div>
+          <div class="level-actions">
+            <button id="reset-topic-progress-button" class="secondary-button" type="button">Retake Topic From Start</button>
+          </div>
+        </section>
+
+        <section id="quiz-section" class="card quiz-card hidden">
+          <div class="quiz-topbar">
+            <div>
+              <p id="quiz-meta" class="quiz-meta"></p>
+              <h2 id="question-title">Question</h2>
+            </div>
+            <div class="score-pill">
+              <span>Score</span>
+              <strong id="live-score">0 / 0</strong>
+            </div>
+          </div>
+
+          <div class="progress-track">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+
+          <div class="question-block">
+            <p id="question-instruction" class="question-instruction hidden"></p>
+            <p id="question-text" class="question-text"></p>
+            <div id="question-diagram" class="question-diagram hidden"></div>
+            <div class="hint-actions">
+              <button id="hint-button" class="secondary-button hidden" type="button">Show Hint</button>
+            </div>
+            <div id="hint-box" class="feedback-box hidden"></div>
+            <div class="answer-feedback-layout">
+              <div class="answer-panel">
+                <div id="options-list" class="options-list"></div>
+                <div id="writing-response" class="writing-response hidden">
+                  <label class="field-label" for="writing-answer">Write your answer</label>
+                  <textarea id="writing-answer" rows="6" placeholder="Type your answer here"></textarea>
+                  <button id="submit-writing-button" class="primary-button" type="button">Submit Writing</button>
+                </div>
+              </div>
+              <div id="feedback-box" class="feedback-box hidden"></div>
+            </div>
+          </div>
+
+          <div class="quiz-actions">
+            <button id="previous-button" class="secondary-button hidden" type="button">Previous Question</button>
+            <button id="next-button" class="primary-button hidden">Next Question</button>
+          </div>
+        </section>
+
+        <section id="results-section" class="card hidden">
+          <div class="section-heading">
+            <h2>🎉 Level Complete</h2>
+            <p id="results-summary"></p>
+          </div>
+          <div id="results-dashboard" class="results-dashboard">
+            <div id="results-metrics" class="results-metrics"></div>
+            <div class="results-chart-card">
+              <div class="results-chart-heading">
+                <strong>Quick Report</strong>
+                <span>Each bar shows one question.</span>
+              </div>
+              <div id="results-chart" class="results-chart" aria-label="Quiz report chart"></div>
+            </div>
+          </div>
+          <div id="results-breakdown" class="results-breakdown"></div>
+          <div class="results-actions">
+            <button id="retry-level-button" class="secondary-button">Retry Level</button>
+            <button id="next-level-button" class="primary-button">Next Level</button>
+          </div>
+        </section>
+
+        <section id="review-section" class="card">
+          <div class="section-heading compact-heading">
+            <h2>📖 Review Past Levels</h2>
+          </div>
+          <div class="review-controls">
+            <select id="review-level-select"></select>
+            <button id="open-review-button" class="secondary-button">Open Review</button>
+          </div>
+          <div id="review-empty" class="feedback-box">Complete a level while logged in to save a review history here.</div>
+          <div id="review-details" class="hidden">
+            <p id="review-summary" class="quiz-meta"></p>
+            <div id="review-breakdown" class="results-breakdown"></div>
+          </div>
+        </section>
+
+      </section>
+    </main>
+  </div>
+
+  <div id="parent-password-modal" class="parent-password-modal hidden">
+    <div id="parent-password-modal-overlay" class="parent-password-modal-overlay"></div>
+    <div class="parent-password-modal-card" role="dialog" aria-modal="true" aria-labelledby="parent-password-modal-title">
+      <h3 id="parent-password-modal-title">Enter parent password</h3>
+      <p id="parent-password-modal-message" class="profile-note">Enter the parent password to continue.</p>
+      <input id="parent-password-modal-input" class="parent-password-modal-input" type="password" placeholder="Parent password" autocomplete="current-password" />
+      <div id="parent-password-modal-error" class="parent-password-modal-error hidden"></div>
+      <div class="parent-password-modal-actions">
+        <button id="parent-password-modal-cancel" class="secondary-button" type="button">Cancel</button>
+        <button id="parent-password-modal-submit" class="primary-button" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="avatar-library.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      window.addEventListener("load", function () {
+        // updateViaCache: "none" stops the browser from caching service-worker.js itself at the
+        // HTTP layer (which can otherwise last up to 24 hours) — without this, bumping
+        // CACHE_NAME inside the file doesn't help because the browser never even re-fetches the
+        // file to see the change, especially on installed/home-screen PWAs.
+        navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
+      });
+      // When a newer service worker takes over, it tells open windows to reload themselves —
+      // this is what actually gets an installed/home-screen app off a stuck old version.
+      navigator.serviceWorker.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "MASTERY_HUB_RELOAD") {
+          window.location.reload();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

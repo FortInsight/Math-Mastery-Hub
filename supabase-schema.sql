@@ -1,3 +1,15 @@
+-- =====================================================================
+-- REQUIRED ONE-TIME SUPABASE DASHBOARD SETTING for username-login kids:
+-- Go to Authentication -> Providers -> Email in your Supabase project
+-- and turn OFF "Confirm email". Child accounts are created with a made-up
+-- internal email address (nobody reads it), so a confirmation link can
+-- never be delivered. With "Confirm email" off, the account is usable
+-- immediately after the parent creates it. This does not weaken security
+-- for parent/adult accounts that use their real email — it's a global
+-- Supabase Auth setting, so real parent signups simply won't need to
+-- click a confirmation link either (they still set their own password).
+-- =====================================================================
+
 create table if not exists public.mastery_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -25,12 +37,20 @@ create table if not exists public.mastery_children (
 alter table public.mastery_children add column if not exists child_email text;
 alter table public.mastery_children add column if not exists linked_profile_id uuid references public.mastery_profiles(id) on delete set null;
 alter table public.mastery_children add column if not exists avatar_data_url text;
-alter table public.mastery_children drop column if exists child_username;
-alter table public.mastery_children drop column if exists password_hash;
+
+-- child_username: the login name a parent sets for a child. The child signs in with this
+-- username on the Learner Login page; the app translates it into a hidden internal email
+-- (see app.js deriveChildEmailFromUsername) so it can still use normal Supabase email/password
+-- auth under the hood. Usernames must be globally unique because they map 1:1 to that hidden email.
+alter table public.mastery_children add column if not exists child_username text;
 
 create unique index if not exists mastery_children_child_email_unique
 on public.mastery_children (parent_id, lower(child_email))
 where child_email is not null;
+
+create unique index if not exists mastery_children_child_username_unique
+on public.mastery_children (lower(child_username))
+where child_username is not null;
 
 create table if not exists public.mastery_progress (
   id uuid primary key default gen_random_uuid(),
