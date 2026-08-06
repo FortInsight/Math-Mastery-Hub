@@ -1,4 +1,4 @@
-const CACHE_NAME = "grammar-maths-mastery-hub-v12";
+const CACHE_NAME = "grammar-maths-mastery-hub-v13";
 const APP_ASSETS = [
   "./",
   "./index.html",

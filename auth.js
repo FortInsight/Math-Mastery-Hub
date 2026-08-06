@@ -245,6 +245,11 @@
     // account is actually labeled "parent" going forward.
     if (role === "parent" && signInData?.user?.user_metadata?.account_type !== "parent") {
       await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
+      // updateUser() refreshes the session internally, but app.html loads as a brand-new page
+      // (not a single-page navigation), so we explicitly wait for the refreshed session to be
+      // persisted to storage before navigating away — otherwise app.html can briefly read the
+      // old, pre-update session and show "Learner" instead of "Parent".
+      await supabaseClient.auth.refreshSession();
     }
 
     setAuthMessage("Login successful. Opening app...");
