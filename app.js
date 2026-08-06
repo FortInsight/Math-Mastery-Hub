@@ -10107,36 +10107,47 @@ const questionFactories = {
       const mode = index % 4;
 
       if (mode === 0) {
-        const a = number(2, difficultyStep(3, difficulty, 14), rng);
-        const b = number(1, difficultyStep(4, difficulty, 18), rng);
-        const correct = `${a + b}x`;
-        const { options, answerIndex } = buildOptions(correct, [`${a * b}x`, `${a - b}x`, `${a + b}`], rng);
+        const a = number(2, difficultyStep(3, difficulty, 12), rng);
+        const b = number(2, difficultyStep(3, difficulty, 12), rng);
+        const c = number(1, difficultyStep(3, difficulty, 10), rng);
+        const d = number(1, difficultyStep(3, difficulty, 10), rng);
+        const correct = `${a + b}x + ${c + d}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${a + b}x + ${Math.abs(c - d)}`,
+          `${a * b}x + ${c + d}`,
+          `${a + b + c + d}x`
+        ], rng);
         return {
-          prompt: `Simplify: ${a}x + ${b}x`,
+          prompt: `Simplify: ${a}x + ${c} + ${b}x + ${d}`,
           options,
           answerIndex,
-          explanation: `Like terms add together, so ${a}x + ${b}x = ${a + b}x.`
+          explanation: `Combine the like terms: ${a}x + ${b}x = ${a + b}x, and ${c} + ${d} = ${c + d}. So the simplified expression is ${correct}.`
         };
       }
 
       if (mode === 1) {
-        const a = number(5, difficultyStep(8, difficulty, 24), rng);
-        const b = number(1, difficultyStep(4, difficulty, 18), rng);
-        const correct = `${a - b}x`;
-        const { options, answerIndex } = buildOptions(correct, [`${a + b}x`, `${a * b}x`, `${a - b}`], rng);
+        const coeff = number(2, difficultyStep(3, difficulty, 9), rng);
+        const innerX = number(2, difficultyStep(2, difficulty, 6), rng);
+        const innerConstant = number(2, difficultyStep(3, difficulty, 12), rng);
+        const correct = `${coeff * innerX}x + ${coeff * innerConstant}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${coeff + innerX}x + ${coeff + innerConstant}`,
+          `${coeff * innerConstant}x + ${coeff * innerX}`,
+          `${coeff * innerX}x + ${innerConstant}`
+        ], rng);
         return {
-          prompt: `Simplify: ${a}x - ${b}x`,
+          prompt: `Expand: ${coeff}(${innerX}x + ${innerConstant})`,
           options,
           answerIndex,
-          explanation: `Subtract the coefficients of the like terms: ${a}x - ${b}x = ${a - b}x.`
+          explanation: `Distribute ${coeff} to each term inside the brackets: ${coeff}(${innerX}x + ${innerConstant}) = ${coeff * innerX}x + ${coeff * innerConstant}.`
         };
       }
 
       if (mode === 2) {
         const coeff = number(2, difficultyStep(3, difficulty, 9), rng);
         const inner = number(2, difficultyStep(3, difficulty, 12), rng);
-        const correct = `${coeff * inner}x + ${coeff * inner}`.replace(/^1x/, "x");
-        const distractA = `${coeff + inner}x + ${coeff + inner}`;
+        const correct = `${coeff}x + ${coeff * inner}`.replace(/^1x/, "x");
+        const distractA = `${coeff * inner}x + ${coeff * inner}`;
         const distractB = `${coeff * inner}x`;
         const distractC = `${coeff}x + ${inner}`;
         const { options, answerIndex } = buildOptions(correct, [distractA, distractB, distractC], rng);
@@ -10148,15 +10159,16 @@ const questionFactories = {
         };
       }
 
-      const x = number(1, difficultyStep(2, difficulty, 8), rng);
-      const b = number(1, difficultyStep(3, difficulty, 12), rng);
-      const total = x + b;
-      const { options, answerIndex } = buildOptions(`x = ${x}`, [`x = ${total}`, `x = ${b}`, `x = ${x + b + 1}`], rng);
+      const x = number(2, difficultyStep(3, difficulty, 9), rng);
+      const leftCoeff = pick([2, 3, 4], rng);
+      const constant = number(2, difficultyStep(3, difficulty, 12), rng);
+      const total = (leftCoeff * x) + constant;
+      const { options, answerIndex } = buildOptions(`x = ${x}`, [`x = ${total}`, `x = ${constant}`, `x = ${x + 1}`], rng);
       return {
-        prompt: `Solve for x: x + ${b} = ${total}`,
+        prompt: `Solve for x: ${leftCoeff}x + ${constant} = ${total}`,
         options,
         answerIndex,
-        explanation: `Subtract ${b} from both sides: x = ${total} - ${b} = ${x}.`
+        explanation: `Subtract ${constant} from both sides to get ${leftCoeff}x = ${total - constant}. Then divide by ${leftCoeff}, so x = ${x}.`
       };
     }
 

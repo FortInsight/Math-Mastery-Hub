@@ -133,16 +133,18 @@
     if (emailLabel) {
       const labelText = emailLabel.firstChild;
       if (labelText && labelText.nodeType === Node.TEXT_NODE) {
-        labelText.textContent = learnerMode ? "Username" : "Email";
+        labelText.textContent = "Email";
       }
     }
     if (emailInput) {
-      emailInput.placeholder = learnerMode ? "Enter your username" : "Enter your email";
-      emailInput.autocomplete = learnerMode ? "off" : "email";
+      emailInput.placeholder = "Enter your email";
+      emailInput.autocomplete = "email";
       emailInput.disabled = false;
     }
     if (signupButton) {
-      signupButton.classList.toggle("hidden", learnerMode);
+      // Learners can now sign up directly with their own email too (not just log in with a
+      // username a parent created for them), so Sign Up stays visible for both roles.
+      signupButton.classList.remove("hidden");
       signupButton.disabled = false;
       signupButton.textContent = "Sign Up";
     }
@@ -182,11 +184,7 @@
   }
 
   async function signUpUser() {
-    if (getSelectedRole() === "learner") {
-      setAuthMessage("Learners don't sign up here. Ask your parent to create your login from their dashboard.");
-      return;
-    }
-
+    const role = getSelectedRole();
     const name = document.getElementById("authName")?.value.trim();
     const email = document.getElementById("authEmail")?.value.trim();
     const password = document.getElementById("authPassword")?.value;
@@ -207,7 +205,9 @@
       options: {
         data: {
           user_name: name || "",
-          account_type: "parent"
+          // A learner who signs up directly here (their own email, not a username a parent
+          // set up for them) gets their own independent account, separate from any parent.
+          account_type: role === "learner" ? "learner" : "parent"
         },
         emailRedirectTo: buildUrl("index.html")
       }
@@ -218,7 +218,9 @@
 
   async function loginUser() {
     const role = getSelectedRole();
-    const rawLogin = document.getElementById("authEmail")?.value.trim() || "";
+    // Learners now log in with their own real email here too (not a parent-created username),
+    // so both roles treat this field as a literal email address.
+    const email = document.getElementById("authEmail")?.value.trim() || "";
     const password = document.getElementById("authPassword")?.value;
 
     setAuthMessage("");
@@ -226,24 +228,14 @@
       setAuthMessage("Paste your Supabase URL and key into supabase-config.js first.");
       return;
     }
-    if (!rawLogin || !password) {
-      setAuthMessage(role === "learner" ? "Enter your username and password." : "Please enter email and password.");
-      return;
-    }
-
-    const email = role === "learner" ? deriveChildEmailFromUsername(rawLogin) : rawLogin;
-    if (!email) {
-      setAuthMessage(role === "learner" ? "Enter a valid username." : "Enter a valid email.");
+    if (!email || !password) {
+      setAuthMessage("Please enter email and password.");
       return;
     }
 
     const { data: signInData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-      setAuthMessage(
-        role === "learner"
-          ? `Login error: ${error.message}. Double-check your username with your parent.`
-          : `Login error: ${error.message}`
-      );
+      setAuthMessage(`Login error: ${error.message}`);
       return;
     }
 
@@ -260,16 +252,11 @@
   }
 
   async function sendPasswordReset() {
-    const role = getSelectedRole();
     const rawLogin = document.getElementById("authEmail")?.value.trim() || "";
     setAuthMessage("");
 
     if (!authEnabled()) {
       setAuthMessage("Paste your Supabase URL and key into supabase-config.js first.");
-      return;
-    }
-    if (role === "learner") {
-      setAuthMessage("Username logins don't have an email on file. Ask your parent to reset your password from their dashboard.");
       return;
     }
     if (!rawLogin) {
