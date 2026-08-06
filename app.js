@@ -3542,34 +3542,39 @@ function renderParentPanel(account) {
   }
 
   const childEntries = Object.values(account.children || {});
+  // The auto-created "self" profile (see ensureSelfLearnerProfile) is a personal view mode for
+  // the account holder, not a real learner someone added — it stays out of the parent-facing
+  // Manage Learners list and Family Dashboard so it doesn't clutter or get confused with actual
+  // children. It's still reachable through the header's "Switch to Learner" control below,
+  // which uses childEntries (including it), not this filtered list.
+  const manageableChildEntries = childEntries.filter((child) => !child.isSelfProfile);
   const showParentSwitchControls = !state.childViewMode;
-  if (!childEntries.length) {
+
+  if (elements.headerChildSelect) {
+    elements.headerChildSelect.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
+    elements.headerChildSelect.innerHTML = childEntries
+      .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(getChildSwitchLabel(child))}</option>`)
+      .join("");
+  }
+  elements.headerChildSwitchButton?.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
+
+  if (!manageableChildEntries.length) {
     elements.parentChildSelect.innerHTML = `<option value="">No children added yet</option>`;
     elements.parentChildSelect.disabled = true;
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
     elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Add a child to start tracking progress.</div>`;
     setChildPhotoPreview("");
-    elements.headerChildSelect?.classList.add("hidden");
-    elements.headerChildSwitchButton?.classList.add("hidden");
     return;
   }
 
   elements.parentChildSelect.disabled = false;
   elements.switchChildButton && (elements.switchChildButton.disabled = false);
-  elements.parentChildSelect.innerHTML = childEntries
+  elements.parentChildSelect.innerHTML = manageableChildEntries
     .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${child.name} | Grade ${child.grade}</option>`)
     .join("");
 
-  if (elements.headerChildSelect) {
-    elements.headerChildSelect.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
-    elements.headerChildSelect.innerHTML = childEntries
-      .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(child.name)}</option>`)
-      .join("");
-  }
-  elements.headerChildSwitchButton?.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
-
-  const childCountLabel = `<p class="profile-note">${childEntries.length} ${childEntries.length === 1 ? "child" : "children"} saved to this account.</p>`;
-  elements.parentKidsDashboard.innerHTML = childCountLabel + childEntries
+  const childCountLabel = `<p class="profile-note">${manageableChildEntries.length} ${manageableChildEntries.length === 1 ? "child" : "children"} saved to this account.</p>`;
+  elements.parentKidsDashboard.innerHTML = childCountLabel + manageableChildEntries
     .map((child) => {
       const totalLevels = countCompletedLevelsFromProgress(child.progress || {});
       const lastEntry = Array.isArray(child.scoreHistory) && child.scoreHistory.length ? child.scoreHistory[0] : null;
@@ -4016,8 +4021,11 @@ function renderParentDashboard() {
     return;
   }
 
-  const childEntries = Object.values(account.children || {});
-  const selectedChildId = account.activeChildId || childEntries[0]?.id || "";
+  // The auto-created "self" profile (see ensureSelfLearnerProfile) is excluded here too — the
+  // Family Dashboard is for tracking real children a parent added, not the account holder's own
+  // practice mode.
+  const childEntries = Object.values(account.children || {}).filter((child) => !child.isSelfProfile);
+  const selectedChildId = (account.activeChildId && !account.children[account.activeChildId]?.isSelfProfile ? account.activeChildId : null) || childEntries[0]?.id || "";
   const activeChild = selectedChildId ? account.children?.[selectedChildId] : null;
 
   if (!childEntries.length || !activeChild) {
@@ -4445,6 +4453,18 @@ function handleHeaderAvatarSelected(event) {
     .catch((error) => {
       showProfileMessage(error?.message || "Could not load that image.", "error");
     });
+}
+
+// The auto-created "self" profile (see ensureSelfLearnerProfile) starts out with a placeholder
+// internal name before its first use — that placeholder should never actually be shown to
+// anyone, so every place that lists child names in a switch-to control uses this instead of
+// child.name directly, showing a clear call-to-action until switchToChild() has asked for and
+// saved a real name.
+function getChildSwitchLabel(child) {
+  if (child.isSelfProfile && !child.selfProfileNamed) {
+    return "🎓 Set up my learner profile";
+  }
+  return child.name;
 }
 
 function switchToChild(childId, { silent = false, enterChildMode = false } = {}) {
