@@ -619,28 +619,20 @@ async function loadSupabaseAccountData(session) {
 
   // Safety net for accounts whose account_type metadata never got stamped "parent" — e.g. the
   // login-page self-heal in auth.js ran into a transient error and silently left it as
-  // "learner" (or missing). If this account isn't actually linked to any parent as a child
-  // (no mastery_children row references it), it can only be a parent account, so heal it here
-  // too instead of leaving the signed-in user stuck seeing a Learner view with no way to add
-  // learners or see the family dashboard.
-  if (role === "learner" && user.email) {
+  // "learner" (or missing). A real child login always uses a made-up internal email address
+  // (see deriveChildEmailFromUsername/CHILD_LOGIN_EMAIL_DOMAIN below) — never a real address a
+  // person actually owns — so any "learner"-tagged account signed in with a real email can only
+  // be a legacy/broken parent account, and gets healed here immediately. This used to be decided
+  // by querying mastery_children for a link to this account, but Supabase's row-level security
+  // never actually allows a learner to read that table (only parents, and only for their own
+  // rows), so that query always came back empty and made this check unreliable. Checking the
+  // email's domain instead needs no database round trip and can't fail that way.
+  if (role === "learner" && user.email && !user.email.toLowerCase().endsWith(`@${CHILD_LOGIN_EMAIL_DOMAIN}`)) {
+    role = "parent";
     try {
-      const { data: childLinkRows, error: childLinkError } = await client
-        .from("mastery_children")
-        .select("id")
-        .or(`child_email.eq.${user.email},linked_profile_id.eq.${user.id}`)
-        .limit(1);
-
-      if (!childLinkError && (!childLinkRows || childLinkRows.length === 0)) {
-        role = "parent";
-        try {
-          await client.auth.updateUser({ data: { account_type: "parent" } });
-        } catch (healError) {
-          console.error("Self-healing account_type to parent on app load failed", healError);
-        }
-      }
-    } catch (lookupError) {
-      console.error("Could not check for an existing child link while loading the account", lookupError);
+      await client.auth.updateUser({ data: { account_type: "parent" } });
+    } catch (healError) {
+      console.error("Self-healing account_type to parent on app load failed, continuing anyway", healError);
     }
   }
 

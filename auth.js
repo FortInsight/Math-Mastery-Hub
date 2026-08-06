@@ -203,42 +203,36 @@
 
     // Self-heal accounts created before this page dropped the parent/learner choice, so anyone
     // who was previously stamped "learner" (or has no account_type at all) gets full access too.
-    // This is a best-effort attempt only — app.js's loadSupabaseAccountData() runs the same
-    // check again on app.html itself (and, unlike here, doesn't need a network round trip to
-    // finish before the account shows correctly), so a failure here must NOT block navigation:
-    // it previously did, and a flaky network call on this one step meant a correct password
-    // could leave someone stuck on the login page. Log and move on instead.
-    if (signInData?.user?.user_metadata?.account_type !== "parent") {
-      const userId = signInData.user.id;
-      let isLinkedChild = false;
+    // A real child login always uses a made-up internal email address (see
+    // deriveChildEmailFromUsername/CHILD_LOGIN_EMAIL_DOMAIN above) — never a real address a
+    // person actually owns — so a "learner"-tagged account signing in here with a real email
+    // can only be a legacy/broken parent account. This used to be decided by querying
+    // mastery_children for a link to this account, but Supabase's row-level security never
+    // actually allows a learner to read that table, so that query always came back empty and
+    // made the check unreliable; the email's domain is a simpler, purely local check that can't
+    // fail that way. This is still only a best-effort attempt — app.js's loadSupabaseAccountData()
+    // runs the same check again on app.html itself — so a failure updating Supabase here must
+    // NOT block navigation: it previously did, and a flaky network call on this one step meant a
+    // correct password could leave someone stuck on the login page. Log and move on instead.
+    if (
+      signInData?.user?.user_metadata?.account_type !== "parent" &&
+      !email.toLowerCase().endsWith(`@${CHILD_LOGIN_EMAIL_DOMAIN}`)
+    ) {
       try {
-        const { data: childLinkRows } = await supabaseClient
-          .from("mastery_children")
-          .select("id")
-          .or(`child_email.eq.${email},linked_profile_id.eq.${userId}`)
-          .limit(1);
-        isLinkedChild = Boolean(childLinkRows && childLinkRows.length);
-      } catch (lookupError) {
-        console.error("Could not check for an existing child link before self-healing account_type", lookupError);
-      }
-
-      if (!isLinkedChild) {
-        try {
-          const { error: updateError } = await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
-          if (updateError) {
-            throw updateError;
-          }
-          // updateUser() refreshes the session internally, but app.html loads as a brand-new page
-          // (not a single-page navigation), so we explicitly wait for the refreshed session to be
-          // persisted to storage before navigating away — otherwise app.html can briefly read the
-          // old, pre-update session and show "Learner" instead of "Parent".
-          const { error: refreshError } = await supabaseClient.auth.refreshSession();
-          if (refreshError) {
-            throw refreshError;
-          }
-        } catch (updateError) {
-          console.error("Self-healing account_type to parent failed, continuing to the app anyway", updateError);
+        const { error: updateError } = await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
+        if (updateError) {
+          throw updateError;
         }
+        // updateUser() refreshes the session internally, but app.html loads as a brand-new page
+        // (not a single-page navigation), so we explicitly wait for the refreshed session to be
+        // persisted to storage before navigating away — otherwise app.html can briefly read the
+        // old, pre-update session and show "Learner" instead of "Parent".
+        const { error: refreshError } = await supabaseClient.auth.refreshSession();
+        if (refreshError) {
+          throw refreshError;
+        }
+      } catch (updateError) {
+        console.error("Self-healing account_type to parent failed, continuing to the app anyway", updateError);
       }
     }
 
