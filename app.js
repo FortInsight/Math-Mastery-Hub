@@ -615,7 +615,35 @@ async function loadSupabaseAccountData(session) {
 
   const profileId = buildSupabaseProfileId(user.id);
   const metadata = user.user_metadata || {};
-  const role = metadata.account_type === "parent" ? "parent" : "learner";
+  let role = metadata.account_type === "parent" ? "parent" : "learner";
+
+  // Safety net for accounts whose account_type metadata never got stamped "parent" — e.g. the
+  // login-page self-heal in auth.js ran into a transient error and silently left it as
+  // "learner" (or missing). If this account isn't actually linked to any parent as a child
+  // (no mastery_children row references it), it can only be a parent account, so heal it here
+  // too instead of leaving the signed-in user stuck seeing a Learner view with no way to add
+  // learners or see the family dashboard.
+  if (role === "learner" && user.email) {
+    try {
+      const { data: childLinkRows, error: childLinkError } = await client
+        .from("mastery_children")
+        .select("id")
+        .or(`child_email.eq.${user.email},linked_profile_id.eq.${user.id}`)
+        .limit(1);
+
+      if (!childLinkError && (!childLinkRows || childLinkRows.length === 0)) {
+        role = "parent";
+        try {
+          await client.auth.updateUser({ data: { account_type: "parent" } });
+        } catch (healError) {
+          console.error("Self-healing account_type to parent on app load failed", healError);
+        }
+      }
+    } catch (lookupError) {
+      console.error("Could not check for an existing child link while loading the account", lookupError);
+    }
+  }
+
   const fallbackName = metadata.user_name || user.email || "Learner";
   const fallbackGrade = Number(metadata.grade) || 1;
   let localAccount = profilesStore.profiles[profileId];
@@ -658,7 +686,14 @@ async function loadSupabaseAccountData(session) {
     setParentDashboardVisible(true);
   }
 
-  await ensureSupabaseProfileRow(localAccount, user);
+  try {
+    await ensureSupabaseProfileRow(localAccount, user);
+  } catch (error) {
+    // A hiccup saving the profile row (flaky network, ad blocker, etc.) shouldn't nuke the whole
+    // sign-in — the account is already showing locally with the right role at this point. Log it
+    // and keep going instead of aborting the rest of the hydration below.
+    console.error("Saving the profile row to Supabase failed, continuing anyway", error);
+  }
 
   if (role === "learner" && user.email) {
     const { data: pendingLinks, error: pendingLinkError } = await client
@@ -4467,19 +4502,11 @@ async function handleBackToParent() {
 }
 
 async function handleHeaderLogout() {
-  const client = getSupabaseClient();
-  if (client) {
-    try {
-      await client.auth.signOut({ scope: "local" });
-    } catch (error) {
-      console.error("Header logout sign-out failed", error);
-    }
-  }
-
-  clearLearnerSession();
-  handleLogoutProfile();
-  // The app itself is always open (no forced login), so logging out just returns to the
-  // regular guest state on this same page instead of redirecting anywhere.
+  // handleLogoutProfile() below now owns the full logout sequence (Supabase sign-out + local
+  // profile clear + redirect to the login page), so the header's "Log Out" button just delegates
+  // to it. This used to duplicate the Supabase sign-out call and then leave the visitor sitting
+  // on the now-signed-out app.html page in a "Guest" state instead of sending them to login.
+  await handleLogoutProfile();
 }
 
 function handleCreateProfile() {
@@ -4573,7 +4600,19 @@ function handleLoginProfile() {
   showProfileMessage(`Welcome back, ${account.name}. Your saved work has been loaded.`, "success");
 }
 
-function handleLogoutProfile() {
+async function handleLogoutProfile() {
+  // Sign out of Supabase too (not just the local profile store) — otherwise a persisted
+  // Supabase session would just re-hydrate the same account on the next page load/refresh,
+  // making "Log Out" not actually work for accounts signed in online.
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      await client.auth.signOut({ scope: "local" });
+    } catch (error) {
+      console.error("Sign-out failed", error);
+    }
+  }
+
   profilesStore.currentProfileId = null;
   saveProfilesStore();
   clearLearnerSession();
@@ -4584,12 +4623,11 @@ function handleLogoutProfile() {
   state.childViewMode = false;
   elements.backToParentButton?.classList.add("hidden");
   hideQuizViews();
-  applyCurrentProfile();
-  renderGradeButtons();
-  renderCategories();
-  renderStudyTime();
-  renderHeroActivity();
-  showProfileMessage("You are now signed out. Create or log in to an account to save progress.", "success");
+
+  // app.html is a protected page (see auth.js handleAppPage/grantAppAccess) — once signed out
+  // there is no account left to show here, so return to the login page instead of falling back
+  // to a visible "Guest" state on this same page.
+  window.location.href = "index.html";
 }
 
 function clearProfileFields() {

@@ -114,44 +114,9 @@
     }
   }
 
-  function getSelectedRole() {
-    return document.getElementById("authRole")?.value || "parent";
-  }
-
-  function updateRoleMode() {
-    const role = getSelectedRole();
-    const learnerMode = role === "learner";
-
-    setHidden("parent-flow-note", learnerMode);
-    setHidden("learner-flow-note", !learnerMode);
-
-    const emailLabel = document.getElementById("auth-email-label");
-    const emailInput = document.getElementById("authEmail");
-    const signupButton = document.getElementById("signupButton");
-    const loginButton = document.getElementById("loginButton");
-
-    if (emailLabel) {
-      const labelText = emailLabel.firstChild;
-      if (labelText && labelText.nodeType === Node.TEXT_NODE) {
-        labelText.textContent = "Email";
-      }
-    }
-    if (emailInput) {
-      emailInput.placeholder = "Enter your email";
-      emailInput.autocomplete = "email";
-      emailInput.disabled = false;
-    }
-    if (signupButton) {
-      // Learners can now sign up directly with their own email too (not just log in with a
-      // username a parent created for them), so Sign Up stays visible for both roles.
-      signupButton.classList.remove("hidden");
-      signupButton.disabled = false;
-      signupButton.textContent = "Sign Up";
-    }
-    if (loginButton) {
-      loginButton.textContent = "Log In";
-    }
-  }
+  // There is no longer a parent/learner choice on this page — every account signs up the same
+  // way and gets full access to add learners (with username, grade, and avatar) from inside the
+  // dashboard. The separate learner-login.html username flow for kids is untouched by this.
 
   // Header rendering and the "Log Out" button are owned entirely by app.js on index.html (see
   // the comment on handleAppPage below) — there used to be duplicate versions of both here,
@@ -184,7 +149,6 @@
   }
 
   async function signUpUser() {
-    const role = getSelectedRole();
     const name = document.getElementById("authName")?.value.trim();
     const email = document.getElementById("authEmail")?.value.trim();
     const password = document.getElementById("authPassword")?.value;
@@ -205,9 +169,10 @@
       options: {
         data: {
           user_name: name || "",
-          // A learner who signs up directly here (their own email, not a username a parent
-          // set up for them) gets their own independent account, separate from any parent.
-          account_type: role === "learner" ? "learner" : "parent"
+          // Every account created here is the same "full" account type — it can add learners
+          // (with username, grade, avatar) from inside the dashboard, whether or not it ever
+          // does. There is no separate parent/learner role to pick at sign-up anymore.
+          account_type: "parent"
         },
         emailRedirectTo: buildUrl("index.html")
       }
@@ -217,9 +182,6 @@
   }
 
   async function loginUser() {
-    const role = getSelectedRole();
-    // Learners now log in with their own real email here too (not a parent-created username),
-    // so both roles treat this field as a literal email address.
     const email = document.getElementById("authEmail")?.value.trim() || "";
     const password = document.getElementById("authPassword")?.value;
 
@@ -239,17 +201,49 @@
       return;
     }
 
-    // Self-heal accounts created by an earlier, buggier sign-up flow that could stamp the
-    // wrong account_type into Supabase's stored user metadata. That metadata sticks forever
-    // once set, so if someone explicitly signs in through the Parent flow, make sure their
-    // account is actually labeled "parent" going forward.
-    if (role === "parent" && signInData?.user?.user_metadata?.account_type !== "parent") {
-      await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
-      // updateUser() refreshes the session internally, but app.html loads as a brand-new page
-      // (not a single-page navigation), so we explicitly wait for the refreshed session to be
-      // persisted to storage before navigating away — otherwise app.html can briefly read the
-      // old, pre-update session and show "Learner" instead of "Parent".
-      await supabaseClient.auth.refreshSession();
+    // Self-heal accounts created before this page dropped the parent/learner choice, so anyone
+    // who was previously stamped "learner" (or has no account_type at all) gets full access too.
+    // Skipped for accounts that are actually a child someone added from the parent dashboard
+    // (matched by login email or linked_profile_id) — this page is the parent-facing login, but
+    // a child's real Supabase login also works here, and it must stay a learner account rather
+    // than get silently promoted to a parent account just because someone signed into it here.
+    if (signInData?.user?.user_metadata?.account_type !== "parent") {
+      const userId = signInData.user.id;
+      let isLinkedChild = false;
+      try {
+        const { data: childLinkRows } = await supabaseClient
+          .from("mastery_children")
+          .select("id")
+          .or(`child_email.eq.${email},linked_profile_id.eq.${userId}`)
+          .limit(1);
+        isLinkedChild = Boolean(childLinkRows && childLinkRows.length);
+      } catch (lookupError) {
+        console.error("Could not check for an existing child link before self-healing account_type", lookupError);
+      }
+
+      if (!isLinkedChild) {
+        try {
+          const { error: updateError } = await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
+          if (updateError) {
+            throw updateError;
+          }
+          // updateUser() refreshes the session internally, but app.html loads as a brand-new page
+          // (not a single-page navigation), so we explicitly wait for the refreshed session to be
+          // persisted to storage before navigating away — otherwise app.html can briefly read the
+          // old, pre-update session and show "Learner" instead of "Parent".
+          const { error: refreshError } = await supabaseClient.auth.refreshSession();
+          if (refreshError) {
+            throw refreshError;
+          }
+        } catch (updateError) {
+          // Don't silently continue into the app in a broken half-healed state — that's what
+          // produced a parent seeing a Learner view with no Manage Learners/dashboard before.
+          // Surface it and let them retry instead.
+          console.error("Self-healing account_type to parent failed", updateError);
+          setAuthMessage("Signed in, but we could not finish setting up your account. Please try logging in again.");
+          return;
+        }
+      }
     }
 
     setAuthMessage("Login successful. Opening app...");
@@ -307,14 +301,25 @@
     window.setTimeout(goToApp, 600);
   }
 
+  // Reveals the app markup that app.html hides by default via CSS (see the inline <style> in
+  // app.html's <head>). Only ever called from a branch of handleAppPage() below that has
+  // confirmed real access — a Supabase session or a local device profile/learner session.
+  function grantAppAccess() {
+    document.body.classList.add("access-granted");
+  }
+
   // app.html is protected: if there is no active Supabase session and no locally signed-in
-  // learner/parent profile on this device, send the visitor to the login page first.
-  // app.js still owns the header/account rendering after access is granted.
+  // learner/parent profile on this device, send the visitor to the login page first. Guests are
+  // never shown the app markup — it stays hidden (see app.html's inline CSS) unless this
+  // function explicitly grants access. app.js still owns the header/account rendering after
+  // access is granted.
   async function handleAppPage() {
     if (!authEnabled()) {
       if (!hasLocalAccessSession()) {
         goToLogin();
+        return;
       }
+      grantAppAccess();
       return;
     }
 
@@ -324,9 +329,13 @@
       if (!session) {
         if (!hasLocalAccessSession()) {
           goToLogin();
+          return;
         }
+        grantAppAccess();
         return;
       }
+
+      grantAppAccess();
 
       const applySession = () => window.masteryApp?.applySupabaseSessionToLocalProfile?.(session);
       if (window.masteryApp?.applySupabaseSessionToLocalProfile) {
@@ -336,10 +345,20 @@
       }
 
       supabaseClient.auth.onAuthStateChange((event, nextSession) => {
+        if (nextSession) {
+          grantAppAccess();
+        }
         window.masteryApp?.applySupabaseSessionToLocalProfile?.(nextSession);
       });
     } catch (error) {
       console.error("Session check failed", error);
+      // Couldn't verify the session either way — don't leave the visitor stuck on a blank
+      // hidden page. Fall back to the same local-session check the other branches use.
+      if (!hasLocalAccessSession()) {
+        goToLogin();
+      } else {
+        grantAppAccess();
+      }
     }
   }
 
@@ -349,33 +368,18 @@
       return;
     }
 
-    const requestedRole = new URLSearchParams(window.location.search).get("role");
     const { data } = await supabaseClient.auth.getSession();
     if (data?.session && !inRecoveryMode()) {
-      if (requestedRole === "learner") {
-        // Someone is already signed in on this browser (likely the parent) but explicitly
-        // asked to switch to a learner login. Sign out of that session first instead of
-        // silently bouncing back to the app, so the login form actually shows up.
-        await supabaseClient.auth.signOut({ scope: "local" });
-      } else {
-        setAuthMessage("You are already signed in. Use Log In with another account, or open the app when you are ready.");
-      }
+      setAuthMessage("You are already signed in. Use Log In with another account, or open the app when you are ready.");
     }
 
     setRecoveryMode(inRecoveryMode());
-
-    const authRoleSelect = document.getElementById("authRole");
-    if (authRoleSelect && requestedRole === "learner") {
-      authRoleSelect.value = "learner";
-    }
-    updateRoleMode();
 
     document.getElementById("signupButton")?.addEventListener("click", signUpUser);
     document.getElementById("loginButton")?.addEventListener("click", async (event) => {
       event.preventDefault();
       await loginUser();
     });
-    document.getElementById("authRole")?.addEventListener("change", updateRoleMode);
     document.getElementById("forgotPasswordButton")?.addEventListener("click", sendPasswordReset);
     document.getElementById("authForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();

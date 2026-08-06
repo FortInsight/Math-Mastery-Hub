@@ -25,22 +25,12 @@
         <p class="eyebrow">Grammar & Maths Learning Hub</p>
         <h1>Sign in to open the learning hub.</h1>
         <p class="hero-text">
-          Parents sign in with email and password. After login, parents can add children inside the dashboard and track each child's progress separately.
-        </p>
-        <p class="hero-text" id="auth-role-help">
-          Parents and learners both sign in with their own email and password. Learners can sign up here directly with their own email, without needing a parent to set anything up first.
+          Sign in with your email and password. After login, you can add learners inside the dashboard — set a username, grade, and avatar for each one — and track their progress separately.
         </p>
       </div>
 
       <form id="authForm" class="profile-form auth-form">
         <div class="two-up auth-input-grid">
-          <label>
-            Account type
-            <select id="authRole">
-              <option value="parent">Parent account</option>
-              <option value="learner">Learner account</option>
-            </select>
-          </label>
           <label id="auth-email-label">
             Email
             <input type="text" id="authEmail" placeholder="Enter your email" autocomplete="email" />
@@ -50,13 +40,6 @@
             <input type="password" id="authPassword" placeholder="Enter password" autocomplete="current-password" />
           </label>
         </div>
-
-        <p class="hero-text" id="parent-flow-note">
-          Parent flow: create one parent login here, then add children inside the dashboard.
-        </p>
-        <p class="hero-text hidden" id="learner-flow-note">
-          Learner flow: sign up or log in with your own email and password — you don't need to be added by a parent first.
-        </p>
 
         <div class="auth-actions">
           <button id="signupButton" type="button" class="primary-button">Sign Up</button>
