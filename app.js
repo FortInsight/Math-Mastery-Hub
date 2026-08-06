@@ -4460,11 +4460,23 @@ function switchToChild(childId, { silent = false, enterChildMode = false } = {})
     return;
   }
 
+  const child = account.children[childId];
+
+  // The auto-created "self" profile (see ensureSelfLearnerProfile) starts out named "My
+  // Practice" as a placeholder. The first time someone actually opens it, ask what they'd
+  // rather be called instead — after that, selfProfileNamed stops it asking again.
+  if (enterChildMode && child.isSelfProfile && !child.selfProfileNamed) {
+    const chosenName = window.prompt("What would you like to be called while you practice?", "");
+    if (chosenName && chosenName.trim()) {
+      child.name = chosenName.trim();
+    }
+    child.selfProfileNamed = true;
+  }
+
   account.activeChildId = childId;
   profilesStore.profiles[account.id] = account;
   saveProfilesStore();
 
-  const child = account.children[childId];
   state.selectedGrade = child.grade;
   state.selectedCategoryId = null;
   state.selectedLevel = null;
