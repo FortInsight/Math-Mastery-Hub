@@ -203,10 +203,11 @@
 
     // Self-heal accounts created before this page dropped the parent/learner choice, so anyone
     // who was previously stamped "learner" (or has no account_type at all) gets full access too.
-    // Skipped for accounts that are actually a child someone added from the parent dashboard
-    // (matched by login email or linked_profile_id) — this page is the parent-facing login, but
-    // a child's real Supabase login also works here, and it must stay a learner account rather
-    // than get silently promoted to a parent account just because someone signed into it here.
+    // This is a best-effort attempt only — app.js's loadSupabaseAccountData() runs the same
+    // check again on app.html itself (and, unlike here, doesn't need a network round trip to
+    // finish before the account shows correctly), so a failure here must NOT block navigation:
+    // it previously did, and a flaky network call on this one step meant a correct password
+    // could leave someone stuck on the login page. Log and move on instead.
     if (signInData?.user?.user_metadata?.account_type !== "parent") {
       const userId = signInData.user.id;
       let isLinkedChild = false;
@@ -236,12 +237,7 @@
             throw refreshError;
           }
         } catch (updateError) {
-          // Don't silently continue into the app in a broken half-healed state — that's what
-          // produced a parent seeing a Learner view with no Manage Learners/dashboard before.
-          // Surface it and let them retry instead.
-          console.error("Self-healing account_type to parent failed", updateError);
-          setAuthMessage("Signed in, but we could not finish setting up your account. Please try logging in again.");
-          return;
+          console.error("Self-healing account_type to parent failed, continuing to the app anyway", updateError);
         }
       }
     }
