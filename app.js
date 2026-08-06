@@ -49,7 +49,7 @@ const curriculum = {
     makeCategory("graphing", "Coordinate Graphing", "Plot points and describe positions on a grid.", "geometry", { level: 5 })
   ],
   6: [
-    makeCategory("numbers", "Ratios & Number Sense", "Factors, multiples, and rational number foundations.", "numberSense", { min: 10, max: 750 }),
+    makeCategory("numbers", "Factors & Number Sense", "Factors, multiples, and rational number foundations.", "numberSense", { min: 10, max: 750 }),
     makeCategory("operations", "Fractions & Decimals", "Compute with fractions, decimals, and percent.", "fractionsDecimalsPercent", { stage: "middleSchoolStart" }),
     makeCategory("algebra", "Expressions & Equations", "Use variables, order of operations, and simple equations.", "algebra", { level: 6 }),
     makeCategory("geometry", "Geometry & Measurement", "Area, surface area, and volume.", "geometry", { level: 6 }),
@@ -327,6 +327,12 @@ async function syncSupabaseChildren(account, ownerId) {
   const activeChildIds = new Set();
 
   for (const child of Object.values(account.children || {})) {
+    if (child.isSelfProfile) {
+      // The auto-created "self" learner profile (see ensureSelfLearnerProfile) is only a local
+      // view mode for the account holder to practice under their own login — it isn't a real
+      // separate learner a parent added, so it never gets written to mastery_children.
+      continue;
+    }
     const normalizedName = child.name.trim().toLowerCase();
     const payload = {
       child_name: child.name,
@@ -665,6 +671,7 @@ async function loadSupabaseAccountData(session) {
   }
 
   ensureAccountShape(localAccount);
+  ensureSelfLearnerProfile(localAccount);
   // Adopt the signed-in account immediately so the app header/profile stops showing Guest
   // while the fuller Supabase sync is still loading in the background.
   profilesStore.profiles[profileId] = localAccount;
@@ -769,6 +776,7 @@ async function loadSupabaseAccountData(session) {
     : localAccount;
 
   ensureAccountShape(account);
+  ensureSelfLearnerProfile(account);
   profilesStore.profiles[profileId] = account;
   profilesStore.currentProfileId = profileId;
   saveProfilesStore();
@@ -1196,16 +1204,19 @@ function setParentDashboardVisible(visible) {
 // parent-only control (Manage Learners, Family Dashboard) so the child only sees the learning
 // area. A small "Back to Parent" control is the only way back in, keeping this a deliberate,
 // two-step action rather than something a curious kid can undo with one tap.
-function setChildViewMode(enabled) {
+function setChildViewMode(enabled, { allowGradeChange = false } = {}) {
   state.childViewMode = enabled;
   if (enabled) {
     setParentDashboardVisible(false);
     setAccountToolsVisible(false);
   }
   elements.backToParentButton?.classList.toggle("hidden", !enabled);
-  // A learner only ever plays at the grade their parent assigned them, so the grade picker
-  // is parent-only tooling and should disappear along with the rest of the admin controls.
-  elements.gradePanelSection?.classList.toggle("hidden", enabled);
+  // A learner added by a parent only ever plays at the grade their parent assigned them, so the
+  // grade picker is parent-only tooling and stays hidden for them. The exception is the
+  // account holder's own "self" learner profile (see ensureSelfLearnerProfile) — when someone
+  // signs in and chooses "I'm a Learner" for themselves, they pick their own grade directly, so
+  // allowGradeChange keeps the grade picker visible in that one case.
+  elements.gradePanelSection?.classList.toggle("hidden", enabled && !allowGradeChange);
   // The performance/activity panel is progress-tracking for parents, not something a kid needs
   // to see while practicing. Force it closed and hide the toggle entirely in child view.
   if (enabled) {
@@ -4461,7 +4472,10 @@ function switchToChild(childId, { silent = false, enterChildMode = false } = {})
   hideQuizViews();
   setHeroPanelVisible(false);
   if (enterChildMode) {
-    setChildViewMode(true);
+    // The account holder's own auto-created "self" learner profile lets them pick their own
+    // grade each time (see ensureSelfLearnerProfile/setChildViewMode); a real child a parent
+    // added keeps the grade locked as before.
+    setChildViewMode(true, { allowGradeChange: Boolean(child.isSelfProfile) });
   }
   renderProfilePanel();
   renderGradeButtons();
@@ -4482,7 +4496,15 @@ async function handleHeaderChildSwitch() {
 }
 
 async function handleBackToParent() {
-  const canReturn = await verifyParentPasswordForAction("return to the parent view");
+  // The parent password prompt exists to stop a kid who's been handed the device from getting
+  // back into the parent's own account tools. That protection isn't needed when the account
+  // holder was only ever in their own "My Practice" self-profile (see ensureSelfLearnerProfile)
+  // — there's no other learner's session to protect there, so skip straight back.
+  const account = getCurrentAccount();
+  const activeChild = account?.children?.[account.activeChildId];
+  const skipPasswordCheck = Boolean(activeChild?.isSelfProfile);
+
+  const canReturn = skipPasswordCheck || (await verifyParentPasswordForAction("return to the parent view"));
   if (!canReturn) {
     return;
   }
@@ -4494,8 +4516,8 @@ async function handleBackToParent() {
   renderCategories();
   renderStudyTime();
   renderHeroActivity();
-  const account = getCurrentAccount();
-  if (account?.type === "parent" && Object.keys(account.children || {}).length) {
+  const refreshedAccount = getCurrentAccount();
+  if (refreshedAccount?.type === "parent" && Object.keys(refreshedAccount.children || {}).length) {
     setParentDashboardVisible(true);
   }
   showProfileMessage("Back in parent view.", "success");
@@ -5068,6 +5090,37 @@ function createLearnerRecord({ id, name, grade, childEmail = "", childUsername =
       }
       : createEmptyLearnerGoals()
   };
+}
+
+// Guarantees every parent account always has at least one learner profile it can switch into
+// (via the header's "Switch to Learner" control) right from the moment they sign in — without
+// first having to add a real child from Manage Learners. This is what lets someone choose
+// "I'm a Learner" for themselves immediately after logging in: it opens this auto-created
+// profile, marked isSelfProfile so switchToChild() knows to leave the grade picker open for it
+// (see setChildViewMode), unlike a real child a parent added, whose grade stays locked.
+function ensureSelfLearnerProfile(account) {
+  if (!account || account.type !== "parent") {
+    return;
+  }
+  account.children = account.children && typeof account.children === "object" ? account.children : {};
+  if (Object.keys(account.children).length > 0) {
+    return;
+  }
+
+  const selfId = "self";
+  const selfProfile = createLearnerRecord({
+    id: selfId,
+    // Deliberately not just account.name — that already labels the signed-in account itself in
+    // the header, so reusing it here for the switch-target too would show the same name twice
+    // and read like a duplicate account rather than "practice as yourself."
+    name: "My Practice",
+    grade: 1
+  });
+  selfProfile.isSelfProfile = true;
+  account.children[selfId] = selfProfile;
+  if (!account.activeChildId) {
+    account.activeChildId = selfId;
+  }
 }
 
 function hashPassword(password) {
@@ -5890,6 +5943,116 @@ function englishPatGrade6PartBDescription() {
 
 function number(min, max, rng) {
   return Math.floor(rng() * (max - min + 1)) + min;
+}
+
+function factorsOf(value) {
+  const n = Math.max(1, Math.round(Math.abs(value)));
+  const result = [];
+  for (let i = 1; i <= n; i += 1) {
+    if (n % i === 0) {
+      result.push(i);
+    }
+  }
+  return result;
+}
+
+function greatestCommonFactor(a, b) {
+  let x = Math.abs(Math.round(a));
+  let y = Math.abs(Math.round(b));
+  while (y) {
+    [x, y] = [y, x % y];
+  }
+  return x || 1;
+}
+
+function leastCommonMultiple(a, b) {
+  return Math.round(Math.abs(a * b) / greatestCommonFactor(a, b));
+}
+
+function isPrimeNumber(value) {
+  const n = Math.round(value);
+  if (n < 2) {
+    return false;
+  }
+  for (let i = 2; i * i <= n; i += 1) {
+    if (n % i === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Grade 6+ "factors, multiples, and rational number foundations" content — used by
+// questionFactories.numberSense in place of the elementary comparison/place-value/sequence
+// questions used for grades below 6 (see the branch in that factory).
+function buildFactorsAndMultiplesQuestion(rng, difficulty, index) {
+  const operandCeiling = lerpRange(6, 60, difficulty);
+  const mode = index % 4;
+
+  if (mode === 0) {
+    const a = number(6, operandCeiling, rng);
+    const b = number(6, operandCeiling, rng);
+    const correct = greatestCommonFactor(a, b);
+    const { options, answerIndex } = buildOptions(correct, [
+      correct + 1,
+      Math.max(1, correct - 1),
+      correct + 3
+    ], rng);
+    return {
+      prompt: `What is the greatest common factor (GCF) of ${a} and ${b}?`,
+      options,
+      answerIndex,
+      explanation: `The largest number that divides evenly into both ${a} and ${b} is ${correct}.`
+    };
+  }
+
+  if (mode === 1) {
+    const a = number(4, Math.max(6, Math.round(operandCeiling / 2)), rng);
+    const b = number(4, Math.max(6, Math.round(operandCeiling / 2)), rng);
+    const correct = leastCommonMultiple(a, b);
+    const { options, answerIndex } = buildOptions(correct, [
+      correct + a,
+      Math.max(1, correct - b),
+      a * b === correct ? correct + b : a * b
+    ], rng);
+    return {
+      prompt: `What is the least common multiple (LCM) of ${a} and ${b}?`,
+      options,
+      answerIndex,
+      explanation: `The smallest number that both ${a} and ${b} divide evenly into is ${correct}.`
+    };
+  }
+
+  if (mode === 2) {
+    const value = number(12, Math.max(20, operandCeiling * 2), rng);
+    const correct = factorsOf(value).length;
+    const { options, answerIndex } = buildOptions(correct, [
+      correct + 1,
+      Math.max(1, correct - 1),
+      correct + 2
+    ], rng);
+    return {
+      prompt: `How many whole-number factors does ${value} have?`,
+      options,
+      answerIndex,
+      explanation: `The factors of ${value} are ${factorsOf(value).join(", ")} — that's ${correct} factors in total.`
+    };
+  }
+
+  const target = number(11, Math.max(30, operandCeiling * 2 + 11), rng);
+  const targetIsPrime = isPrimeNumber(target);
+  const correctLabel = targetIsPrime ? "Prime" : "Composite";
+  const otherLabel = targetIsPrime ? "Composite" : "Prime";
+  const { options, answerIndex } = buildOptions(correctLabel, [otherLabel, "Neither", "Both"], rng);
+  const smallestFactor = !targetIsPrime ? factorsOf(target).find((factor) => factor > 1 && factor < target) : null;
+  return {
+    prompt: `Is ${target} a prime number or a composite number?`,
+    options,
+    answerIndex,
+    explanation: targetIsPrime
+      ? `${target} is only divisible by 1 and itself, so it is prime.`
+      : `${target} can also be divided evenly by ${smallestFactor} (not just 1 and itself), so it is composite.`
+  };
 }
 
 function lerpRange(min, max, difficulty) {
@@ -8930,6 +9093,15 @@ const questionFactories = {
   numberSense(rng, grade, config, index, difficulty) {
     const min = config.min;
     const max = lerpRange(config.min, config.max, difficulty);
+
+    // Grade 6's number-sense category is specifically about factors, multiples, and rational
+    // number foundations (see its category description) — the plain magnitude-comparison,
+    // place-value, and sequence questions below are both far too simple for that grade and
+    // don't match the topic at all, so grade 6+ gets its own set of modes instead.
+    if (grade >= 6) {
+      return buildFactorsAndMultiplesQuestion(rng, difficulty, index);
+    }
+
     const mode = index % 4;
 
     if (mode === 0) {
