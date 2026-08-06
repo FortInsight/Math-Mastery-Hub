@@ -4339,10 +4339,18 @@ async function handleAddChild() {
       console.error("Fallback learner list refresh also failed", fallbackError);
     }
   }
+  // hasSupabasePersistence() only returns true when signed into a real online (Supabase)
+  // account — a purely local/offline parent account (created via Create Profile with a name +
+  // password, no email) looks identical in this form, but queueSupabaseWrite() below silently
+  // does nothing for it. Without this warning, a learner added on one device while signed into
+  // a local-only account would just vanish from every other device with no explanation.
+  const syncNote = hasSupabasePersistence()
+    ? ""
+    : " This learner is only saved on this device/browser — sign in with your online account (email + password) to see them on other devices too.";
   showProfileMessage(
-    childUsername
+    (childUsername
       ? `${childName} was added. They can log in on the Learner Login page with username "${sanitizeUsername(childUsername)}".`
-      : `${childName} was added and is now the active learner.`,
+      : `${childName} was added and is now the active learner.`) + syncNote,
     "success"
   );
 
