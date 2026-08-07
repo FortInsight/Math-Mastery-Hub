@@ -4340,6 +4340,11 @@ async function handleAddChild() {
   if (hasSupabasePersistence()) {
     try {
       await syncSupabaseChildren(account, state.supabaseUserId);
+      const sessionResponse = await getSupabaseClient().auth.getSession();
+      const session = sessionResponse?.data?.session || null;
+      if (session) {
+        await loadSupabaseAccountData(session);
+      }
       syncNote = " Saved to your online parent account.";
     } catch (error) {
       console.error("Immediate learner sync failed", error);
