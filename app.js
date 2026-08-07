@@ -327,12 +327,6 @@ async function syncSupabaseChildren(account, ownerId) {
   const activeChildIds = new Set();
 
   for (const child of Object.values(account.children || {})) {
-    if (child.isSelfProfile) {
-      // The auto-created "self" learner profile (see ensureSelfLearnerProfile) is only a local
-      // view mode for the account holder to practice under their own login — it isn't a real
-      // separate learner a parent added, so it never gets written to mastery_children.
-      continue;
-    }
     const normalizedName = child.name.trim().toLowerCase();
     const payload = {
       child_name: child.name,
@@ -621,26 +615,7 @@ async function loadSupabaseAccountData(session) {
 
   const profileId = buildSupabaseProfileId(user.id);
   const metadata = user.user_metadata || {};
-  let role = metadata.account_type === "parent" ? "parent" : "learner";
-
-  // Safety net for accounts whose account_type metadata never got stamped "parent" — e.g. the
-  // login-page self-heal in auth.js ran into a transient error and silently left it as
-  // "learner" (or missing). A real child login always uses a made-up internal email address
-  // (see deriveChildEmailFromUsername/CHILD_LOGIN_EMAIL_DOMAIN below) — never a real address a
-  // person actually owns — so any "learner"-tagged account signed in with a real email can only
-  // be a legacy/broken parent account, and gets healed here immediately. This used to be decided
-  // by querying mastery_children for a link to this account, but Supabase's row-level security
-  // never actually allows a learner to read that table (only parents, and only for their own
-  // rows), so that query always came back empty and made this check unreliable. Checking the
-  // email's domain instead needs no database round trip and can't fail that way.
-  if (role === "learner" && user.email && !user.email.toLowerCase().endsWith(`@${CHILD_LOGIN_EMAIL_DOMAIN}`)) {
-    role = "parent";
-    try {
-      await client.auth.updateUser({ data: { account_type: "parent" } });
-    } catch (healError) {
-      console.error("Self-healing account_type to parent on app load failed, continuing anyway", healError);
-    }
-  }
+  const role = metadata.account_type === "learner" ? "learner" : "parent";
 
   const fallbackName = metadata.user_name || user.email || "Learner";
   const fallbackGrade = Number(metadata.grade) || 1;
@@ -671,7 +646,6 @@ async function loadSupabaseAccountData(session) {
   }
 
   ensureAccountShape(localAccount);
-  ensureSelfLearnerProfile(localAccount);
   // Adopt the signed-in account immediately so the app header/profile stops showing Guest
   // while the fuller Supabase sync is still loading in the background.
   profilesStore.profiles[profileId] = localAccount;
@@ -776,7 +750,6 @@ async function loadSupabaseAccountData(session) {
     : localAccount;
 
   ensureAccountShape(account);
-  ensureSelfLearnerProfile(account);
   profilesStore.profiles[profileId] = account;
   profilesStore.currentProfileId = profileId;
   saveProfilesStore();
@@ -3547,18 +3520,17 @@ function renderParentPanel(account) {
   // Manage Learners list and Family Dashboard so it doesn't clutter or get confused with actual
   // children. It's still reachable through the header's "Switch to Learner" control below,
   // which uses childEntries (including it), not this filtered list.
-  const manageableChildEntries = childEntries.filter((child) => !child.isSelfProfile);
   const showParentSwitchControls = !state.childViewMode;
 
   if (elements.headerChildSelect) {
     elements.headerChildSelect.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
     elements.headerChildSelect.innerHTML = childEntries
-      .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(getChildSwitchLabel(child))}</option>`)
+      .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(child.name)}</option>`)
       .join("");
   }
   elements.headerChildSwitchButton?.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
 
-  if (!manageableChildEntries.length) {
+  if (!childEntries.length) {
     elements.parentChildSelect.innerHTML = `<option value="">No children added yet</option>`;
     elements.parentChildSelect.disabled = true;
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
@@ -3569,12 +3541,12 @@ function renderParentPanel(account) {
 
   elements.parentChildSelect.disabled = false;
   elements.switchChildButton && (elements.switchChildButton.disabled = false);
-  elements.parentChildSelect.innerHTML = manageableChildEntries
+  elements.parentChildSelect.innerHTML = childEntries
     .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${child.name} | Grade ${child.grade}</option>`)
     .join("");
 
-  const childCountLabel = `<p class="profile-note">${manageableChildEntries.length} ${manageableChildEntries.length === 1 ? "child" : "children"} saved to this account.</p>`;
-  elements.parentKidsDashboard.innerHTML = childCountLabel + manageableChildEntries
+  const childCountLabel = `<p class="profile-note">${childEntries.length} ${childEntries.length === 1 ? "child" : "children"} saved to this account.</p>`;
+  elements.parentKidsDashboard.innerHTML = childCountLabel + childEntries
     .map((child) => {
       const totalLevels = countCompletedLevelsFromProgress(child.progress || {});
       const lastEntry = Array.isArray(child.scoreHistory) && child.scoreHistory.length ? child.scoreHistory[0] : null;
@@ -4024,8 +3996,8 @@ function renderParentDashboard() {
   // The auto-created "self" profile (see ensureSelfLearnerProfile) is excluded here too — the
   // Family Dashboard is for tracking real children a parent added, not the account holder's own
   // practice mode.
-  const childEntries = Object.values(account.children || {}).filter((child) => !child.isSelfProfile);
-  const selectedChildId = (account.activeChildId && !account.children[account.activeChildId]?.isSelfProfile ? account.activeChildId : null) || childEntries[0]?.id || "";
+  const childEntries = Object.values(account.children || {});
+  const selectedChildId = (account.activeChildId && account.children[account.activeChildId] ? account.activeChildId : null) || childEntries[0]?.id || "";
   const activeChild = selectedChildId ? account.children?.[selectedChildId] : null;
 
   if (!childEntries.length || !activeChild) {
@@ -4455,15 +4427,7 @@ function handleHeaderAvatarSelected(event) {
     });
 }
 
-// The auto-created "self" profile (see ensureSelfLearnerProfile) starts out with a placeholder
-// internal name before its first use — that placeholder should never actually be shown to
-// anyone, so every place that lists child names in a switch-to control uses this instead of
-// child.name directly, showing a clear call-to-action until switchToChild() has asked for and
-// saved a real name.
 function getChildSwitchLabel(child) {
-  if (child.isSelfProfile && !child.selfProfileNamed) {
-    return "🎓 Set up my learner profile";
-  }
   return child.name;
 }
 
@@ -4482,18 +4446,7 @@ function switchToChild(childId, { silent = false, enterChildMode = false } = {})
 
   const child = account.children[childId];
 
-  // The auto-created "self" profile (see ensureSelfLearnerProfile) starts out named "My
-  // Practice" as a placeholder. The first time someone actually opens it, ask what they'd
-  // rather be called instead — after that, selfProfileNamed stops it asking again.
-  if (enterChildMode && child.isSelfProfile && !child.selfProfileNamed) {
-    const chosenName = window.prompt("What would you like to be called while you practice?", "");
-    if (chosenName && chosenName.trim()) {
-      child.name = chosenName.trim();
-    }
-    child.selfProfileNamed = true;
-  }
-
-  account.activeChildId = childId;
+    account.activeChildId = childId;
   profilesStore.profiles[account.id] = account;
   saveProfilesStore();
 
@@ -4504,10 +4457,7 @@ function switchToChild(childId, { silent = false, enterChildMode = false } = {})
   hideQuizViews();
   setHeroPanelVisible(false);
   if (enterChildMode) {
-    // The account holder's own auto-created "self" learner profile lets them pick their own
-    // grade each time (see ensureSelfLearnerProfile/setChildViewMode); a real child a parent
-    // added keeps the grade locked as before.
-    setChildViewMode(true, { allowGradeChange: Boolean(child.isSelfProfile) });
+        setChildViewMode(true, { allowGradeChange: false });
   }
   renderProfilePanel();
   renderGradeButtons();
@@ -4528,15 +4478,7 @@ async function handleHeaderChildSwitch() {
 }
 
 async function handleBackToParent() {
-  // The parent password prompt exists to stop a kid who's been handed the device from getting
-  // back into the parent's own account tools. That protection isn't needed when the account
-  // holder was only ever in their own "My Practice" self-profile (see ensureSelfLearnerProfile)
-  // — there's no other learner's session to protect there, so skip straight back.
-  const account = getCurrentAccount();
-  const activeChild = account?.children?.[account.activeChildId];
-  const skipPasswordCheck = Boolean(activeChild?.isSelfProfile);
-
-  const canReturn = skipPasswordCheck || (await verifyParentPasswordForAction("return to the parent view"));
+    const canReturn = await verifyParentPasswordForAction("return to the parent view");
   if (!canReturn) {
     return;
   }
@@ -4564,6 +4506,12 @@ async function handleHeaderLogout() {
 }
 
 function handleCreateProfile() {
+  if (window.location.protocol !== "file:") {
+    showProfileMessage("On the live site, sign in from the login page so learners and progress sync across browsers.", "error");
+    window.location.href = "login.html";
+    return;
+  }
+
   state.childViewMode = false;
   elements.backToParentButton?.classList.add("hidden");
   const name = elements.profileNameInput.value.trim();
@@ -4618,6 +4566,12 @@ function handleCreateProfile() {
 }
 
 function handleLoginProfile() {
+  if (window.location.protocol !== "file:") {
+    showProfileMessage("On the live site, use the email login page so learners and progress sync across browsers.", "error");
+    window.location.href = "login.html";
+    return;
+  }
+
   state.childViewMode = false;
   elements.backToParentButton?.classList.add("hidden");
   const name = elements.profileNameInput.value.trim();
@@ -5124,35 +5078,8 @@ function createLearnerRecord({ id, name, grade, childEmail = "", childUsername =
   };
 }
 
-// Guarantees every parent account always has at least one learner profile it can switch into
-// (via the header's "Switch to Learner" control) right from the moment they sign in — without
-// first having to add a real child from Manage Learners. This is what lets someone choose
-// "I'm a Learner" for themselves immediately after logging in: it opens this auto-created
-// profile, marked isSelfProfile so switchToChild() knows to leave the grade picker open for it
-// (see setChildViewMode), unlike a real child a parent added, whose grade stays locked.
 function ensureSelfLearnerProfile(account) {
-  if (!account || account.type !== "parent") {
-    return;
-  }
-  account.children = account.children && typeof account.children === "object" ? account.children : {};
-  if (Object.keys(account.children).length > 0) {
-    return;
-  }
-
-  const selfId = "self";
-  const selfProfile = createLearnerRecord({
-    id: selfId,
-    // Deliberately not just account.name — that already labels the signed-in account itself in
-    // the header, so reusing it here for the switch-target too would show the same name twice
-    // and read like a duplicate account rather than "practice as yourself."
-    name: "My Practice",
-    grade: 1
-  });
-  selfProfile.isSelfProfile = true;
-  account.children[selfId] = selfProfile;
-  if (!account.activeChildId) {
-    account.activeChildId = selfId;
-  }
+  return;
 }
 
 function hashPassword(password) {
@@ -5438,6 +5365,13 @@ function ensureAccountShape(account) {
     if (!account.children || typeof account.children !== "object") {
       account.children = {};
     }
+
+    Object.keys(account.children).forEach((childId) => {
+      if (account.children[childId]?.isSelfProfile) {
+        delete account.children[childId];
+      }
+    });
+
     Object.values(account.children).forEach((child) => ensureLearnerShape(child));
     if (account.activeChildId && !account.children[account.activeChildId]) {
       account.activeChildId = null;

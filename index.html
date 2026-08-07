@@ -31,6 +31,37 @@
 
       <form id="authForm" class="profile-form auth-form">
         <div class="two-up auth-input-grid">
+          <label>
+            Account type
+            <select id="authRole">
+              <option value="parent">Parent</option>
+              <option value="learner">Learner</option>
+            </select>
+          </label>
+          <label id="auth-grade-group" class="hidden">
+            Grade
+            <select id="authGrade">
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+              <option value="4">Grade 4</option>
+              <option value="5">Grade 5</option>
+              <option value="6">Grade 6</option>
+              <option value="7">Grade 7</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="two-up auth-input-grid">
+          <label id="auth-name-group" class="hidden">
+            Profile name
+            <input type="text" id="authName" placeholder="Enter learner name" autocomplete="name" />
+          </label>
           <label id="auth-email-label">
             Email
             <input type="text" id="authEmail" placeholder="Enter your email" autocomplete="email" />
@@ -49,6 +80,7 @@
         </div>
 
         <p id="authMessage" class="auth-message"></p>
+        <p id="authRoleNote" class="auth-message">Parent accounts can manage learners. Learner accounts open straight into grade-based practice.</p>
       </form>
 
       <form id="updatePasswordForm" class="profile-form auth-form update-password-form" hidden>

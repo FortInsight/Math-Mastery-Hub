@@ -28,18 +28,22 @@
   }
 
   function getConfiguredBaseUrl() {
+    if (window.location.protocol === "file:") {
+      return "";
+    }
+
     const configured = (window.APP_BASE_URL || "").trim();
     if (configured) {
       return configured.endsWith("/") ? configured : `${configured}/`;
     }
 
-    if (window.location.protocol === "file:") {
-      return "";
-    }
-
     const current = new URL(window.location.href);
     const basePath = current.pathname.replace(/[^/]*$/, "");
     return `${current.origin}${basePath}`;
+  }
+
+  function isHostedDeployment() {
+    return window.location.protocol !== "file:";
   }
 
   function buildUrl(fileName) {
@@ -80,6 +84,9 @@
   }
 
   function hasLocalAccessSession() {
+    if (isHostedDeployment()) {
+      return false;
+    }
     return Boolean(getStoredCurrentProfileId() || hasLearnerSession());
   }
 
@@ -114,10 +121,6 @@
     }
   }
 
-  // There is no longer a parent/learner choice on this page — every account signs up the same
-  // way and gets full access to add learners (with username, grade, and avatar) from inside the
-  // dashboard. The separate learner-login.html username flow for kids is untouched by this.
-
   // Header rendering and the "Log Out" button are owned entirely by app.js on index.html (see
   // the comment on handleAppPage below) — there used to be duplicate versions of both here,
   // which raced against app.js and caused real bugs. Removed rather than left unused, so no one
@@ -148,10 +151,55 @@
     if (updatePasswordForm) updatePasswordForm.hidden = !enabled;
   }
 
+  function getSelectedRole() {
+    return document.getElementById("authRole")?.value === "learner" ? "learner" : "parent";
+  }
+
+  function updateRoleFields() {
+    const role = getSelectedRole();
+    const learnerMode = role === "learner";
+    const nameGroup = document.getElementById("auth-name-group");
+    const gradeGroup = document.getElementById("auth-grade-group");
+    const nameInput = document.getElementById("authName");
+    const emailLabel = document.getElementById("auth-email-label");
+    const emailInput = document.getElementById("authEmail");
+    const roleNote = document.getElementById("authRoleNote");
+
+    nameGroup?.classList.toggle("hidden", !learnerMode);
+    gradeGroup?.classList.toggle("hidden", !learnerMode);
+
+    if (nameInput) {
+      nameInput.placeholder = learnerMode ? "Enter learner name" : "Enter your name";
+    }
+    if (emailLabel) {
+      emailLabel.firstChild.textContent = learnerMode ? "Email or Username" : "Email";
+    }
+    if (emailInput) {
+      emailInput.placeholder = learnerMode ? "Enter your learner email or username" : "Enter your email";
+      emailInput.autocomplete = learnerMode ? "username" : "email";
+    }
+
+    if (roleNote) {
+      roleNote.textContent = learnerMode
+        ? "Learner accounts open directly into their own grade-based learning page. Use your own learner email, or a username your parent created for you."
+        : "Parent accounts can add learners, set goals, and view learner performance.";
+    }
+  }
+
+  function resolveLearnerEmail(rawValue) {
+    const value = String(rawValue || "").trim();
+    if (!value) {
+      return "";
+    }
+    return value.includes("@") ? value : deriveChildEmailFromUsername(value);
+  }
+
   async function signUpUser() {
     const name = document.getElementById("authName")?.value.trim();
     const email = document.getElementById("authEmail")?.value.trim();
     const password = document.getElementById("authPassword")?.value;
+    const role = getSelectedRole();
+    const grade = Number(document.getElementById("authGrade")?.value || 1);
 
     setAuthMessage("");
     if (!authEnabled()) {
@@ -160,6 +208,10 @@
     }
     if (!email || !password) {
       setAuthMessage("Please enter email and password.");
+      return;
+    }
+    if (role === "learner" && !name) {
+      setAuthMessage("Enter the learner profile name before signing up.");
       return;
     }
 
@@ -169,71 +221,61 @@
       options: {
         data: {
           user_name: name || "",
-          // Every account created here is the same "full" account type — it can add learners
-          // (with username, grade, avatar) from inside the dashboard, whether or not it ever
-          // does. There is no separate parent/learner role to pick at sign-up anymore.
-          account_type: "parent"
+          account_type: role,
+          grade: role === "learner" ? grade : null
         },
         emailRedirectTo: buildUrl("index.html")
       }
     });
 
-    setAuthMessage(error ? `Sign up error: ${error.message}` : "Account created. You can now log in.");
+    setAuthMessage(
+      error
+        ? `Sign up error: ${error.message}`
+        : role === "learner"
+          ? "Learner account created. You can now log in and start learning."
+          : "Parent account created. You can now log in and manage learners."
+    );
   }
 
   async function loginUser() {
-    const email = document.getElementById("authEmail")?.value.trim() || "";
+    const rawLogin = document.getElementById("authEmail")?.value.trim() || "";
     const password = document.getElementById("authPassword")?.value;
+    const selectedRole = getSelectedRole();
+    const email = selectedRole === "learner" ? resolveLearnerEmail(rawLogin) : rawLogin;
 
     setAuthMessage("");
     if (!authEnabled()) {
       setAuthMessage("Paste your Supabase URL and key into supabase-config.js first.");
       return;
     }
-    if (!email || !password) {
-      setAuthMessage("Please enter email and password.");
+    if (!rawLogin || !password) {
+      setAuthMessage(selectedRole === "learner" ? "Please enter learner email or username, and password." : "Please enter email and password.");
+      return;
+    }
+    if (!email) {
+      setAuthMessage("Please enter a valid learner email or username.");
       return;
     }
 
     const { data: signInData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-      setAuthMessage(`Login error: ${error.message}`);
+      setAuthMessage(
+        selectedRole === "learner"
+          ? `Login error: ${error.message}. Use your learner email or the username your parent created for you.`
+          : `Login error: ${error.message}`
+      );
       return;
     }
 
-    // Self-heal accounts created before this page dropped the parent/learner choice, so anyone
-    // who was previously stamped "learner" (or has no account_type at all) gets full access too.
-    // A real child login always uses a made-up internal email address (see
-    // deriveChildEmailFromUsername/CHILD_LOGIN_EMAIL_DOMAIN above) — never a real address a
-    // person actually owns — so a "learner"-tagged account signing in here with a real email
-    // can only be a legacy/broken parent account. This used to be decided by querying
-    // mastery_children for a link to this account, but Supabase's row-level security never
-    // actually allows a learner to read that table, so that query always came back empty and
-    // made the check unreliable; the email's domain is a simpler, purely local check that can't
-    // fail that way. This is still only a best-effort attempt — app.js's loadSupabaseAccountData()
-    // runs the same check again on app.html itself — so a failure updating Supabase here must
-    // NOT block navigation: it previously did, and a flaky network call on this one step meant a
-    // correct password could leave someone stuck on the login page. Log and move on instead.
-    if (
-      signInData?.user?.user_metadata?.account_type !== "parent" &&
-      !email.toLowerCase().endsWith(`@${CHILD_LOGIN_EMAIL_DOMAIN}`)
-    ) {
-      try {
-        const { error: updateError } = await supabaseClient.auth.updateUser({ data: { account_type: "parent" } });
-        if (updateError) {
-          throw updateError;
-        }
-        // updateUser() refreshes the session internally, but app.html loads as a brand-new page
-        // (not a single-page navigation), so we explicitly wait for the refreshed session to be
-        // persisted to storage before navigating away — otherwise app.html can briefly read the
-        // old, pre-update session and show "Learner" instead of "Parent".
-        const { error: refreshError } = await supabaseClient.auth.refreshSession();
-        if (refreshError) {
-          throw refreshError;
-        }
-      } catch (updateError) {
-        console.error("Self-healing account_type to parent failed, continuing to the app anyway", updateError);
-      }
+    const actualRole = signInData?.user?.user_metadata?.account_type === "learner" ? "learner" : "parent";
+    if (actualRole !== selectedRole) {
+      await supabaseClient.auth.signOut({ scope: "local" });
+      setAuthMessage(
+        actualRole === "parent"
+          ? "This login belongs to a parent account. A learner must use their own learner email or the username a parent created."
+          : "This login belongs to a learner account. Choose Learner to log in."
+      );
+      return;
     }
 
     setAuthMessage("Login successful. Opening app...");
@@ -305,6 +347,10 @@
   // access is granted.
   async function handleAppPage() {
     if (!authEnabled()) {
+      if (isHostedDeployment()) {
+        goToLogin();
+        return;
+      }
       if (!hasLocalAccessSession()) {
         goToLogin();
         return;
@@ -317,7 +363,7 @@
       const { data } = await supabaseClient.auth.getSession();
       const session = data?.session || null;
       if (!session) {
-        if (!hasLocalAccessSession()) {
+        if (isHostedDeployment() || !hasLocalAccessSession()) {
           goToLogin();
           return;
         }
@@ -342,9 +388,9 @@
       });
     } catch (error) {
       console.error("Session check failed", error);
-      // Couldn't verify the session either way — don't leave the visitor stuck on a blank
-      // hidden page. Fall back to the same local-session check the other branches use.
-      if (!hasLocalAccessSession()) {
+      // On the hosted app, always fall back to the real login page instead of browser-only
+      // profiles, so learner lists and progress stay shared across browsers/devices.
+      if (isHostedDeployment() || !hasLocalAccessSession()) {
         goToLogin();
       } else {
         grantAppAccess();
@@ -371,6 +417,7 @@
       await loginUser();
     });
     document.getElementById("forgotPasswordButton")?.addEventListener("click", sendPasswordReset);
+    document.getElementById("authRole")?.addEventListener("change", updateRoleFields);
     document.getElementById("authForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();
       await loginUser();
@@ -380,6 +427,7 @@
       setRecoveryMode(false);
       history.replaceState({}, document.title, buildUrl("index.html"));
     });
+    updateRoleFields();
   }
 
   document.addEventListener("DOMContentLoaded", async () => {

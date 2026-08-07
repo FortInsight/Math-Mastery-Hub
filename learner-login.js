@@ -45,13 +45,13 @@
   }
 
   function getConfiguredBaseUrl() {
+    if (window.location.protocol === "file:") {
+      return "";
+    }
+
     const configured = (window.APP_BASE_URL || "").trim();
     if (configured) {
       return configured.endsWith("/") ? configured : `${configured}/`;
-    }
-
-    if (window.location.protocol === "file:") {
-      return "";
     }
 
     const current = new URL(window.location.href);
