@@ -4335,19 +4335,26 @@ async function handleAddChild() {
   // password, no email) looks identical in this form, but queueSupabaseWrite() below silently
   // does nothing for it. Without this warning, a learner added on one device while signed into
   // a local-only account would just vanish from every other device with no explanation.
-  const syncNote = hasSupabasePersistence()
-    ? ""
-    : " This learner is only saved on this device/browser — sign in with your online account (email + password) to see them on other devices too.";
+  let syncNote = "";
+  let syncStatus = "success";
+  if (hasSupabasePersistence()) {
+    try {
+      await syncSupabaseChildren(account, state.supabaseUserId);
+      syncNote = " Saved to your online parent account.";
+    } catch (error) {
+      console.error("Immediate learner sync failed", error);
+      syncNote = " Added here, but the online sync failed. Refresh and try again before checking another browser.";
+      syncStatus = "error";
+    }
+  } else {
+    syncNote = " This learner is only saved on this device/browser — sign in with your online account (email + password) to see them on other devices too.";
+  }
   showProfileMessage(
     (childUsername
       ? `${childName} was added. They can log in on the Learner Login page with username "${sanitizeUsername(childUsername)}".`
       : `${childName} was added and is now the active learner.`) + syncNote,
-    "success"
+    syncStatus
   );
-
-  queueSupabaseWrite(async (_client, ownerId) => {
-    await syncSupabaseChildren(account, ownerId);
-  });
 }
 
 function handleSaveChildSettings() {
