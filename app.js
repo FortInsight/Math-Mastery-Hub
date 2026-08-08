@@ -149,6 +149,7 @@ const state = {
   supabaseSessionActive: false,
   supabaseHydrating: false,
   supabaseChildRecoveryInFlight: false,
+  supabaseChildrenSyncInFlight: false,
   childViewMode: false,
   avatarLibraryOpen: false
 };
@@ -329,6 +330,87 @@ function getSupabaseFetchHelpMessage(error, actionLabel = "sync online") {
   return `Could not ${actionLabel} because this browser could not reach Supabase. Check your internet connection, browser privacy settings, or any blocker extension and try again.`;
 }
 
+function getUnsyncedParentLearners(account) {
+  if (!account || account.type !== "parent") {
+    return [];
+  }
+  return Object.values(account.children || {}).filter((child) => !child?.supabaseChildId);
+}
+
+async function syncParentChildrenOnline(account, { silent = false, sessionUser = null } = {}) {
+  if (!account || account.type !== "parent") {
+    return false;
+  }
+  if (!isSupabaseProfileId(account.id)) {
+    return false;
+  }
+  if (state.supabaseChildrenSyncInFlight) {
+    return false;
+  }
+
+  const learners = Object.values(account.children || {});
+  if (!learners.length) {
+    return false;
+  }
+
+  const activeSessionUser = sessionUser || await getSupabaseSessionUser();
+  if (!activeSessionUser?.id) {
+    if (!silent) {
+      showProfileMessage("Your online parent session expired. Sign in again, then sync the learners.", "error");
+    }
+    return false;
+  }
+
+  const localOnlyLearners = getUnsyncedParentLearners(account);
+  if (!localOnlyLearners.length) {
+    if (!silent) {
+      showProfileMessage("All current learners are already synced online.", "success");
+    }
+    return true;
+  }
+
+  state.supabaseChildrenSyncInFlight = true;
+  try {
+    if (elements.syncParentDashboardButton && !silent) {
+      elements.syncParentDashboardButton.disabled = true;
+      elements.syncParentDashboardButton.textContent = "Syncing...";
+    }
+
+    await ensureSupabaseProfileRow(account, activeSessionUser);
+    await syncSupabaseChildren(account, activeSessionUser.id);
+
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+    renderProfilePanel();
+    renderStudyTime();
+    renderHeroActivity();
+    renderParentDashboard();
+
+    if (!silent) {
+      showProfileMessage(
+        `${localOnlyLearners.length} learner${localOnlyLearners.length === 1 ? "" : "s"} synced to your online parent account.`,
+        "success"
+      );
+    }
+    return true;
+  } catch (error) {
+    console.error("Syncing parent learners to Supabase failed", error);
+    if (!silent) {
+      showProfileMessage(
+        getSupabaseFetchHelpMessage(error, "sync learners online") || `Could not sync learners online: ${error?.message || "Unknown error"}`,
+        "error"
+      );
+    }
+    return false;
+  } finally {
+    state.supabaseChildrenSyncInFlight = false;
+    if (elements.syncParentDashboardButton) {
+      elements.syncParentDashboardButton.disabled = false;
+      elements.syncParentDashboardButton.textContent = "Sync Learners Online";
+    }
+  }
+}
+
 async function recoverParentChildrenFromSupabase(account) {
   const client = getSupabaseClient();
   if (!client || !account || account.type !== "parent" || !state.supabaseUserId || state.supabaseChildRecoveryInFlight) {
@@ -392,60 +474,11 @@ async function handleSyncParentDashboardLearners() {
     showProfileMessage("Sign in with your online parent account before syncing learners across browsers.", "error");
     return;
   }
-
-  const sessionUser = await getSupabaseSessionUser();
-  if (!sessionUser?.id) {
-    showProfileMessage("Your online parent session expired. Sign in again, then sync the learners.", "error");
-    return;
-  }
-
-  const learners = Object.values(account.children || {});
-  if (!learners.length) {
+  if (!Object.keys(account.children || {}).length) {
     showProfileMessage("Add at least one learner before syncing.", "error");
     return;
   }
-
-  const localOnlyLearners = learners.filter((child) => !child?.supabaseChildId);
-  if (!localOnlyLearners.length) {
-    showProfileMessage("All current learners are already synced online.", "success");
-    return;
-  }
-
-  try {
-    if (elements.syncParentDashboardButton) {
-      elements.syncParentDashboardButton.disabled = true;
-      elements.syncParentDashboardButton.textContent = "Syncing...";
-    }
-
-    await ensureSupabaseProfileRow(account, sessionUser);
-
-    for (const child of localOnlyLearners) {
-      await upsertSingleSupabaseChild(sessionUser.id, child);
-    }
-
-    await syncSupabaseChildren(account, sessionUser.id);
-    profilesStore.profiles[account.id] = account;
-    saveProfilesStore();
-    renderProfilePanel();
-    renderStudyTime();
-    renderHeroActivity();
-    renderParentDashboard();
-    showProfileMessage(
-      `${localOnlyLearners.length} learner${localOnlyLearners.length === 1 ? "" : "s"} synced to your online parent account.`,
-      "success"
-    );
-  } catch (error) {
-    console.error("Syncing parent learners to Supabase failed", error);
-    showProfileMessage(
-      getSupabaseFetchHelpMessage(error, "sync learners online") || `Could not sync learners online: ${error?.message || "Unknown error"}`,
-      "error"
-    );
-  } finally {
-    if (elements.syncParentDashboardButton) {
-      elements.syncParentDashboardButton.disabled = false;
-      elements.syncParentDashboardButton.textContent = "Sync Learners Online";
-    }
-  }
+  await syncParentChildrenOnline(account, { silent: false });
 }
 
 function createProgressBundle() {
@@ -1079,7 +1112,7 @@ async function loadSupabaseAccountData(session) {
     // Push recovered local learners immediately so they appear in Supabase
     // across devices after the first parent refresh.
     try {
-      await syncSupabaseChildren(account, user.id);
+      await syncParentChildrenOnline(account, { silent: true, sessionUser: user });
     } catch (error) {
       console.error("Syncing recovered parent learners during hydration failed", error);
     }
@@ -1413,6 +1446,7 @@ function attachEvents() {
   elements.parentDashboardLearnerGrid?.addEventListener("click", handleParentDashboardLearnerClick);
   bindClick(elements.toggleSearchPanelButton, toggleSearchPanel);
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("online", handleBrowserOnline);
   window.addEventListener("beforeunload", flushStudyTime);
 }
 
@@ -1421,6 +1455,19 @@ function toggleProfilePanel() {
   const isHidden = elements.profilePanelContent.classList.toggle("hidden");
   elements.toggleProfilePanelButton.textContent = isHidden ? "Show Tools" : "Hide Tools";
   elements.toggleProfilePanelButton.setAttribute("aria-expanded", String(!isHidden));
+}
+
+function handleBrowserOnline() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent" || !isSupabaseProfileId(account.id)) {
+    return;
+  }
+  if (!getUnsyncedParentLearners(account).length) {
+    return;
+  }
+  syncParentChildrenOnline(account, { silent: true }).catch((error) => {
+    console.error("Retrying learner sync after browser reconnect failed", error);
+  });
 }
 
 function setHeroCopyCollapsed(collapsed) {
@@ -4718,9 +4765,7 @@ async function handleAddChild() {
       try {
         state.supabaseUserId = sessionUser.id;
         state.supabaseUserEmail = sessionUser.email || state.supabaseUserEmail || "";
-        await ensureSupabaseProfileRow(account, sessionUser);
-        await upsertSingleSupabaseChild(sessionUser.id, account.children[childId]);
-        await syncSupabaseChildren(account, sessionUser.id);
+        await syncParentChildrenOnline(account, { silent: true, sessionUser });
         const sessionResponse = await getSupabaseClient().auth.getSession();
         const session = sessionResponse?.data?.session || null;
         if (session) {
@@ -4785,7 +4830,13 @@ function handleSaveChildSettings() {
   showProfileMessage(`Saved learner settings for ${child.name}.`, "success");
 
   queueSupabaseWrite(async (_client, ownerId) => {
-    await syncSupabaseChildren(account, ownerId);
+    await syncParentChildrenOnline(account, {
+      silent: true,
+      sessionUser: {
+        id: ownerId,
+        email: state.supabaseUserEmail
+      }
+    });
   });
 }
 
