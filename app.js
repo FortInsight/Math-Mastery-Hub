@@ -633,33 +633,41 @@ async function syncSupabaseChildren(account, ownerId) {
         existing.avatar_data_url !== (child.avatarDataUrl || null) ||
         Number(existing.grade) !== Number(child.grade)
       ) {
-        const { error: updateError } = await client
-          .from("mastery_children")
-          .update(payload)
-          .eq("id", existing.id);
+        const { data: syncedChildId, error: updateError } = await client
+          .rpc("upsert_mastery_child", {
+            p_child_id: existing.id,
+            p_child_name: payload.child_name,
+            p_grade: payload.grade,
+            p_child_email: payload.child_email,
+            p_child_username: payload.child_username,
+            p_linked_profile_id: payload.linked_profile_id,
+            p_avatar_data_url: payload.avatar_data_url
+          });
 
         if (updateError) {
           throw updateError;
         }
+        child.supabaseChildId = syncedChildId || existing.id;
       }
       continue;
     }
 
-    const { data: insertedChild, error: insertError } = await client
-      .from("mastery_children")
-      .insert({
-        parent_id: ownerId,
-        ...payload
-      })
-      .select("id")
-      .single();
+    const { data: insertedChildId, error: insertError } = await client
+      .rpc("upsert_mastery_child", {
+        p_child_name: payload.child_name,
+        p_grade: payload.grade,
+        p_child_email: payload.child_email,
+        p_child_username: payload.child_username,
+        p_linked_profile_id: payload.linked_profile_id,
+        p_avatar_data_url: payload.avatar_data_url
+      });
 
     if (insertError) {
       throw insertError;
     }
 
-    child.supabaseChildId = insertedChild.id;
-    activeChildIds.add(insertedChild.id);
+    child.supabaseChildId = insertedChildId;
+    activeChildIds.add(insertedChildId);
   }
 
   const staleRows = (existingRows || []).filter((row) => !activeChildIds.has(row.id));
@@ -693,36 +701,21 @@ async function upsertSingleSupabaseChild(ownerId, child) {
     grade: Number(child.grade)
   };
 
-  if (child.supabaseChildId) {
-    const { error: updateError } = await client
-      .from("mastery_children")
-      .update({
-        child_name: payload.child_name,
-        child_email: payload.child_email,
-        child_username: payload.child_username,
-        linked_profile_id: payload.linked_profile_id,
-        avatar_data_url: payload.avatar_data_url,
-        grade: payload.grade
-      })
-      .eq("id", child.supabaseChildId);
-
-    if (updateError) {
-      throw updateError;
-    }
-    return child.supabaseChildId;
-  }
-
-  const { data, error } = await client
-    .from("mastery_children")
-    .insert(payload)
-    .select("id")
-    .single();
+  const { data, error } = await client.rpc("upsert_mastery_child", {
+    p_child_id: child.supabaseChildId || null,
+    p_child_name: payload.child_name,
+    p_grade: payload.grade,
+    p_child_email: payload.child_email,
+    p_child_username: payload.child_username,
+    p_linked_profile_id: payload.linked_profile_id,
+    p_avatar_data_url: payload.avatar_data_url
+  });
 
   if (error) {
     throw error;
   }
 
-  child.supabaseChildId = data?.id || null;
+  child.supabaseChildId = data || null;
   return child.supabaseChildId;
 }
 

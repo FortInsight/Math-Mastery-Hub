@@ -1,4 +1,4 @@
-const CACHE_NAME = "grammar-maths-mastery-hub-v24";
+const CACHE_NAME = "grammar-maths-mastery-hub-v25";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -45,23 +45,45 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          return networkResponse;
+        })
+        .catch(async () => {
+          const cachedPage = await caches.match(event.request);
+          if (cachedPage) {
+            return cachedPage;
+          }
+          return caches.match("./index.html");
+        })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== "basic") {
-            return networkResponse;
-          }
-
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== "basic") {
           return networkResponse;
-        })
-        .catch(() => caches.match("./index.html"));
+        }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+        return networkResponse;
+      });
     })
   );
 });
