@@ -75,6 +75,10 @@
     }
   }
 
+  function isSupabaseProfileId(profileId) {
+    return typeof profileId === "string" && profileId.startsWith("supabase:");
+  }
+
   function hasLearnerSession() {
     try {
       return Boolean(JSON.parse(localStorage.getItem(learnerSessionKey) || "null"));
@@ -87,7 +91,9 @@
     if (isHostedDeployment()) {
       return false;
     }
-    return Boolean(getStoredCurrentProfileId() || hasLearnerSession());
+    const currentProfileId = getStoredCurrentProfileId();
+    const hasDeviceOnlyProfile = Boolean(currentProfileId) && !isSupabaseProfileId(currentProfileId);
+    return Boolean(hasDeviceOnlyProfile || hasLearnerSession());
   }
 
   // Must match sanitizeUsername/deriveChildEmailFromUsername/CHILD_LOGIN_EMAIL_DOMAIN in app.js
@@ -363,6 +369,11 @@
       const { data } = await supabaseClient.auth.getSession();
       const session = data?.session || null;
       if (!session) {
+        const storedProfileId = getStoredCurrentProfileId();
+        if (isSupabaseProfileId(storedProfileId)) {
+          goToLogin();
+          return;
+        }
         if (isHostedDeployment() || !hasLocalAccessSession()) {
           goToLogin();
           return;

@@ -1,4 +1,4 @@
-const grades = Array.from({ length: 12 }, (_, index) => index + 1);
+﻿const grades = Array.from({ length: 12 }, (_, index) => index + 1);
 const ENABLE_PAT_PRACTICE = true;
 
 const curriculum = {
@@ -146,7 +146,9 @@ const state = {
   isStartingLevel: false,
   supabaseUserId: null,
   supabaseUserEmail: "",
+  supabaseSessionActive: false,
   supabaseHydrating: false,
+  supabaseChildRecoveryInFlight: false,
   childViewMode: false,
   avatarLibraryOpen: false
 };
@@ -173,12 +175,41 @@ function getSupabaseClient() {
   return window.masterySupabase?.client || null;
 }
 
+async function getSupabaseSessionUser() {
+  const client = getSupabaseClient();
+  if (!client) {
+    state.supabaseSessionActive = false;
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      console.error("Could not read the active Supabase session", error);
+      state.supabaseSessionActive = false;
+      return null;
+    }
+    const user = data?.session?.user || null;
+    state.supabaseSessionActive = Boolean(user?.id);
+    return user;
+  } catch (error) {
+    console.error("Reading the Supabase session failed", error);
+    state.supabaseSessionActive = false;
+    return null;
+  }
+}
+
 function isSupabaseProfileId(profileId) {
   return typeof profileId === "string" && profileId.startsWith("supabase:");
 }
 
 function hasSupabasePersistence() {
-  return Boolean(getSupabaseClient() && state.supabaseUserId && isSupabaseProfileId(state.currentProfileId));
+  const account = getCurrentAccount();
+  return Boolean(
+    getSupabaseClient() &&
+    state.supabaseUserId &&
+    (isSupabaseProfileId(state.currentProfileId) || account?.type === "parent" || account?.type === "learner")
+  );
 }
 
 function queueSupabaseWrite(task) {
@@ -197,6 +228,224 @@ function queueSupabaseWrite(task) {
 
 function normalizeSupabaseResults(results) {
   return Array.isArray(results) ? results : [];
+}
+
+function normalizeProfileName(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function cloneChildMap(children) {
+  const nextChildren = {};
+  for (const [childId, child] of Object.entries(children || {})) {
+    nextChildren[childId] = {
+      ...child,
+      progress: child?.progress ? JSON.parse(JSON.stringify(child.progress)) : createProgressBundle().progress,
+      scoreHistory: Array.isArray(child?.scoreHistory) ? [...child.scoreHistory] : [],
+      studyTime: child?.studyTime ? JSON.parse(JSON.stringify(child.studyTime)) : createStudyTimeBundle()
+    };
+  }
+  return nextChildren;
+}
+
+function findLegacyParentChildrenForSupabaseParent(profileId, fallbackName) {
+  const normalizedFallbackName = normalizeProfileName(fallbackName);
+  const localParents = Object.values(profilesStore.profiles || {}).filter((profile) => {
+    if (!profile || profile.id === profileId || profile.type !== "parent" || isSupabaseProfileId(profile.id)) {
+      return false;
+    }
+    return Object.keys(profile.children || {}).length > 0;
+  });
+
+  if (!localParents.length) {
+    return null;
+  }
+
+  const exactNameMatches = localParents.filter((profile) => normalizeProfileName(profile.name) === normalizedFallbackName);
+  if (exactNameMatches.length === 1) {
+    return cloneChildMap(exactNameMatches[0].children);
+  }
+
+  if (exactNameMatches.length > 1) {
+    return exactNameMatches.reduce((merged, profile) => ({ ...merged, ...cloneChildMap(profile.children) }), {});
+  }
+
+  if (localParents.length === 1) {
+    return cloneChildMap(localParents[0].children);
+  }
+
+  return null;
+}
+
+function mergeChildrenIntoParentAccount(targetAccount, sourceChildren) {
+  if (!targetAccount || targetAccount.type !== "parent" || !sourceChildren) {
+    return;
+  }
+
+  if (!targetAccount.children || typeof targetAccount.children !== "object") {
+    targetAccount.children = {};
+  }
+
+  for (const child of Object.values(sourceChildren)) {
+    if (!child?.name) {
+      continue;
+    }
+    const childId = child.id || buildProfileId(child.name);
+    if (!targetAccount.children[childId]) {
+      targetAccount.children[childId] = {
+        ...child,
+        id: childId
+      };
+    }
+  }
+
+  if (!targetAccount.activeChildId || !targetAccount.children[targetAccount.activeChildId]) {
+    targetAccount.activeChildId = Object.keys(targetAccount.children)[0] || null;
+  }
+}
+
+function getLearnerSyncStatus(child) {
+  return child?.supabaseChildId ? "online" : "local";
+}
+
+function getLearnerSyncLabel(child) {
+  return getLearnerSyncStatus(child) === "online" ? "Synced online" : "Only on this browser";
+}
+
+function getSupabaseFetchHelpMessage(error, actionLabel = "sync online") {
+  const rawMessage = String(error?.message || "").toLowerCase();
+  const isFetchFailure = rawMessage.includes("failed to fetch") || rawMessage.includes("networkerror");
+  if (!isFetchFailure) {
+    return null;
+  }
+
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return `Could not ${actionLabel} because this device appears to be offline. Reconnect to the internet and try again.`;
+  }
+
+  if (typeof window !== "undefined" && window.location?.protocol === "file:") {
+    return `Could not ${actionLabel} from this local file page. Open the deployed site and sign in there, or serve this folder from a local web server, then try again.`;
+  }
+
+  return `Could not ${actionLabel} because this browser could not reach Supabase. Check your internet connection, browser privacy settings, or any blocker extension and try again.`;
+}
+
+async function recoverParentChildrenFromSupabase(account) {
+  const client = getSupabaseClient();
+  if (!client || !account || account.type !== "parent" || !state.supabaseUserId || state.supabaseChildRecoveryInFlight) {
+    return false;
+  }
+
+  state.supabaseChildRecoveryInFlight = true;
+  try {
+    const { data: childRows, error } = await client
+      .from("mastery_children")
+      .select("id, parent_id, child_name, child_email, child_username, linked_profile_id, avatar_data_url, grade")
+      .eq("parent_id", state.supabaseUserId);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(childRows) || !childRows.length) {
+      return false;
+    }
+
+    childRows.forEach((childRow) => {
+      const childLocalId = buildProfileId(childRow.child_name);
+      if (!account.children[childLocalId]) {
+        account.children[childLocalId] = createLearnerRecord({
+          id: childLocalId,
+          name: childRow.child_name,
+          grade: Number(childRow.grade || 1),
+          childEmail: childRow.child_email || "",
+          childUsername: childRow.child_username || "",
+          avatarDataUrl: childRow.avatar_data_url || "",
+          supabaseChildId: childRow.id,
+          linkedProfileId: childRow.linked_profile_id || null
+        });
+      }
+    });
+
+    ensureAccountShape(account);
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+    renderProfilePanel();
+    renderStudyTime();
+    renderHeroActivity();
+    return true;
+  } catch (error) {
+    console.error("Recovering parent learners directly from Supabase failed", error);
+    return false;
+  } finally {
+    state.supabaseChildRecoveryInFlight = false;
+  }
+}
+
+async function handleSyncParentDashboardLearners() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent") {
+    showProfileMessage("Open a parent account first before syncing learners online.", "error");
+    return;
+  }
+
+  if (!isSupabaseProfileId(account.id)) {
+    showProfileMessage("Sign in with your online parent account before syncing learners across browsers.", "error");
+    return;
+  }
+
+  const sessionUser = await getSupabaseSessionUser();
+  if (!sessionUser?.id) {
+    showProfileMessage("Your online parent session expired. Sign in again, then sync the learners.", "error");
+    return;
+  }
+
+  const learners = Object.values(account.children || {});
+  if (!learners.length) {
+    showProfileMessage("Add at least one learner before syncing.", "error");
+    return;
+  }
+
+  const localOnlyLearners = learners.filter((child) => !child?.supabaseChildId);
+  if (!localOnlyLearners.length) {
+    showProfileMessage("All current learners are already synced online.", "success");
+    return;
+  }
+
+  try {
+    if (elements.syncParentDashboardButton) {
+      elements.syncParentDashboardButton.disabled = true;
+      elements.syncParentDashboardButton.textContent = "Syncing...";
+    }
+
+    await ensureSupabaseProfileRow(account, sessionUser);
+
+    for (const child of localOnlyLearners) {
+      await upsertSingleSupabaseChild(sessionUser.id, child);
+    }
+
+    await syncSupabaseChildren(account, sessionUser.id);
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+    renderProfilePanel();
+    renderStudyTime();
+    renderHeroActivity();
+    renderParentDashboard();
+    showProfileMessage(
+      `${localOnlyLearners.length} learner${localOnlyLearners.length === 1 ? "" : "s"} synced to your online parent account.`,
+      "success"
+    );
+  } catch (error) {
+    console.error("Syncing parent learners to Supabase failed", error);
+    showProfileMessage(
+      getSupabaseFetchHelpMessage(error, "sync learners online") || `Could not sync learners online: ${error?.message || "Unknown error"}`,
+      "error"
+    );
+  } finally {
+    if (elements.syncParentDashboardButton) {
+      elements.syncParentDashboardButton.disabled = false;
+      elements.syncParentDashboardButton.textContent = "Sync Learners Online";
+    }
+  }
 }
 
 function createProgressBundle() {
@@ -393,6 +642,55 @@ async function syncSupabaseChildren(account, ownerId) {
   }
 
   return existingRows || [];
+}
+
+async function upsertSingleSupabaseChild(ownerId, child) {
+  const client = getSupabaseClient();
+  if (!client || !ownerId || !child) {
+    return null;
+  }
+
+  const payload = {
+    parent_id: ownerId,
+    child_name: child.name,
+    child_email: child.childEmail || null,
+    child_username: child.childUsername || null,
+    linked_profile_id: child.linkedProfileId || null,
+    avatar_data_url: child.avatarDataUrl || null,
+    grade: Number(child.grade)
+  };
+
+  if (child.supabaseChildId) {
+    const { error: updateError } = await client
+      .from("mastery_children")
+      .update({
+        child_name: payload.child_name,
+        child_email: payload.child_email,
+        child_username: payload.child_username,
+        linked_profile_id: payload.linked_profile_id,
+        avatar_data_url: payload.avatar_data_url,
+        grade: payload.grade
+      })
+      .eq("id", child.supabaseChildId);
+
+    if (updateError) {
+      throw updateError;
+    }
+    return child.supabaseChildId;
+  }
+
+  const { data, error } = await client
+    .from("mastery_children")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  child.supabaseChildId = data?.id || null;
+  return child.supabaseChildId;
 }
 
 function applyChildFilter(query, childId) {
@@ -612,6 +910,7 @@ async function loadSupabaseAccountData(session) {
   state.supabaseHydrating = true;
   state.supabaseUserId = user.id;
   state.supabaseUserEmail = user.email || "";
+  state.supabaseSessionActive = true;
 
   const profileId = buildSupabaseProfileId(user.id);
   const metadata = user.user_metadata || {};
@@ -641,6 +940,13 @@ async function loadSupabaseAccountData(session) {
 
   localAccount.name = fallbackName;
   localAccount.type = role;
+  if (role === "parent" && (!localAccount.children || !Object.keys(localAccount.children).length)) {
+    const recoveredChildren = findLegacyParentChildrenForSupabaseParent(profileId, fallbackName);
+    if (recoveredChildren && Object.keys(recoveredChildren).length) {
+      localAccount.children = recoveredChildren;
+      localAccount.activeChildId = localAccount.activeChildId || Object.keys(recoveredChildren)[0] || null;
+    }
+  }
   if (role === "learner") {
     localAccount.grade = Number(localAccount.grade || fallbackGrade || 1);
   }
@@ -663,7 +969,7 @@ async function loadSupabaseAccountData(session) {
     await ensureSupabaseProfileRow(localAccount, user);
   } catch (error) {
     // A hiccup saving the profile row (flaky network, ad blocker, etc.) shouldn't nuke the whole
-    // sign-in — the account is already showing locally with the right role at this point. Log it
+    // sign-in â€” the account is already showing locally with the right role at this point. Log it
     // and keep going instead of aborting the rest of the hydration below.
     console.error("Saving the profile row to Supabase failed, continuing anyway", error);
   }
@@ -749,6 +1055,13 @@ async function loadSupabaseAccountData(session) {
       : createLearnerAccountFromRemote(profileId, profileRow, progressRows, localAccount)
     : localAccount;
 
+  if (role === "parent") {
+    const recoveredChildren = findLegacyParentChildrenForSupabaseParent(profileId, fallbackName);
+    if (recoveredChildren && Object.keys(recoveredChildren).length) {
+      mergeChildrenIntoParentAccount(account, recoveredChildren);
+    }
+  }
+
   ensureAccountShape(account);
   profilesStore.profiles[profileId] = account;
   profilesStore.currentProfileId = profileId;
@@ -762,11 +1075,14 @@ async function loadSupabaseAccountData(session) {
   if (!hasRemoteLearningData) {
     await syncSupabaseAccountSnapshot(account, user);
   } else if (role === "parent") {
-    // Push any children that were recovered locally but aren't in the remote
-    // snapshot yet, so they don't get lost again on the next reload.
-    queueSupabaseWrite(async (_client, ownerId) => {
-      await syncSupabaseChildren(account, ownerId);
-    });
+    // Hydration is still in progress here, so queued writes would be skipped.
+    // Push recovered local learners immediately so they appear in Supabase
+    // across devices after the first parent refresh.
+    try {
+      await syncSupabaseChildren(account, user.id);
+    } catch (error) {
+      console.error("Syncing recovered parent learners during hydration failed", error);
+    }
   }
 
   if (role === "parent" && Object.keys(account.children || {}).length) {
@@ -844,6 +1160,8 @@ const elements = {
   saveChildButton: document.getElementById("save-child-button"),
   parentKidsDashboard: document.getElementById("parent-kids-dashboard"),
   parentDashboardSection: document.getElementById("parent-dashboard-section"),
+  parentDashboardSyncSummary: document.getElementById("parent-dashboard-sync-summary"),
+  syncParentDashboardButton: document.getElementById("sync-parent-dashboard-button"),
   toggleParentDashboardButton: document.getElementById("toggle-parent-dashboard-button"),
   parentDashboardContent: document.getElementById("parent-dashboard-content"),
   parentDashboardEmpty: document.getElementById("parent-dashboard-empty"),
@@ -1047,7 +1365,7 @@ function attachEvents() {
   bindClick(elements.parentGoalsSaveButton, handleSaveParentGoals);
   bindClick(elements.openAccountToolsButton, () => {
     if (!getCurrentAccount()) {
-      // Guests don't have a local account to open — send them to the real (Supabase) sign-in
+      // Guests don't have a local account to open â€” send them to the real (Supabase) sign-in
       // page instead, since that's the account system going forward. index.html is now the
       // login page.
       window.location.href = "login.html";
@@ -1091,6 +1409,7 @@ function attachEvents() {
   bindClick(elements.toggleHeroCopyButton, toggleHeroCopy);
   bindClick(elements.toggleGradePanelButton, toggleGradePanel);
   bindClick(elements.toggleParentDashboardButton, toggleParentDashboard);
+  bindClick(elements.syncParentDashboardButton, handleSyncParentDashboardLearners);
   elements.parentDashboardLearnerGrid?.addEventListener("click", handleParentDashboardLearnerClick);
   bindClick(elements.toggleSearchPanelButton, toggleSearchPanel);
   document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -1186,7 +1505,7 @@ function setChildViewMode(enabled, { allowGradeChange = false } = {}) {
   elements.backToParentButton?.classList.toggle("hidden", !enabled);
   // A learner added by a parent only ever plays at the grade their parent assigned them, so the
   // grade picker is parent-only tooling and stays hidden for them. The exception is the
-  // account holder's own "self" learner profile (see ensureSelfLearnerProfile) — when someone
+  // account holder's own "self" learner profile (see ensureSelfLearnerProfile) â€” when someone
   // signs in and chooses "I'm a Learner" for themselves, they pick their own grade directly, so
   // allowGradeChange keeps the grade picker visible in that one case.
   elements.gradePanelSection?.classList.toggle("hidden", enabled && !allowGradeChange);
@@ -1614,7 +1933,7 @@ function showHintAfterWrong(question) {
   }
 
   elements.hintButton.classList.remove("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
   elements.hintBox.classList.add("hidden");
 }
 
@@ -1945,7 +2264,7 @@ function checkAnswer(selectedIndex, selectedButton) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
+      <span class="feedback-emoji">${isCorrect ? "ðŸ˜„" : "ðŸ˜¢"}</span>
       <strong class="feedback-title">${isCorrect ? "Correct!" : "Not quite."}</strong>
     </div>
     <div>${question.explanation}</div>
@@ -2017,13 +2336,13 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
-  elements.hintButton.textContent = "💡 Show Hint";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -2033,9 +2352,9 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
 }
 
 function moveToPreviousQuestion() {
@@ -2078,7 +2397,7 @@ function completeLevel() {
   const percentage = Math.round((state.score / state.currentQuestions.length) * 100);
   triggerConfetti(percentage >= 70 ? 70 : 30);
   showCelebrationToast(
-    percentage === 100 ? "🏆 Perfect score!" : percentage >= 70 ? "🎉 Great job!" : "✨ Level complete!"
+    percentage === 100 ? "ðŸ† Perfect score!" : percentage >= 70 ? "ðŸŽ‰ Great job!" : "âœ¨ Level complete!"
   );
   const saveMessage = savedToProfile
     ? currentProfile
@@ -2186,15 +2505,15 @@ function showFeedback(isCorrect, explanation) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
+      <span class="feedback-emoji">${isCorrect ? "ðŸ˜„" : "ðŸ˜¢"}</span>
       <strong class="feedback-title">${isCorrect ? "Yeah!" : "Oh no."}</strong>
     </div>
     <div>${isCorrect ? "Yeah, you got it." : "That is not correct. Check the hint to learn more."}</div>
     <div>${explanation}</div>
   `;
   elements.feedbackBox.innerHTML = elements.feedbackBox.innerHTML
-    .replace("ðŸŽ¸", "\u{1F3B8}")
-    .replace("ðŸ˜…", "\u{1F605}");
+    .replace("Ã°Å¸Å½Â¸", "\u{1F3B8}")
+    .replace("Ã°Å¸Ëœâ€¦", "\u{1F605}");
 }
 
 function playAnswerFeedback() {
@@ -3303,7 +3622,7 @@ function renderProfilePanel() {
     elements.parentPanel?.classList.add("hidden");
     if (elements.openAccountToolsButton) {
       // Guests need a visible way in now that the separate online Parent/Learner Login
-      // links are gone — this is the only entry point to the local Create Profile / Log In form.
+      // links are gone â€” this is the only entry point to the local Create Profile / Log In form.
       elements.openAccountToolsButton.textContent = "Sign In / Sign Up";
       elements.openAccountToolsButton.classList.remove("hidden");
     }
@@ -3348,10 +3667,12 @@ function renderHeaderAccountBadge(account, learner) {
       // email-based online login) that do NOT share data with each other. Spelling out which
       // one is active makes it obvious when a child was added under the "other" account.
       const accountSource = isSupabaseProfileId(account.id)
-        ? state.supabaseUserEmail || "signed in online"
+        ? state.supabaseSessionActive
+          ? state.supabaseUserEmail || "signed in online"
+          : `${state.supabaseUserEmail || account.name} (session expired - sign in again to sync learners)`
         : `${account.name} (saved on this device only)`;
       elements.authAccountMeta.textContent = account.type === "parent"
-        ? `Parent account · ${accountSource}`
+        ? `Parent account Â· ${accountSource}`
         : "Learner account";
     } else {
       elements.authAccountMeta.textContent = "Open login to continue";
@@ -3516,7 +3837,7 @@ function renderParentPanel(account) {
 
   const childEntries = Object.values(account.children || {});
   // The auto-created "self" profile (see ensureSelfLearnerProfile) is a personal view mode for
-  // the account holder, not a real learner someone added — it stays out of the parent-facing
+  // the account holder, not a real learner someone added â€” it stays out of the parent-facing
   // Manage Learners list and Family Dashboard so it doesn't clutter or get confused with actual
   // children. It's still reachable through the header's "Switch to Learner" control below,
   // which uses childEntries (including it), not this filtered list.
@@ -3531,6 +3852,9 @@ function renderParentPanel(account) {
   elements.headerChildSwitchButton?.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
 
   if (!childEntries.length) {
+    if (isSupabaseProfileId(account.id) && state.supabaseSessionActive) {
+      recoverParentChildrenFromSupabase(account);
+    }
     elements.parentChildSelect.innerHTML = `<option value="">No children added yet</option>`;
     elements.parentChildSelect.disabled = true;
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
@@ -3558,6 +3882,7 @@ function renderParentPanel(account) {
             <div>
               <strong>${escapeHtml(child.name)}</strong>
               <small>${escapeHtml(child.childUsername ? `Username: ${child.childUsername}` : (child.childEmail || "No login set yet"))}</small>
+              <div class="learner-sync-badge learner-sync-badge--${getLearnerSyncStatus(child)}">${getLearnerSyncLabel(child)}</div>
             </div>
           </div>
           <div class="parent-kid-meta">
@@ -3592,7 +3917,7 @@ function renderParentPanel(account) {
     if (elements.childUsernameNote) {
       elements.childUsernameNote.textContent = hasUsername
         ? `This learner already logs in with username "${activeChild.childUsername}". Username and password can't be changed here yet.`
-        : "Username and password are optional — only needed if this child wants to log in on their own on a separate device (requires Supabase).";
+        : "Username and password are optional â€” only needed if this child wants to log in on their own on a separate device (requires Supabase).";
     }
   }
 
@@ -3993,14 +4318,33 @@ function renderParentDashboard() {
     return;
   }
 
-  // The auto-created "self" profile (see ensureSelfLearnerProfile) is excluded here too — the
+  // The auto-created "self" profile (see ensureSelfLearnerProfile) is excluded here too â€” the
   // Family Dashboard is for tracking real children a parent added, not the account holder's own
   // practice mode.
   const childEntries = Object.values(account.children || {});
+  const localOnlyChildren = childEntries.filter((child) => !child?.supabaseChildId);
   const selectedChildId = (account.activeChildId && account.children[account.activeChildId] ? account.activeChildId : null) || childEntries[0]?.id || "";
   const activeChild = selectedChildId ? account.children?.[selectedChildId] : null;
 
+  if (elements.parentDashboardSyncSummary) {
+    if (!childEntries.length) {
+      elements.parentDashboardSyncSummary.textContent = "No learners yet.";
+    } else if (!localOnlyChildren.length) {
+      elements.parentDashboardSyncSummary.textContent = `${childEntries.length} learner${childEntries.length === 1 ? "" : "s"} synced online.`;
+    } else {
+      elements.parentDashboardSyncSummary.textContent = `${localOnlyChildren.length} learner${localOnlyChildren.length === 1 ? "" : "s"} only on this browser. Sync to see them on other devices.`;
+    }
+  }
+
+  if (elements.syncParentDashboardButton) {
+    const canSyncParentLearners = isSupabaseProfileId(account.id) && state.supabaseSessionActive && localOnlyChildren.length > 0;
+    elements.syncParentDashboardButton.classList.toggle("hidden", !canSyncParentLearners);
+  }
+
   if (!childEntries.length || !activeChild) {
+    if (isSupabaseProfileId(account.id) && state.supabaseSessionActive) {
+      recoverParentChildrenFromSupabase(account);
+    }
     elements.parentDashboardEmpty?.classList.remove("hidden");
     elements.parentDashboardBody?.classList.add("hidden");
     return;
@@ -4018,6 +4362,7 @@ function renderParentDashboard() {
             : `<div class="parent-dashboard-learner-photo parent-dashboard-learner-photo--placeholder">${escapeHtml((child.name || "?").charAt(0).toUpperCase())}</div>`}
           <strong>${escapeHtml(child.name)}</strong>
           <small>Grade ${child.grade}</small>
+          <span class="learner-sync-badge learner-sync-badge--${getLearnerSyncStatus(child)}">${getLearnerSyncLabel(child)}</span>
         </button>
       `)
       .join("");
@@ -4149,7 +4494,7 @@ function renderParentDashboard() {
     if (!topicAnalytics.length) {
       elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">This learner has not completed any topic yet.</div>`;
     } else if (!weakTopics.length) {
-      elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">Nice work — every topic is scoring ${WEAK_TOPIC_THRESHOLD}% or higher.</div>`;
+      elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">Nice work â€” every topic is scoring ${WEAK_TOPIC_THRESHOLD}% or higher.</div>`;
     } else {
       elements.parentDashboardWeakAreas.innerHTML = `
         <div class="parent-dashboard-analysis-table">
@@ -4224,36 +4569,133 @@ function handleSaveParentGoals() {
 }
 
 async function handleAddChild() {
-  const account = getCurrentAccount();
-  if (!account || account.type !== "parent") {
-    showProfileMessage("Log in to a parent account before adding children.", "error");
-    return;
-  }
+  try {
+    const account = getCurrentAccount();
+    if (!account || account.type !== "parent") {
+      showProfileMessage("Log in to a parent account before adding children.", "error");
+      return;
+    }
 
-  const childName = elements.childNameInput?.value.trim();
-  const childGrade = Number(elements.childGradeInput?.value || state.selectedGrade || 1);
-  const childEmail = elements.childEmailInput?.value.trim() || "";
-  const childUsername = elements.childUsernameInput?.value.trim() || "";
-  const childPassword = elements.childPasswordInput?.value || "";
-  const avatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
+    const signedInSupabaseParent = isSupabaseProfileId(account.id);
+    if (signedInSupabaseParent) {
+      const activeSessionUser = await getSupabaseSessionUser();
+      if (!activeSessionUser?.id) {
+        renderProfilePanel();
+        renderHeroActivity();
+        showProfileMessage("Your online parent session expired on this page. Sign in again before adding learners so they save to Supabase across browsers.", "error");
+        return;
+      }
+    }
 
-  if (!childName) {
-    showProfileMessage("Enter the child's name before adding them.", "error");
-    return;
-  }
-  if (childUsername && !childPassword) {
-    showProfileMessage("Choose a password for the child's username login.", "error");
-    return;
-  }
+    const childName = elements.childNameInput?.value.trim();
+    const childGrade = Number(elements.childGradeInput?.value || state.selectedGrade || 1);
+    const childEmail = elements.childEmailInput?.value.trim() || "";
+    const childUsername = elements.childUsernameInput?.value.trim() || "";
+    const childPassword = elements.childPasswordInput?.value || "";
+    const avatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
 
-  const childId = buildProfileId(childName);
-  if (account.children[childId]) {
-    // The child already exists in the data even though the visible list may not show it
-    // (e.g. an earlier render step failed silently) — select them and force a fresh render
-    // so the parent can actually see they're already there instead of just getting an error.
+    if (!childName) {
+      showProfileMessage("Enter the child's name before adding them.", "error");
+      return;
+    }
+    if (childUsername && !childPassword) {
+      showProfileMessage("Choose a password for the child's username login.", "error");
+      return;
+    }
+
+    const childId = buildProfileId(childName);
+    if (account.children[childId]) {
+      const existingChild = account.children[childId];
+      if (!existingChild.supabaseChildId) {
+        const retrySessionUser = await getSupabaseSessionUser();
+        const retryOwnerId = retrySessionUser?.id || state.supabaseUserId || null;
+        if (retryOwnerId && getSupabaseClient()) {
+          try {
+            if (retrySessionUser) {
+              state.supabaseUserId = retrySessionUser.id;
+              state.supabaseUserEmail = retrySessionUser.email || state.supabaseUserEmail || "";
+              await ensureSupabaseProfileRow(account, retrySessionUser);
+            }
+            await upsertSingleSupabaseChild(retryOwnerId, existingChild);
+            await syncSupabaseChildren(account, retryOwnerId);
+            account.activeChildId = childId;
+            profilesStore.profiles[account.id] = account;
+            saveProfilesStore();
+            renderProfilePanel();
+            renderStudyTime();
+            renderHeroActivity();
+            showProfileMessage(`${existingChild.name} was already on this device and has now been saved to your online parent account.`, "success");
+            return;
+          } catch (retryError) {
+            console.error("Retrying online sync for an existing local learner failed", retryError);
+          }
+        }
+      }
+      // The child already exists in the data even though the visible list may not show it
+      // (e.g. an earlier render step failed silently) â€” select them and force a fresh render
+      // so the parent can actually see they're already there instead of just getting an error.
+      account.activeChildId = childId;
+      profilesStore.profiles[account.id] = account;
+      saveProfilesStore();
+      try {
+        renderProfilePanel();
+        renderGradeButtons();
+        renderCategories();
+        renderStudyTime();
+        renderHeroActivity();
+      } catch (error) {
+        console.error("Refreshing the learner list failed", error);
+      }
+      showProfileMessage(`${childName} already exists and is shown below.`, "error");
+      return;
+    }
+    if (childEmail && findChildByEmail(childEmail)) {
+      showProfileMessage("That learner email is already linked. Please choose another one.", "error");
+      return;
+    }
+
+    let linkedProfileId = null;
+    if (childUsername) {
+      if (!hasSupabasePersistence()) {
+        showProfileMessage("Sign in with your Supabase parent account before creating a child login.", "error");
+        return;
+      }
+
+      showProfileMessage("Creating the child's login...", "success");
+      const result = await createChildSupabaseLogin({
+        childName,
+        grade: childGrade,
+        username: childUsername,
+        password: childPassword
+      });
+
+      if (result.error) {
+        showProfileMessage(result.error, "error");
+        return;
+      }
+
+      linkedProfileId = result.linkedProfileId;
+    }
+
+    account.children[childId] = createLearnerRecord({
+      id: childId,
+      name: childName,
+      grade: childGrade,
+      childEmail,
+      childUsername: childUsername ? sanitizeUsername(childUsername) : "",
+      avatarDataUrl,
+      linkedProfileId
+    });
     account.activeChildId = childId;
     profilesStore.profiles[account.id] = account;
     saveProfilesStore();
+
+    state.selectedGrade = childGrade;
+    state.selectedCategoryId = null;
+    state.selectedLevel = null;
+    state.currentQuestions = [];
+    hideQuizViews();
+    clearProfileFields();
     try {
       renderProfilePanel();
       renderGradeButtons();
@@ -4261,105 +4703,48 @@ async function handleAddChild() {
       renderStudyTime();
       renderHeroActivity();
     } catch (error) {
-      console.error("Refreshing the learner list failed", error);
-    }
-    showProfileMessage(`${childName} already exists — showing them in the list below.`, "error");
-    return;
-  }
-  if (childEmail && findChildByEmail(childEmail)) {
-    showProfileMessage("That learner email is already linked. Please choose another one.", "error");
-    return;
-  }
-
-  let linkedProfileId = null;
-  if (childUsername) {
-    if (!hasSupabasePersistence()) {
-      showProfileMessage("Sign in with your Supabase parent account before creating a child login.", "error");
-      return;
-    }
-
-    showProfileMessage("Creating the child's login...", "success");
-    const result = await createChildSupabaseLogin({
-      childName,
-      grade: childGrade,
-      username: childUsername,
-      password: childPassword
-    });
-
-    if (result.error) {
-      showProfileMessage(result.error, "error");
-      return;
-    }
-
-    linkedProfileId = result.linkedProfileId;
-  }
-
-  account.children[childId] = createLearnerRecord({
-    id: childId,
-    name: childName,
-    grade: childGrade,
-    childEmail,
-    childUsername: childUsername ? sanitizeUsername(childUsername) : "",
-    avatarDataUrl,
-    linkedProfileId
-  });
-  account.activeChildId = childId;
-  profilesStore.profiles[account.id] = account;
-  saveProfilesStore();
-
-  state.selectedGrade = childGrade;
-  state.selectedCategoryId = null;
-  state.selectedLevel = null;
-  state.currentQuestions = [];
-  hideQuizViews();
-  clearProfileFields();
-  // Data is already saved above at this point. Wrap the render calls so that if any one of
-  // them throws (e.g. an unexpected value on an element), it can't silently swallow the rest
-  // of this function and leave the success message and learner list stuck out of date.
-  try {
-    renderProfilePanel();
-    renderGradeButtons();
-    renderCategories();
-    renderStudyTime();
-    renderHeroActivity();
-  } catch (error) {
-    console.error("Rendering after adding a child failed", error);
-    try {
-      renderParentPanel(account);
-    } catch (fallbackError) {
-      console.error("Fallback learner list refresh also failed", fallbackError);
-    }
-  }
-  // hasSupabasePersistence() only returns true when signed into a real online (Supabase)
-  // account — a purely local/offline parent account (created via Create Profile with a name +
-  // password, no email) looks identical in this form, but queueSupabaseWrite() below silently
-  // does nothing for it. Without this warning, a learner added on one device while signed into
-  // a local-only account would just vanish from every other device with no explanation.
-  let syncNote = "";
-  let syncStatus = "success";
-  if (hasSupabasePersistence()) {
-    try {
-      await syncSupabaseChildren(account, state.supabaseUserId);
-      const sessionResponse = await getSupabaseClient().auth.getSession();
-      const session = sessionResponse?.data?.session || null;
-      if (session) {
-        await loadSupabaseAccountData(session);
+      console.error("Rendering after adding a child failed", error);
+      try {
+        renderParentPanel(account);
+      } catch (fallbackError) {
+        console.error("Fallback learner list refresh also failed", fallbackError);
       }
-      syncNote = " Saved to your online parent account.";
-    } catch (error) {
-      console.error("Immediate learner sync failed", error);
-      syncNote = " Added here, but the online sync failed. Refresh and try again before checking another browser.";
-      syncStatus = "error";
     }
-  } else {
-    syncNote = " This learner is only saved on this device/browser — sign in with your online account (email + password) to see them on other devices too.";
+    let syncNote = "";
+    let syncStatus = "success";
+    const sessionUser = await getSupabaseSessionUser();
+    const canSyncOnline = Boolean(sessionUser?.id && account.type === "parent");
+    if (canSyncOnline) {
+      try {
+        state.supabaseUserId = sessionUser.id;
+        state.supabaseUserEmail = sessionUser.email || state.supabaseUserEmail || "";
+        await ensureSupabaseProfileRow(account, sessionUser);
+        await upsertSingleSupabaseChild(sessionUser.id, account.children[childId]);
+        await syncSupabaseChildren(account, sessionUser.id);
+        const sessionResponse = await getSupabaseClient().auth.getSession();
+        const session = sessionResponse?.data?.session || null;
+        if (session) {
+          await loadSupabaseAccountData(session);
+        }
+        syncNote = " Saved to your online parent account.";
+      } catch (error) {
+        console.error("Immediate learner sync failed", error);
+        syncNote = ` Added here, but the online sync failed: ${error?.message || "Unknown error"}.`;
+        syncStatus = "error";
+      }
+    } else {
+      syncNote = " This learner is only saved on this device/browser â€” sign in with your online parent account to see them on other devices too.";
+    }
+    showProfileMessage(
+      (childUsername
+        ? `${childName} was added. They can log in on the Learner Login page with username "${sanitizeUsername(childUsername)}".`
+        : `${childName} was added and is now the active learner.`) + syncNote,
+      syncStatus
+    );
+  } catch (error) {
+    console.error("Add child flow failed", error);
+    showProfileMessage(`Could not add learner: ${error?.message || "Unknown error"}`, "error");
   }
-  showProfileMessage(
-    (childUsername
-      ? `${childName} was added. They can log in on the Learner Login page with username "${sanitizeUsername(childUsername)}".`
-      : `${childName} was added and is now the active learner.`) + syncNote,
-    syncStatus
-  );
 }
 
 function handleSaveChildSettings() {
@@ -4495,7 +4880,7 @@ async function handleBackToParent() {
     return;
   }
   setChildViewMode(false);
-  // setChildViewMode() only updates the profile panel/header — refresh the rest of the page
+  // setChildViewMode() only updates the profile panel/header â€” refresh the rest of the page
   // (grade buttons, topics, study time, activity chart, Family Dashboard) so the parent sees
   // everything unlocked immediately instead of needing to reload the page.
   renderGradeButtons();
@@ -4621,7 +5006,7 @@ function handleLoginProfile() {
 }
 
 async function handleLogoutProfile() {
-  // Sign out of Supabase too (not just the local profile store) — otherwise a persisted
+  // Sign out of Supabase too (not just the local profile store) â€” otherwise a persisted
   // Supabase session would just re-hydrate the same account on the next page load/refresh,
   // making "Log Out" not actually work for accounts signed in online.
   const client = getSupabaseClient();
@@ -4644,7 +5029,7 @@ async function handleLogoutProfile() {
   elements.backToParentButton?.classList.add("hidden");
   hideQuizViews();
 
-  // app.html is a protected page (see auth.js handleAppPage/grantAppAccess) — once signed out
+  // app.html is a protected page (see auth.js handleAppPage/grantAppAccess) â€” once signed out
   // there is no account left to show here, so return to the login page instead of falling back
   // to a visible "Guest" state on this same page.
   window.location.href = "index.html";
@@ -5960,7 +6345,7 @@ function isPrimeNumber(value) {
   return true;
 }
 
-// Grade 6+ "factors, multiples, and rational number foundations" content — used by
+// Grade 6+ "factors, multiples, and rational number foundations" content â€” used by
 // questionFactories.numberSense in place of the elementary comparison/place-value/sequence
 // questions used for grades below 6 (see the branch in that factory).
 function buildFactorsAndMultiplesQuestion(rng, difficulty, index) {
@@ -6013,7 +6398,7 @@ function buildFactorsAndMultiplesQuestion(rng, difficulty, index) {
       prompt: `How many whole-number factors does ${value} have?`,
       options,
       answerIndex,
-      explanation: `The factors of ${value} are ${factorsOf(value).join(", ")} — that's ${correct} factors in total.`
+      explanation: `The factors of ${value} are ${factorsOf(value).join(", ")} â€” that's ${correct} factors in total.`
     };
   }
 
@@ -6116,7 +6501,7 @@ function buildGenericFallbackOptionLabel(correctLabel, attempt) {
   const text = String(correctLabel || "").trim();
 
   if ([">", "<", "="].includes(text)) {
-    return [">", "<", "=", "≠"][attempt % 4];
+    return [">", "<", "=", "â‰ "][attempt % 4];
   }
 
   if (/^-?\d+x$/.test(text)) {
@@ -6460,7 +6845,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 2: Use a sample space table",
         question: "A coin is tossed and a marker is chosen from the colours red, blue, and green. How many outcomes are there?",
         howTo: "Put one event on the left and the other across the top. Fill the table with all combinations.",
-        solution: "A coin has 2 outcomes: heads and tails. The markers have 3 outcomes: red, blue, green. Total outcomes = 2 × 3 = 6.",
+        solution: "A coin has 2 outcomes: heads and tails. The markers have 3 outcomes: red, blue, green. Total outcomes = 2 Ã— 3 = 6.",
         diagram: sampleSpaceTableDiagram("Coin", "Marker", ["Heads", "Tails"], ["Red", "Blue", "Green"], (coin, marker) => `${coin}-${marker}`),
         masteryQuestion: "A spinner can land on A or B, and a coin can land on heads or tails. Use a sample space table to show all outcomes."
       },
@@ -6468,7 +6853,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 3: Count outcomes for a condition",
         question: "A pizza shop offers crusts thin and regular, and toppings cheese, pepperoni, and veggie. What is the probability of choosing a regular crust with veggie topping if all outcomes are equally likely?",
         howTo: "First build the full sample space, then count the outcomes that match the condition.",
-        solution: "There are 2 crust choices and 3 topping choices, so 2 × 3 = 6 total outcomes. Only one outcome is regular + veggie, so the probability is 1/6.",
+        solution: "There are 2 crust choices and 3 topping choices, so 2 Ã— 3 = 6 total outcomes. Only one outcome is regular + veggie, so the probability is 1/6.",
         diagram: sampleSpaceTableDiagram("Crust", "Topping", ["Thin", "Regular"], ["Cheese", "Pepperoni", "Veggie"], (crust, topping) => `${crust} + ${topping}`),
         masteryQuestion: "A hockey net prize board offers 3 puck colours and 4 target zones. What is the probability of choosing blue and top-left if all outcomes are equally likely?"
       },
@@ -6476,7 +6861,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 4: Tree-diagram thinking",
         question: "A student chooses one of 2 sauces and one of 3 side dishes. How can a tree diagram help organize the outcomes?",
         howTo: "A tree starts each first choice, then branches again for every second choice.",
-        solution: "Start with the 2 sauces. From each sauce, draw 3 branches for the side dishes. That gives 2 × 3 = 6 outcomes in a clear organized way.",
+        solution: "Start with the 2 sauces. From each sauce, draw 3 branches for the side dishes. That gives 2 Ã— 3 = 6 outcomes in a clear organized way.",
         diagram: plainListDiagram("Tree-diagram idea", ["Sauce 1 -> Side 1, Side 2, Side 3", "Sauce 2 -> Side 1, Side 2, Side 3"]),
         masteryQuestion: "A student chooses one book genre and one reading spot. Explain how a tree diagram can organize the sample space."
       }
@@ -6486,7 +6871,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 1: Two independent events",
         question: "A student picks one snack from chips, fruit, or crackers and one drink from water or milk. What is the probability of getting fruit and milk?",
         howTo: "Because the two choices do not affect each other, multiply the separate probabilities or count one matching outcome from the sample space.",
-        solution: "There are 3 snack choices and 2 drink choices, so 3 × 2 = 6 total outcomes. Only one outcome is fruit + milk, so the probability is 1/6.",
+        solution: "There are 3 snack choices and 2 drink choices, so 3 Ã— 2 = 6 total outcomes. Only one outcome is fruit + milk, so the probability is 1/6.",
         diagram: sampleSpaceTableDiagram("Snack", "Drink", ["Chips", "Fruit", "Crackers"], ["Water", "Milk"], (snack, drink) => `${snack} + ${drink}`),
         masteryQuestion: "A student picks one sandwich from chicken, tuna, or egg and one juice from orange or apple. What is the probability of chicken and apple?"
       },
@@ -6653,7 +7038,7 @@ const englishSkillPools = {
         "Which sentence uses active voice more effectively?",
         "Which sentence uses standard formal grammar?"
       ].includes(item.prompt)),
-      { prompt: "Which sentence correctly uses an em dash?", correct: "The results were clear—the experiment had succeeded.", distractors: ["The results were clear-the experiment had succeeded.", "The results were clear, the experiment had succeeded.", "The results were clear; the experiment—had succeeded."], hint: "An em dash can set off a dramatic clarification.", explanation: "The em dash correctly sets off the clarifying clause." },
+      { prompt: "Which sentence correctly uses an em dash?", correct: "The results were clearâ€”the experiment had succeeded.", distractors: ["The results were clear-the experiment had succeeded.", "The results were clear, the experiment had succeeded.", "The results were clear; the experimentâ€”had succeeded."], hint: "An em dash can set off a dramatic clarification.", explanation: "The em dash correctly sets off the clarifying clause." },
       { prompt: "Which sentence avoids faulty parallelism in a formal list?", correct: "The report was clear, concise, and persuasive.", distractors: ["The report was clear, concise, and persuading.", "The report was being clear, concise, and persuasive.", "The report was clear, being concise, and persuasive."], hint: "Each item in the list should share the same grammatical form.", explanation: "All three adjectives share the same form, keeping the list parallel." },
       { prompt: "Which sentence correctly uses a restrictive clause without commas?", correct: "Students who arrive late must sign in at the office.", distractors: ["Students, who arrive late, must sign in at the office.", "Students who arrive late, must sign in at the office.", "Students, who arrive late must sign in at the office."], hint: "A restrictive clause is essential to the meaning and is not set off by commas.", explanation: "Because 'who arrive late' is essential to identifying which students, no commas are needed." },
       { prompt: "Which sentence correctly uses the passive voice for emphasis?", correct: "The award was presented to an outstanding researcher.", distractors: ["An outstanding researcher was presenting the award.", "The award presented an outstanding researcher.", "An outstanding researcher present the award."], hint: "Passive voice puts the receiver of the action first.", explanation: "The passive construction correctly emphasizes the award being given." },
@@ -6896,7 +7281,7 @@ const englishWritingPools = {
     { prompt: "Fill in the gap with the correct verb: Each of the reports ___ reviewed before publication.", correct: "was", distractors: ["were", "are", "be"], hint: "'Each' is singular in formal grammar.", explanation: "'Each of the reports' takes the singular verb 'was'." },
     { prompt: "Choose the sentence with correct punctuation and clause control.", correct: "Because the evidence was incomplete, the team delayed its decision.", distractors: ["Because the evidence was incomplete the team delayed its decision.", "Because the evidence was incomplete; the team delayed its decision.", "Because the evidence was incomplete: the team delayed its decision."], hint: "An opening dependent clause is usually followed by a comma.", explanation: "The comma correctly separates the opening clause from the main clause." },
     { prompt: "Fill in the gap with the most precise word: The author's claim was supported by ___ data from three independent studies.", correct: "reliable", distractors: ["nicely", "rely", "trust"], hint: "Choose the adjective that best describes data you can depend on.", explanation: "'Reliable' is the precise adjective that fits the sentence." },
-    { prompt: "Choose the sentence with the most effective use of an em dash for emphasis.", correct: "The results confirmed one thing—the hypothesis was correct.", distractors: ["The results confirmed one thing, the hypothesis was correct.", "The results confirmed one thing; the hypothesis, was correct.", "The results confirmed—one thing the hypothesis was correct."], hint: "An em dash can dramatically emphasize the final idea.", explanation: "The em dash correctly emphasizes the concluding clause." },
+    { prompt: "Choose the sentence with the most effective use of an em dash for emphasis.", correct: "The results confirmed one thingâ€”the hypothesis was correct.", distractors: ["The results confirmed one thing, the hypothesis was correct.", "The results confirmed one thing; the hypothesis, was correct.", "The results confirmedâ€”one thing the hypothesis was correct."], hint: "An em dash can dramatically emphasize the final idea.", explanation: "The em dash correctly emphasizes the concluding clause." },
     { prompt: "Fill in the gap with the best transition for contrasting ideas: The policy was popular; ___, critics raised concerns about its cost.", correct: "however", distractors: ["therefore", "similarly", "consequently"], hint: "Choose a transition that signals contrast.", explanation: "'However' correctly signals the contrast between popularity and criticism." },
     { prompt: "Choose the sentence that best integrates a quotation smoothly into the writer's own sentence.", correct: "As the researcher explains, \"early intervention produces the strongest outcomes.\"", distractors: ["The researcher said. \"Early intervention produces the strongest outcomes.\"", "\"Early intervention produces the strongest outcomes\" the researcher.", "Early intervention, \"produces the strongest,\" outcomes researcher said."], hint: "A smoothly integrated quotation fits grammatically into the sentence around it.", explanation: "This version smoothly introduces and grammatically integrates the quotation." },
     { prompt: "Fill in the gap with the most precise word: The editorial's ___ tone alienated readers who disagreed.", correct: "combative", distractors: ["combat", "combatively", "combats"], hint: "You need an adjective describing a confrontational tone.", explanation: "'Combative' is the adjective that precisely describes an aggressive, confrontational tone." },
@@ -8741,7 +9126,7 @@ const probabilityMasteryGenerators = {
     },
     (rng) => {
       const promptType = pick(["quarter", "dimeOrQuarter", "notLoonie"], rng);
-      const coins = ["25¢", "5¢", "25¢", "$1", "10¢", "10¢", "25¢", "25¢"];
+      const coins = ["25Â¢", "5Â¢", "25Â¢", "$1", "10Â¢", "10Â¢", "25Â¢", "25Â¢"];
       const counts = {
         quarter: 4,
         dimeOrQuarter: 6,
@@ -8816,7 +9201,7 @@ const probabilityMasteryGenerators = {
           `The spinner has ${moves.length} possible outcomes.`,
           `The die has ${dieFaces.length} possible outcomes.`,
           `For every spinner result, there are ${dieFaces.length} die results.`,
-          `So the sample space has ${moves.length} × ${dieFaces.length} = ${correct} outcomes.`
+          `So the sample space has ${moves.length} Ã— ${dieFaces.length} = ${correct} outcomes.`
         ],
         diagram: sampleSpaceTableDiagram("Move", "Die", moves, dieFaces, (move, face) => `${move}-${face}`)
       });
@@ -8834,7 +9219,7 @@ const probabilityMasteryGenerators = {
           `The coin has ${coin.length} outcomes: H and T.`,
           `The school-supply choice has ${supplies.length} outcomes: p, e, c, and r.`,
           `Each coin result can be paired with each supply.`,
-          `So the sample space has ${coin.length} × ${supplies.length} = ${sampleCount} outcomes.`
+          `So the sample space has ${coin.length} Ã— ${supplies.length} = ${sampleCount} outcomes.`
         ],
         diagram: sampleSpaceTableDiagram("Coin", "Supply", coin, supplies, (coinSide, supply) => `${coinSide}${supply}`)
       });
@@ -8860,7 +9245,7 @@ const probabilityMasteryGenerators = {
         ],
         hint: "Count how many ordered pairs match the event, then divide by all possible ordered pairs.",
         steps: [
-          `There are ${colors.length} × ${numbers.length} = ${total} possible outcomes.`,
+          `There are ${colors.length} Ã— ${numbers.length} = ${total} possible outcomes.`,
           `Count the favourable outcomes for '${event.label}'. There are ${event.favorable}.`,
           `Write the probability as ${event.favorable}/${total}.`,
           `Simplify if possible. The answer is ${correct}.`
@@ -8881,7 +9266,7 @@ const probabilityMasteryGenerators = {
           `The number spinner has ${first.length} outcomes.`,
           `The letter spinner has ${second.length} outcomes.`,
           `Multiply to count all ordered pairs.`,
-          `${first.length} × ${second.length} = ${correctCount}, so there are ${correctCount} outcomes.`
+          `${first.length} Ã— ${second.length} = ${correctCount}, so there are ${correctCount} outcomes.`
         ],
         diagram: sampleSpaceTableDiagram("Number", "Letter", first, second, (a, b) => `${a}${b}`)
       });
@@ -8899,7 +9284,7 @@ const probabilityMasteryGenerators = {
           `There are ${breads.length} bread choices.`,
           `There are ${fillings.length} filling choices.`,
           `Multiply the choices to count all combinations.`,
-          `${breads.length} × ${fillings.length} = ${correct}, so there are ${correct} sandwiches.`
+          `${breads.length} Ã— ${fillings.length} = ${correct}, so there are ${correct} sandwiches.`
         ],
         diagram: sampleSpaceTableDiagram("Bread", "Filling", breads, fillings, (bread, filling) => `${bread} + ${filling}`)
       });
@@ -8937,7 +9322,7 @@ const probabilityMasteryGenerators = {
         hint: "There is only one favourable meal-and-drink pair. Divide by all possible meal-and-drink pairs.",
         steps: [
           `There are ${meals.length} meal choices and ${drinks.length} drink choices.`,
-          `So there are ${meals.length} × ${drinks.length} = ${total} total outcomes.`,
+          `So there are ${meals.length} Ã— ${drinks.length} = ${total} total outcomes.`,
           "Only one outcome is 'chicken wrap and milk'.",
           `So the probability is 1/${total}, which is ${correct}.`
         ],
@@ -8957,7 +9342,7 @@ const probabilityMasteryGenerators = {
         steps: [
           `The first spinner has ${homes.length} outcomes.`,
           `The city spinner has ${cities.length} outcomes.`,
-          `So there are ${homes.length} × ${cities.length} = ${total} ordered pairs.`,
+          `So there are ${homes.length} Ã— ${cities.length} = ${total} ordered pairs.`,
           `Only one of those pairs is (apartment, Victoria), so the probability is 1/${total}.`
         ],
         diagram: sampleSpaceTableDiagram("Home", "City", homes, cities, (home, city) => `${home}, ${city}`)
@@ -8983,13 +9368,13 @@ const probabilityMasteryGenerators = {
         hint: "Count the outcomes that satisfy the event, then divide by all drink-and-snack pairs.",
         steps: event.favorable === snacks.length
           ? [
-              `There are ${drinks.length} × ${snacks.length} = ${total} total choices.`,
+              `There are ${drinks.length} Ã— ${snacks.length} = ${total} total choices.`,
               `If the choice must include milk, milk can pair with each of the ${snacks.length} snacks.`,
               `So there are ${event.favorable} favourable outcomes.`,
               `The probability is ${event.favorable}/${total}, which simplifies to ${correct}.`
             ]
           : [
-              `There are ${drinks.length} × ${snacks.length} = ${total} total choices.`,
+              `There are ${drinks.length} Ã— ${snacks.length} = ${total} total choices.`,
               "Only one pair is 'juice and orange'.",
               `So there is ${event.favorable} favourable outcome.`,
               `The probability is ${event.favorable}/${total}, which simplifies to ${correct}.`
@@ -9009,7 +9394,7 @@ const probabilityMasteryGenerators = {
         hint: "Only one ordered pair is 'Dusting and Dishes'. Divide by the total number of ordered pairs.",
         steps: [
           `The first spinner has ${chores1.length} outcomes and the second has ${chores2.length}.`,
-          `That gives ${chores1.length} × ${chores2.length} = ${total} total outcomes.`,
+          `That gives ${chores1.length} Ã— ${chores2.length} = ${total} total outcomes.`,
           "Only one outcome matches Dusting and Dishes.",
           `So the probability is 1/${total}, which is ${correct}.`
         ],
@@ -9034,7 +9419,7 @@ const probabilityMasteryGenerators = {
         hint: "Build the sample space of all coin-color pairs first.",
         steps: [
           `The coin has ${coin.length} outcomes and the color choice has ${colors.length}.`,
-          `So there are ${coin.length} × ${colors.length} = ${total} total outcomes.`,
+          `So there are ${coin.length} Ã— ${colors.length} = ${total} total outcomes.`,
           `The event '${event}' has ${favorable} favourable outcome${favorable === 1 ? "" : "s"}.`,
           `The probability is ${favorable}/${total}, which simplifies to ${correct}.`
         ],
@@ -9073,7 +9458,7 @@ const questionFactories = {
     const max = lerpRange(config.min, config.max, difficulty);
 
     // Grade 6's number-sense category is specifically about factors, multiples, and rational
-    // number foundations (see its category description) — the plain magnitude-comparison,
+    // number foundations (see its category description) â€” the plain magnitude-comparison,
     // place-value, and sequence questions below are both far too simple for that grade and
     // don't match the topic at all, so grade 6+ gets its own set of modes instead.
     if (grade >= 6) {
@@ -9889,7 +10274,7 @@ const questionFactories = {
         prompt: `A right triangle has legs ${a} and ${b}. Which is closest to the hypotenuse length?`,
         options,
         answerIndex,
-        explanation: `Step 1: Use the Pythagorean theorem, c^2 = ${a}^2 + ${b}^2.<br>Step 2: Compute ${a * a} + ${b * b} = ${(a * a) + (b * b)}.<br>Step 3: Take the square root: c ≈ ${correct}.`,
+        explanation: `Step 1: Use the Pythagorean theorem, c^2 = ${a}^2 + ${b}^2.<br>Step 2: Compute ${a * a} + ${b * b} = ${(a * a) + (b * b)}.<br>Step 3: Take the square root: c â‰ˆ ${correct}.`,
         diagram: triangleDiagram(a, b)
       };
     }
@@ -10225,19 +10610,19 @@ const questionFactories = {
     if (config.skill === "powersRadicals") {
       const mode = index % 4;
       const radicalTable = [
-        { radicand: 8, simplified: "2√2" },
-        { radicand: 12, simplified: "2√3" },
-        { radicand: 18, simplified: "3√2" },
-        { radicand: 20, simplified: "2√5" },
-        { radicand: 27, simplified: "3√3" },
-        { radicand: 32, simplified: "4√2" },
-        { radicand: 45, simplified: "3√5" },
-        { radicand: 50, simplified: "5√2" },
-        { radicand: 75, simplified: "5√3" },
-        { radicand: 98, simplified: "7√2" },
-        { radicand: 120, simplified: "2√30" },
-        { radicand: 150, simplified: "5√6" },
-        { radicand: 200, simplified: "10√2" }
+        { radicand: 8, simplified: "2âˆš2" },
+        { radicand: 12, simplified: "2âˆš3" },
+        { radicand: 18, simplified: "3âˆš2" },
+        { radicand: 20, simplified: "2âˆš5" },
+        { radicand: 27, simplified: "3âˆš3" },
+        { radicand: 32, simplified: "4âˆš2" },
+        { radicand: 45, simplified: "3âˆš5" },
+        { radicand: 50, simplified: "5âˆš2" },
+        { radicand: 75, simplified: "5âˆš3" },
+        { radicand: 98, simplified: "7âˆš2" },
+        { radicand: 120, simplified: "2âˆš30" },
+        { radicand: 150, simplified: "5âˆš6" },
+        { radicand: 200, simplified: "10âˆš2" }
       ];
 
       if (mode === 0) {
@@ -10245,10 +10630,10 @@ const questionFactories = {
         const selected = pool[Math.floor(index / 4) % pool.length];
         const { options, answerIndex } = buildOptions(selected.simplified, radicalTable.filter((item) => item.simplified !== selected.simplified).slice(0, 3).map((item) => item.simplified), rng);
         return {
-          prompt: `Simplify √${selected.radicand}.`,
+          prompt: `Simplify âˆš${selected.radicand}.`,
           options,
           answerIndex,
-          explanation: `Find the largest perfect square factor of ${selected.radicand} and pull it out of the radical. √${selected.radicand} = ${selected.simplified}.`
+          explanation: `Find the largest perfect square factor of ${selected.radicand} and pull it out of the radical. âˆš${selected.radicand} = ${selected.simplified}.`
         };
       }
 
@@ -10275,19 +10660,19 @@ const questionFactories = {
           prompt: `Simplify ${base}^(1/2).`,
           options,
           answerIndex,
-          explanation: `A power of 1/2 means square root. ${base}^(1/2) = √${base} = ${correct}.`
+          explanation: `A power of 1/2 means square root. ${base}^(1/2) = âˆš${base} = ${correct}.`
         };
       }
 
       const a = pick([2, 3, 5], rng);
       const b = pick([2, 3, 5].filter((value) => value !== a), rng);
-      const correct = `√${a * b}`;
-      const { options, answerIndex } = buildOptions(correct, [`√${a + b}`, `${a}√${b}`, `√${a}√${b}`], rng);
+      const correct = `âˆš${a * b}`;
+      const { options, answerIndex } = buildOptions(correct, [`âˆš${a + b}`, `${a}âˆš${b}`, `âˆš${a}âˆš${b}`], rng);
       return {
-        prompt: `Simplify √${a} x √${b}.`,
+        prompt: `Simplify âˆš${a} x âˆš${b}.`,
         options,
         answerIndex,
-        explanation: `Multiply the radicands together: √${a} x √${b} = √${a * b}.`
+        explanation: `Multiply the radicands together: âˆš${a} x âˆš${b} = âˆš${a * b}.`
       };
     }
 
@@ -12059,9 +12444,9 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -12071,7 +12456,7 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
 }
 
 function roundByGrade(value, grade) {
@@ -12231,7 +12616,7 @@ function showHintAfterWrong(question) {
   }
 
   elements.hintButton.classList.remove("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
   elements.hintBox.classList.add("hidden");
 }
 
@@ -12242,9 +12627,9 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -12254,5 +12639,6 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
 }
+

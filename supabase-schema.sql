@@ -67,6 +67,85 @@ create table if not exists public.mastery_progress (
   completed_at timestamptz not null default now()
 );
 
+create or replace function public.sync_mastery_profile_from_auth()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.mastery_profiles (
+    id,
+    email,
+    display_name,
+    account_type,
+    grade,
+    updated_at
+  )
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'user_name', split_part(coalesce(new.email, 'Learner'), '@', 1), 'Learner'),
+    case
+      when coalesce(new.raw_user_meta_data ->> 'account_type', 'parent') = 'learner' then 'learner'
+      else 'parent'
+    end,
+    case
+      when (new.raw_user_meta_data ->> 'account_type') = 'learner'
+        then nullif(new.raw_user_meta_data ->> 'grade', '')::integer
+      else null
+    end,
+    now()
+  )
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    display_name = coalesce(excluded.display_name, public.mastery_profiles.display_name),
+    account_type = excluded.account_type,
+    grade = excluded.grade,
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_mastery_profile on auth.users;
+create trigger on_auth_user_created_mastery_profile
+after insert on auth.users
+for each row
+execute function public.sync_mastery_profile_from_auth();
+
+insert into public.mastery_profiles (
+  id,
+  email,
+  display_name,
+  account_type,
+  grade,
+  updated_at
+)
+select
+  users.id,
+  users.email,
+  coalesce(users.raw_user_meta_data ->> 'user_name', split_part(coalesce(users.email, 'Learner'), '@', 1), 'Learner'),
+  case
+    when coalesce(users.raw_user_meta_data ->> 'account_type', 'parent') = 'learner' then 'learner'
+    else 'parent'
+  end,
+  case
+    when (users.raw_user_meta_data ->> 'account_type') = 'learner'
+      then nullif(users.raw_user_meta_data ->> 'grade', '')::integer
+    else null
+  end,
+  now()
+from auth.users as users
+on conflict (id) do update
+set
+  email = excluded.email,
+  display_name = coalesce(excluded.display_name, public.mastery_profiles.display_name),
+  account_type = excluded.account_type,
+  grade = coalesce(excluded.grade, public.mastery_profiles.grade),
+  updated_at = now();
+
 alter table public.mastery_profiles enable row level security;
 alter table public.mastery_children enable row level security;
 alter table public.mastery_progress enable row level security;
