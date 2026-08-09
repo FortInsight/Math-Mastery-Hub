@@ -27,6 +27,14 @@
     return path.toLowerCase();
   }
 
+  function isAppMarkupPresent() {
+    return Boolean(document.querySelector(".page-shell") || document.getElementById("auth-check-loading"));
+  }
+
+  function isLoginMarkupPresent() {
+    return Boolean(document.getElementById("authForm") || document.querySelector(".auth-shell"));
+  }
+
   function getConfiguredBaseUrl() {
     if (window.location.protocol === "file:") {
       return "";
@@ -443,9 +451,10 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     const page = getPageName();
-    // app.html is the practice app; everything else that loads auth.js (index.html — the
-    // default/landing page — plus the legacy login.html alias) is treated as the login page.
-    if (page === "app.html") {
+    // Prefer the actual markup over the file name. In production the hosted app can be served
+    // through index-like routes, and relying only on "app.html" prevented the signed-in
+    // Supabase session from hydrating the live practice page.
+    if (page === "app.html" || (isAppMarkupPresent() && !isLoginMarkupPresent())) {
       await handleAppPage();
       return;
     }
