@@ -232,8 +232,8 @@
 
     if (roleNote) {
       roleNote.textContent = learnerMode
-        ? "Learner accounts open directly into their own grade-based learning page. Use your own learner email, or a username your parent created for you."
-        : "Parent accounts can add learners, set goals, and view learner performance.";
+        ? "Learner accounts open directly into their own grade-based learning page. A valid license key is required for new learner sign-up. Use your own learner email, or a username your parent created for you."
+        : "Parent accounts can add learners, set goals, and view learner performance. A valid license key is required for new parent sign-up.";
     }
   }
 
