@@ -151,7 +151,8 @@ const state = {
   supabaseChildRecoveryInFlight: false,
   supabaseChildrenSyncInFlight: false,
   childViewMode: false,
-  avatarLibraryOpen: false
+  avatarLibraryOpen: false,
+  parentEditorChildId: null
 };
 
 const questionBankCache = new Map();
@@ -434,18 +435,25 @@ async function recoverParentChildrenFromSupabase(account) {
 
     childRows.forEach((childRow) => {
       const childLocalId = buildProfileId(childRow.child_name);
-      if (!account.children[childLocalId]) {
-        account.children[childLocalId] = createLearnerRecord({
-          id: childLocalId,
-          name: childRow.child_name,
-          grade: Number(childRow.grade || 1),
-          childEmail: childRow.child_email || "",
-          childUsername: childRow.child_username || "",
-          avatarDataUrl: childRow.avatar_data_url || "",
-          supabaseChildId: childRow.id,
-          linkedProfileId: childRow.linked_profile_id || null
-        });
+      const existingChild = account.children[childLocalId];
+      const nextChild = createLearnerRecord({
+        id: childLocalId,
+        name: childRow.child_name,
+        grade: Number(childRow.grade || existingChild?.grade || 1),
+        childEmail: childRow.child_email || existingChild?.childEmail || "",
+        childUsername: childRow.child_username || existingChild?.childUsername || "",
+        avatarDataUrl: childRow.avatar_data_url || existingChild?.avatarDataUrl || "",
+        supabaseChildId: childRow.id,
+        linkedProfileId: childRow.linked_profile_id || existingChild?.linkedProfileId || null
+      });
+
+      if (existingChild) {
+        nextChild.progress = existingChild.progress || nextChild.progress;
+        nextChild.scoreHistory = existingChild.scoreHistory || nextChild.scoreHistory;
+        nextChild.studyTime = existingChild.studyTime || nextChild.studyTime;
       }
+
+      account.children[childLocalId] = nextChild;
     });
 
     ensureAccountShape(account);
@@ -633,41 +641,77 @@ async function syncSupabaseChildren(account, ownerId) {
         existing.avatar_data_url !== (child.avatarDataUrl || null) ||
         Number(existing.grade) !== Number(child.grade)
       ) {
-        const { data: syncedChildId, error: updateError } = await client
-          .rpc("upsert_mastery_child", {
-            p_child_id: existing.id,
-            p_child_name: payload.child_name,
-            p_grade: payload.grade,
-            p_child_email: payload.child_email,
-            p_child_username: payload.child_username,
-            p_linked_profile_id: payload.linked_profile_id,
-            p_avatar_data_url: payload.avatar_data_url
-          });
+        try {
+          const { data: syncedChildId, error: updateError } = await client
+            .rpc("upsert_mastery_child", {
+              p_child_id: existing.id,
+              p_child_name: payload.child_name,
+              p_grade: payload.grade,
+              p_child_email: payload.child_email,
+              p_child_username: payload.child_username,
+              p_linked_profile_id: payload.linked_profile_id,
+              p_avatar_data_url: payload.avatar_data_url
+            });
 
-        if (updateError) {
-          throw updateError;
+          if (updateError) {
+            throw updateError;
+          }
+          child.supabaseChildId = syncedChildId || existing.id;
+        } catch (rpcError) {
+          console.warn("RPC child update failed, falling back to direct update", rpcError);
+          const { data: updatedRow, error: directUpdateError } = await client
+            .from("mastery_children")
+            .update({ ...payload, parent_id: ownerId })
+            .eq("id", existing.id)
+            .eq("parent_id", ownerId)
+            .select("id")
+            .single();
+
+          if (directUpdateError) {
+            throw directUpdateError;
+          }
+          child.supabaseChildId = updatedRow?.id || existing.id;
         }
-        child.supabaseChildId = syncedChildId || existing.id;
       }
       continue;
     }
 
-    const { data: insertedChildId, error: insertError } = await client
-      .rpc("upsert_mastery_child", {
-        p_child_name: payload.child_name,
-        p_grade: payload.grade,
-        p_child_email: payload.child_email,
-        p_child_username: payload.child_username,
-        p_linked_profile_id: payload.linked_profile_id,
-        p_avatar_data_url: payload.avatar_data_url
-      });
+    let syncedInsertId = null;
+    try {
+      const { data: insertedChildId, error: insertError } = await client
+        .rpc("upsert_mastery_child", {
+          p_child_name: payload.child_name,
+          p_grade: payload.grade,
+          p_child_email: payload.child_email,
+          p_child_username: payload.child_username,
+          p_linked_profile_id: payload.linked_profile_id,
+          p_avatar_data_url: payload.avatar_data_url
+        });
 
-    if (insertError) {
-      throw insertError;
+      if (insertError) {
+        throw insertError;
+      }
+
+      child.supabaseChildId = insertedChildId;
+      syncedInsertId = insertedChildId;
+    } catch (rpcError) {
+      console.warn("RPC child insert failed, falling back to direct insert", rpcError);
+      const { data: insertedRow, error: directInsertError } = await client
+        .from("mastery_children")
+        .insert({ ...payload, parent_id: ownerId })
+        .select("id")
+        .single();
+
+      if (directInsertError) {
+        throw directInsertError;
+      }
+
+      child.supabaseChildId = insertedRow?.id || null;
+      syncedInsertId = insertedRow?.id || null;
     }
-
-    child.supabaseChildId = insertedChildId;
-    activeChildIds.add(insertedChildId);
+    if (syncedInsertId) {
+      activeChildIds.add(syncedInsertId);
+    }
   }
 
   const staleRows = (existingRows || []).filter((row) => !activeChildIds.has(row.id));
@@ -701,7 +745,8 @@ async function upsertSingleSupabaseChild(ownerId, child) {
     grade: Number(child.grade)
   };
 
-  const { data, error } = await client.rpc("upsert_mastery_child", {
+  let childId = null;
+  const rpcResponse = await client.rpc("upsert_mastery_child", {
     p_child_id: child.supabaseChildId || null,
     p_child_name: payload.child_name,
     p_grade: payload.grade,
@@ -711,11 +756,38 @@ async function upsertSingleSupabaseChild(ownerId, child) {
     p_avatar_data_url: payload.avatar_data_url
   });
 
-  if (error) {
-    throw error;
+  if (rpcResponse.error) {
+    console.warn("RPC child upsert failed, falling back to direct table write", rpcResponse.error);
+    if (child.supabaseChildId) {
+      const updateResponse = await client
+        .from("mastery_children")
+        .update(payload)
+        .eq("id", child.supabaseChildId)
+        .eq("parent_id", ownerId)
+        .select("id")
+        .single();
+
+      if (updateResponse.error) {
+        throw updateResponse.error;
+      }
+      childId = updateResponse.data?.id || child.supabaseChildId;
+    } else {
+      const insertResponse = await client
+        .from("mastery_children")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (insertResponse.error) {
+        throw insertResponse.error;
+      }
+      childId = insertResponse.data?.id || null;
+    }
+  } else {
+    childId = rpcResponse.data || null;
   }
 
-  child.supabaseChildId = data || null;
+  child.supabaseChildId = childId;
   return child.supabaseChildId;
 }
 
@@ -1184,6 +1256,7 @@ const elements = {
   avatarLibraryGrid: document.getElementById("avatar-library-grid"),
   addChildButton: document.getElementById("add-child-button"),
   saveChildButton: document.getElementById("save-child-button"),
+  deleteChildButton: document.getElementById("delete-child-button"),
   parentKidsDashboard: document.getElementById("parent-kids-dashboard"),
   parentDashboardSection: document.getElementById("parent-dashboard-section"),
   parentDashboardSyncSummary: document.getElementById("parent-dashboard-sync-summary"),
@@ -1378,7 +1451,9 @@ function attachEvents() {
   bindChange(elements.profileRoleInput, renderAccountFormMode);
   bindClick(elements.addChildButton, handleAddChild);
   bindClick(elements.saveChildButton, handleSaveChildSettings);
+  bindClick(elements.deleteChildButton, handleDeleteChild);
   bindClick(elements.switchChildButton, handleSwitchChild);
+  bindChange(elements.parentChildSelect, handleParentChildEditorChange);
   bindChange(elements.headerChildSelect, handleHeaderChildSwitch);
   bindClick(elements.headerChildSwitchButton, handleHeaderChildSwitch);
   bindClick(elements.backToParentButton, handleBackToParent);
@@ -3868,6 +3943,7 @@ function renderParentPanel(account) {
     elements.parentChildSelect.innerHTML = `<option value="">No child selected</option>`;
     elements.parentChildSelect.disabled = true;
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
+    elements.deleteChildButton?.classList.add("hidden");
     elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Create or open a parent account to view children here.</div>`;
     setChildPhotoPreview("");
     elements.headerChildSelect?.classList.add("hidden");
@@ -3876,12 +3952,19 @@ function renderParentPanel(account) {
   }
 
   const childEntries = Object.values(account.children || {});
+  const editorChildId = state.parentEditorChildId && account.children?.[state.parentEditorChildId]
+    ? state.parentEditorChildId
+    : "";
   // The auto-created "self" profile (see ensureSelfLearnerProfile) is a personal view mode for
   // the account holder, not a real learner someone added â€” it stays out of the parent-facing
   // Manage Learners list and Family Dashboard so it doesn't clutter or get confused with actual
   // children. It's still reachable through the header's "Switch to Learner" control below,
   // which uses childEntries (including it), not this filtered list.
   const showParentSwitchControls = !state.childViewMode;
+
+  if (isSupabaseProfileId(account.id) && state.supabaseSessionActive && !state.supabaseChildRecoveryInFlight) {
+    recoverParentChildrenFromSupabase(account);
+  }
 
   if (elements.headerChildSelect) {
     elements.headerChildSelect.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
@@ -3898,6 +3981,7 @@ function renderParentPanel(account) {
     elements.parentChildSelect.innerHTML = `<option value="">No children added yet</option>`;
     elements.parentChildSelect.disabled = true;
     elements.switchChildButton && (elements.switchChildButton.disabled = true);
+    elements.deleteChildButton?.classList.add("hidden");
     elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Add a child to start tracking progress.</div>`;
     setChildPhotoPreview("");
     return;
@@ -3905,8 +3989,8 @@ function renderParentPanel(account) {
 
   elements.parentChildSelect.disabled = false;
   elements.switchChildButton && (elements.switchChildButton.disabled = false);
-  elements.parentChildSelect.innerHTML = childEntries
-    .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${child.name} | Grade ${child.grade}</option>`)
+  elements.parentChildSelect.innerHTML = [`<option value="" ${!editorChildId ? "selected" : ""}>Add new learner</option>`]
+    .concat(childEntries.map((child) => `<option value="${child.id}" ${child.id === editorChildId ? "selected" : ""}>${child.name} | Grade ${child.grade}</option>`))
     .join("");
 
   const childCountLabel = `<p class="profile-note">${childEntries.length} ${childEntries.length === 1 ? "child" : "children"} saved to this account.</p>`;
@@ -3937,7 +4021,7 @@ function renderParentPanel(account) {
     })
     .join("");
 
-  const activeChild = account.children[account.activeChildId];
+  const activeChild = editorChildId ? account.children[editorChildId] : null;
   if (activeChild) {
     elements.childNameInput && (elements.childNameInput.value = activeChild.name || "");
     elements.childGradeInput && (elements.childGradeInput.value = String(activeChild.grade || state.selectedGrade || 1));
@@ -3959,6 +4043,23 @@ function renderParentPanel(account) {
         ? `This learner already logs in with username "${activeChild.childUsername}". Username and password can't be changed here yet.`
         : "Username and password are optional â€” only needed if this child wants to log in on their own on a separate device (requires Supabase).";
     }
+    elements.deleteChildButton?.classList.remove("hidden");
+  } else {
+    clearProfileFields();
+    if (elements.childGradeInput) {
+      elements.childGradeInput.value = String(state.selectedGrade || 1);
+    }
+    if (elements.childUsernameInput) {
+      elements.childUsernameInput.disabled = false;
+    }
+    if (elements.childPasswordInput) {
+      elements.childPasswordInput.disabled = false;
+      elements.childPasswordInput.placeholder = "Set a password for login";
+    }
+    if (elements.childUsernameNote) {
+      elements.childUsernameNote.textContent = "Add a new learner here. Username and password are optional â€” only needed if this child wants to log in on their own on a separate device (requires Supabase).";
+    }
+    elements.deleteChildButton?.classList.add("hidden");
   }
 
   renderParentDashboard();
@@ -3977,10 +4078,29 @@ function handleParentDashboardLearnerClick(event) {
   }
 
   account.activeChildId = childId;
+  state.parentEditorChildId = childId;
   profilesStore.profiles[account.id] = account;
   saveProfilesStore();
   applyCurrentProfile();
   showProfileMessage(`Now viewing ${account.children[childId].name}'s family dashboard.`, "success");
+}
+
+function handleParentChildEditorChange() {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent") {
+    return;
+  }
+
+  const childId = elements.parentChildSelect?.value || "";
+  state.parentEditorChildId = childId || null;
+
+  if (childId && account.children?.[childId]) {
+    account.activeChildId = childId;
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+  }
+
+  renderProfilePanel();
 }
 
 function getAverageScorePercentage(scoreHistory) {
@@ -4727,6 +4847,7 @@ async function handleAddChild() {
       linkedProfileId
     });
     account.activeChildId = childId;
+    state.parentEditorChildId = null;
     profilesStore.profiles[account.id] = account;
     saveProfilesStore();
 
@@ -4787,12 +4908,13 @@ async function handleAddChild() {
 
 function handleSaveChildSettings() {
   const account = getCurrentAccount();
-  if (!account || account.type !== "parent" || !account.activeChildId || !account.children?.[account.activeChildId]) {
+  const editorChildId = state.parentEditorChildId || elements.parentChildSelect?.value || "";
+  if (!account || account.type !== "parent" || !editorChildId || !account.children?.[editorChildId]) {
     showProfileMessage("Choose a child first before saving learner settings.", "error");
     return;
   }
 
-  const child = account.children[account.activeChildId];
+  const child = account.children[editorChildId];
   const nextName = elements.childNameInput?.value.trim() || child.name;
   const nextGrade = Number(elements.childGradeInput?.value || child.grade || state.selectedGrade || 1);
   const nextAvatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
@@ -4831,6 +4953,51 @@ function handleSaveChildSettings() {
       }
     });
   });
+}
+
+async function handleDeleteChild() {
+  const account = getCurrentAccount();
+  const editorChildId = state.parentEditorChildId || elements.parentChildSelect?.value || "";
+  if (!account || account.type !== "parent" || !editorChildId || !account.children?.[editorChildId]) {
+    showProfileMessage("Choose a child first before deleting.", "error");
+    return;
+  }
+
+  const child = account.children[editorChildId];
+  const confirmed = window.confirm(`Delete ${child.name}? This removes the learner from this parent account.`);
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    if (isSupabaseProfileId(account.id) && state.supabaseSessionActive && child.supabaseChildId && getSupabaseClient()) {
+      const { error } = await getSupabaseClient()
+        .from("mastery_children")
+        .delete()
+        .eq("id", child.supabaseChildId);
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    delete account.children[editorChildId];
+    const remainingChildIds = Object.keys(account.children || {});
+    account.activeChildId = remainingChildIds[0] || null;
+    state.parentEditorChildId = null;
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+    clearProfileFields();
+    applyCurrentProfile();
+    renderGradeButtons();
+    renderCategories();
+    renderStudyTime();
+    renderHeroActivity();
+    showProfileMessage(`${child.name} was deleted.`, "success");
+  } catch (error) {
+    console.error("Delete child flow failed", error);
+    showProfileMessage(`Could not delete learner: ${error?.message || "Unknown error"}`, "error");
+  }
 }
 
 function handleChildPhotoSelected(event) {
