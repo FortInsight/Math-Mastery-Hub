@@ -310,10 +310,10 @@ function getLearnerSyncStatus(child) {
 }
 
 function getLearnerSyncLabel(child) {
-  return getLearnerSyncStatus(child) === "online" ? "Synced online" : "Only on this browser";
+  return getLearnerSyncStatus(child) === "online" ? "Saved to account" : "Only on this browser";
 }
 
-function getSupabaseFetchHelpMessage(error, actionLabel = "sync online") {
+function getSupabaseFetchHelpMessage(error, actionLabel = "save online") {
   const rawMessage = String(error?.message || "").toLowerCase();
   const isFetchFailure = rawMessage.includes("failed to fetch") || rawMessage.includes("networkerror");
   if (!isFetchFailure) {
@@ -365,7 +365,7 @@ async function syncParentChildrenOnline(account, { silent = false, sessionUser =
   const localOnlyLearners = getUnsyncedParentLearners(account);
   if (!localOnlyLearners.length) {
     if (!silent) {
-      showProfileMessage("All current learners are already synced online.", "success");
+      showProfileMessage("All current learners are already saved to your account.", "success");
     }
     return true;
   }
@@ -389,7 +389,7 @@ async function syncParentChildrenOnline(account, { silent = false, sessionUser =
 
     if (!silent) {
       showProfileMessage(
-        `${localOnlyLearners.length} learner${localOnlyLearners.length === 1 ? "" : "s"} synced to your online parent account.`,
+        `${localOnlyLearners.length} learner${localOnlyLearners.length === 1 ? "" : "s"} saved to your parent account.`,
         "success"
       );
     }
@@ -398,7 +398,7 @@ async function syncParentChildrenOnline(account, { silent = false, sessionUser =
     console.error("Syncing parent learners to Supabase failed", error);
     if (!silent) {
       showProfileMessage(
-        getSupabaseFetchHelpMessage(error, "sync learners online") || `Could not sync learners online: ${error?.message || "Unknown error"}`,
+        getSupabaseFetchHelpMessage(error, "save learners to your account") || `Could not save learners to your account: ${error?.message || "Unknown error"}`,
         "error"
       );
     }
@@ -407,7 +407,7 @@ async function syncParentChildrenOnline(account, { silent = false, sessionUser =
     state.supabaseChildrenSyncInFlight = false;
     if (elements.syncParentDashboardButton) {
       elements.syncParentDashboardButton.disabled = false;
-      elements.syncParentDashboardButton.textContent = "Sync Learners Online";
+      elements.syncParentDashboardButton.textContent = "Save Learners";
     }
   }
 }
@@ -2048,7 +2048,7 @@ function showHintAfterWrong(question) {
   }
 
   elements.hintButton.classList.remove("hidden");
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = "💡 Show Hint";
   elements.hintBox.classList.add("hidden");
 }
 
@@ -2379,7 +2379,7 @@ function checkAnswer(selectedIndex, selectedButton) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "ðŸ˜„" : "ðŸ˜¢"}</span>
+      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
       <strong class="feedback-title">${isCorrect ? "Correct!" : "Not quite."}</strong>
     </div>
     <div>${question.explanation}</div>
@@ -2451,13 +2451,13 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = "💡 Show Hint";
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
-  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
-  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -2467,9 +2467,9 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
-  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
-  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
 }
 
 function moveToPreviousQuestion() {
@@ -2512,7 +2512,7 @@ function completeLevel() {
   const percentage = Math.round((state.score / state.currentQuestions.length) * 100);
   triggerConfetti(percentage >= 70 ? 70 : 30);
   showCelebrationToast(
-    percentage === 100 ? "ðŸ† Perfect score!" : percentage >= 70 ? "ðŸŽ‰ Great job!" : "âœ¨ Level complete!"
+    percentage === 100 ? "🏆 Perfect score!" : percentage >= 70 ? "🎉 Great job!" : "✨ Level complete!"
   );
   const saveMessage = savedToProfile
     ? currentProfile
@@ -2620,15 +2620,12 @@ function showFeedback(isCorrect, explanation) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "ðŸ˜„" : "ðŸ˜¢"}</span>
+      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
       <strong class="feedback-title">${isCorrect ? "Yeah!" : "Oh no."}</strong>
     </div>
     <div>${isCorrect ? "Yeah, you got it." : "That is not correct. Check the hint to learn more."}</div>
     <div>${explanation}</div>
   `;
-  elements.feedbackBox.innerHTML = elements.feedbackBox.innerHTML
-    .replace("Ã°Å¸Å½Â¸", "\u{1F3B8}")
-    .replace("Ã°Å¸Ëœâ€¦", "\u{1F605}");
 }
 
 function playAnswerFeedback() {
@@ -3787,7 +3784,7 @@ function renderHeaderAccountBadge(account, learner) {
           : `${state.supabaseUserEmail || account.name} (session expired - sign in again to sync learners)`
         : `${account.name} (saved on this device only)`;
       elements.authAccountMeta.textContent = account.type === "parent"
-        ? `Parent account Â· ${accountSource}`
+        ? `Parent account · ${accountSource}`
         : "Learner account";
     } else {
       elements.authAccountMeta.textContent = "Open login to continue";
@@ -4490,9 +4487,9 @@ function renderParentDashboard() {
     if (!childEntries.length) {
       elements.parentDashboardSyncSummary.textContent = "No learners yet.";
     } else if (!localOnlyChildren.length) {
-      elements.parentDashboardSyncSummary.textContent = `${childEntries.length} learner${childEntries.length === 1 ? "" : "s"} synced online.`;
+      elements.parentDashboardSyncSummary.textContent = `${childEntries.length} learner${childEntries.length === 1 ? "" : "s"} saved to account.`;
     } else {
-      elements.parentDashboardSyncSummary.textContent = `${localOnlyChildren.length} learner${localOnlyChildren.length === 1 ? "" : "s"} only on this browser. Sync to see them on other devices.`;
+      elements.parentDashboardSyncSummary.textContent = `${localOnlyChildren.length} learner${localOnlyChildren.length === 1 ? "" : "s"} only on this browser. Save them to your account to see them on other devices.`;
     }
   }
 
@@ -6712,7 +6709,7 @@ function buildGenericFallbackOptionLabel(correctLabel, attempt) {
   const text = String(correctLabel || "").trim();
 
   if ([">", "<", "="].includes(text)) {
-    return [">", "<", "=", "â‰ "][attempt % 4];
+    return [">", "<", "=", "≠"][attempt % 4];
   }
 
   if (/^-?\d+x$/.test(text)) {
@@ -6747,7 +6744,19 @@ function buildGenericFallbackOptionLabel(correctLabel, attempt) {
     }
   }
 
-  return `Choice ${String.fromCharCode(68 + ((attempt - 1) % 6))}`;
+  if (["Rational", "Irrational"].includes(text)) {
+    return ["Neither", "Both"][((attempt - 1) % 2)];
+  }
+
+  if (["Opens upward", "Opens downward"].includes(text)) {
+    return ["It is a straight line", "It is horizontal"][((attempt - 1) % 2)];
+  }
+
+  if (["Yes, it is a function", "No, it is not a function"].includes(text)) {
+    return ["Not enough information", "It depends on the inputs"][((attempt - 1) % 2)];
+  }
+
+  return ["None of these", "More than one answer", "Neither", "Both"][((attempt - 1) % 4)];
 }
 
 function canAutoGenerateFallbackOptions(correct) {
@@ -7056,7 +7065,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 2: Use a sample space table",
         question: "A coin is tossed and a marker is chosen from the colours red, blue, and green. How many outcomes are there?",
         howTo: "Put one event on the left and the other across the top. Fill the table with all combinations.",
-        solution: "A coin has 2 outcomes: heads and tails. The markers have 3 outcomes: red, blue, green. Total outcomes = 2 Ã— 3 = 6.",
+        solution: "A coin has 2 outcomes: heads and tails. The markers have 3 outcomes: red, blue, green. Total outcomes = 2 × 3 = 6.",
         diagram: sampleSpaceTableDiagram("Coin", "Marker", ["Heads", "Tails"], ["Red", "Blue", "Green"], (coin, marker) => `${coin}-${marker}`),
         masteryQuestion: "A spinner can land on A or B, and a coin can land on heads or tails. Use a sample space table to show all outcomes."
       },
@@ -7064,7 +7073,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 3: Count outcomes for a condition",
         question: "A pizza shop offers crusts thin and regular, and toppings cheese, pepperoni, and veggie. What is the probability of choosing a regular crust with veggie topping if all outcomes are equally likely?",
         howTo: "First build the full sample space, then count the outcomes that match the condition.",
-        solution: "There are 2 crust choices and 3 topping choices, so 2 Ã— 3 = 6 total outcomes. Only one outcome is regular + veggie, so the probability is 1/6.",
+        solution: "There are 2 crust choices and 3 topping choices, so 2 × 3 = 6 total outcomes. Only one outcome is regular + veggie, so the probability is 1/6.",
         diagram: sampleSpaceTableDiagram("Crust", "Topping", ["Thin", "Regular"], ["Cheese", "Pepperoni", "Veggie"], (crust, topping) => `${crust} + ${topping}`),
         masteryQuestion: "A hockey net prize board offers 3 puck colours and 4 target zones. What is the probability of choosing blue and top-left if all outcomes are equally likely?"
       },
@@ -7072,7 +7081,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 4: Tree-diagram thinking",
         question: "A student chooses one of 2 sauces and one of 3 side dishes. How can a tree diagram help organize the outcomes?",
         howTo: "A tree starts each first choice, then branches again for every second choice.",
-        solution: "Start with the 2 sauces. From each sauce, draw 3 branches for the side dishes. That gives 2 Ã— 3 = 6 outcomes in a clear organized way.",
+        solution: "Start with the 2 sauces. From each sauce, draw 3 branches for the side dishes. That gives 2 × 3 = 6 outcomes in a clear organized way.",
         diagram: plainListDiagram("Tree-diagram idea", ["Sauce 1 -> Side 1, Side 2, Side 3", "Sauce 2 -> Side 1, Side 2, Side 3"]),
         masteryQuestion: "A student chooses one book genre and one reading spot. Explain how a tree diagram can organize the sample space."
       }
@@ -7082,7 +7091,7 @@ function getProbabilityWorksheetExamples(tabId) {
         title: "Example 1: Two independent events",
         question: "A student picks one snack from chips, fruit, or crackers and one drink from water or milk. What is the probability of getting fruit and milk?",
         howTo: "Because the two choices do not affect each other, multiply the separate probabilities or count one matching outcome from the sample space.",
-        solution: "There are 3 snack choices and 2 drink choices, so 3 Ã— 2 = 6 total outcomes. Only one outcome is fruit + milk, so the probability is 1/6.",
+        solution: "There are 3 snack choices and 2 drink choices, so 3 × 2 = 6 total outcomes. Only one outcome is fruit + milk, so the probability is 1/6.",
         diagram: sampleSpaceTableDiagram("Snack", "Drink", ["Chips", "Fruit", "Crackers"], ["Water", "Milk"], (snack, drink) => `${snack} + ${drink}`),
         masteryQuestion: "A student picks one sandwich from chicken, tuna, or egg and one juice from orange or apple. What is the probability of chicken and apple?"
       },
@@ -9337,7 +9346,7 @@ const probabilityMasteryGenerators = {
     },
     (rng) => {
       const promptType = pick(["quarter", "dimeOrQuarter", "notLoonie"], rng);
-      const coins = ["25Â¢", "5Â¢", "25Â¢", "$1", "10Â¢", "10Â¢", "25Â¢", "25Â¢"];
+      const coins = ["25¢", "5¢", "25¢", "$1", "10¢", "10¢", "25¢", "25¢"];
       const counts = {
         quarter: 4,
         dimeOrQuarter: 6,
@@ -9412,7 +9421,7 @@ const probabilityMasteryGenerators = {
           `The spinner has ${moves.length} possible outcomes.`,
           `The die has ${dieFaces.length} possible outcomes.`,
           `For every spinner result, there are ${dieFaces.length} die results.`,
-          `So the sample space has ${moves.length} Ã— ${dieFaces.length} = ${correct} outcomes.`
+          `So the sample space has ${moves.length} × ${dieFaces.length} = ${correct} outcomes.`
         ],
         diagram: sampleSpaceTableDiagram("Move", "Die", moves, dieFaces, (move, face) => `${move}-${face}`)
       });
@@ -9430,7 +9439,7 @@ const probabilityMasteryGenerators = {
           `The coin has ${coin.length} outcomes: H and T.`,
           `The school-supply choice has ${supplies.length} outcomes: p, e, c, and r.`,
           `Each coin result can be paired with each supply.`,
-          `So the sample space has ${coin.length} Ã— ${supplies.length} = ${sampleCount} outcomes.`
+          `So the sample space has ${coin.length} × ${supplies.length} = ${sampleCount} outcomes.`
         ],
         diagram: sampleSpaceTableDiagram("Coin", "Supply", coin, supplies, (coinSide, supply) => `${coinSide}${supply}`)
       });
@@ -9456,7 +9465,7 @@ const probabilityMasteryGenerators = {
         ],
         hint: "Count how many ordered pairs match the event, then divide by all possible ordered pairs.",
         steps: [
-          `There are ${colors.length} Ã— ${numbers.length} = ${total} possible outcomes.`,
+          `There are ${colors.length} × ${numbers.length} = ${total} possible outcomes.`,
           `Count the favourable outcomes for '${event.label}'. There are ${event.favorable}.`,
           `Write the probability as ${event.favorable}/${total}.`,
           `Simplify if possible. The answer is ${correct}.`
@@ -9477,7 +9486,7 @@ const probabilityMasteryGenerators = {
           `The number spinner has ${first.length} outcomes.`,
           `The letter spinner has ${second.length} outcomes.`,
           `Multiply to count all ordered pairs.`,
-          `${first.length} Ã— ${second.length} = ${correctCount}, so there are ${correctCount} outcomes.`
+          `${first.length} × ${second.length} = ${correctCount}, so there are ${correctCount} outcomes.`
         ],
         diagram: sampleSpaceTableDiagram("Number", "Letter", first, second, (a, b) => `${a}${b}`)
       });
@@ -9495,7 +9504,7 @@ const probabilityMasteryGenerators = {
           `There are ${breads.length} bread choices.`,
           `There are ${fillings.length} filling choices.`,
           `Multiply the choices to count all combinations.`,
-          `${breads.length} Ã— ${fillings.length} = ${correct}, so there are ${correct} sandwiches.`
+          `${breads.length} × ${fillings.length} = ${correct}, so there are ${correct} sandwiches.`
         ],
         diagram: sampleSpaceTableDiagram("Bread", "Filling", breads, fillings, (bread, filling) => `${bread} + ${filling}`)
       });
@@ -9533,7 +9542,7 @@ const probabilityMasteryGenerators = {
         hint: "There is only one favourable meal-and-drink pair. Divide by all possible meal-and-drink pairs.",
         steps: [
           `There are ${meals.length} meal choices and ${drinks.length} drink choices.`,
-          `So there are ${meals.length} Ã— ${drinks.length} = ${total} total outcomes.`,
+          `So there are ${meals.length} × ${drinks.length} = ${total} total outcomes.`,
           "Only one outcome is 'chicken wrap and milk'.",
           `So the probability is 1/${total}, which is ${correct}.`
         ],
@@ -9553,7 +9562,7 @@ const probabilityMasteryGenerators = {
         steps: [
           `The first spinner has ${homes.length} outcomes.`,
           `The city spinner has ${cities.length} outcomes.`,
-          `So there are ${homes.length} Ã— ${cities.length} = ${total} ordered pairs.`,
+          `So there are ${homes.length} × ${cities.length} = ${total} ordered pairs.`,
           `Only one of those pairs is (apartment, Victoria), so the probability is 1/${total}.`
         ],
         diagram: sampleSpaceTableDiagram("Home", "City", homes, cities, (home, city) => `${home}, ${city}`)
@@ -9579,13 +9588,13 @@ const probabilityMasteryGenerators = {
         hint: "Count the outcomes that satisfy the event, then divide by all drink-and-snack pairs.",
         steps: event.favorable === snacks.length
           ? [
-              `There are ${drinks.length} Ã— ${snacks.length} = ${total} total choices.`,
+              `There are ${drinks.length} × ${snacks.length} = ${total} total choices.`,
               `If the choice must include milk, milk can pair with each of the ${snacks.length} snacks.`,
               `So there are ${event.favorable} favourable outcomes.`,
               `The probability is ${event.favorable}/${total}, which simplifies to ${correct}.`
             ]
           : [
-              `There are ${drinks.length} Ã— ${snacks.length} = ${total} total choices.`,
+              `There are ${drinks.length} × ${snacks.length} = ${total} total choices.`,
               "Only one pair is 'juice and orange'.",
               `So there is ${event.favorable} favourable outcome.`,
               `The probability is ${event.favorable}/${total}, which simplifies to ${correct}.`
@@ -9605,7 +9614,7 @@ const probabilityMasteryGenerators = {
         hint: "Only one ordered pair is 'Dusting and Dishes'. Divide by the total number of ordered pairs.",
         steps: [
           `The first spinner has ${chores1.length} outcomes and the second has ${chores2.length}.`,
-          `That gives ${chores1.length} Ã— ${chores2.length} = ${total} total outcomes.`,
+          `That gives ${chores1.length} × ${chores2.length} = ${total} total outcomes.`,
           "Only one outcome matches Dusting and Dishes.",
           `So the probability is 1/${total}, which is ${correct}.`
         ],
@@ -9630,7 +9639,7 @@ const probabilityMasteryGenerators = {
         hint: "Build the sample space of all coin-color pairs first.",
         steps: [
           `The coin has ${coin.length} outcomes and the color choice has ${colors.length}.`,
-          `So there are ${coin.length} Ã— ${colors.length} = ${total} total outcomes.`,
+          `So there are ${coin.length} × ${colors.length} = ${total} total outcomes.`,
           `The event '${event}' has ${favorable} favourable outcome${favorable === 1 ? "" : "s"}.`,
           `The probability is ${favorable}/${total}, which simplifies to ${correct}.`
         ],
@@ -10821,19 +10830,19 @@ const questionFactories = {
     if (config.skill === "powersRadicals") {
       const mode = index % 4;
       const radicalTable = [
-        { radicand: 8, simplified: "2âˆš2" },
-        { radicand: 12, simplified: "2âˆš3" },
-        { radicand: 18, simplified: "3âˆš2" },
-        { radicand: 20, simplified: "2âˆš5" },
-        { radicand: 27, simplified: "3âˆš3" },
-        { radicand: 32, simplified: "4âˆš2" },
-        { radicand: 45, simplified: "3âˆš5" },
-        { radicand: 50, simplified: "5âˆš2" },
-        { radicand: 75, simplified: "5âˆš3" },
-        { radicand: 98, simplified: "7âˆš2" },
-        { radicand: 120, simplified: "2âˆš30" },
-        { radicand: 150, simplified: "5âˆš6" },
-        { radicand: 200, simplified: "10âˆš2" }
+        { radicand: 8, simplified: "2√2" },
+        { radicand: 12, simplified: "2√3" },
+        { radicand: 18, simplified: "3√2" },
+        { radicand: 20, simplified: "2√5" },
+        { radicand: 27, simplified: "3√3" },
+        { radicand: 32, simplified: "4√2" },
+        { radicand: 45, simplified: "3√5" },
+        { radicand: 50, simplified: "5√2" },
+        { radicand: 75, simplified: "5√3" },
+        { radicand: 98, simplified: "7√2" },
+        { radicand: 120, simplified: "2√30" },
+        { radicand: 150, simplified: "5√6" },
+        { radicand: 200, simplified: "10√2" }
       ];
 
       if (mode === 0) {
@@ -10841,10 +10850,10 @@ const questionFactories = {
         const selected = pool[Math.floor(index / 4) % pool.length];
         const { options, answerIndex } = buildOptions(selected.simplified, radicalTable.filter((item) => item.simplified !== selected.simplified).slice(0, 3).map((item) => item.simplified), rng);
         return {
-          prompt: `Simplify âˆš${selected.radicand}.`,
+          prompt: `Simplify √${selected.radicand}.`,
           options,
           answerIndex,
-          explanation: `Find the largest perfect square factor of ${selected.radicand} and pull it out of the radical. âˆš${selected.radicand} = ${selected.simplified}.`
+          explanation: `Find the largest perfect square factor of ${selected.radicand} and pull it out of the radical. √${selected.radicand} = ${selected.simplified}.`
         };
       }
 
@@ -10871,19 +10880,19 @@ const questionFactories = {
           prompt: `Simplify ${base}^(1/2).`,
           options,
           answerIndex,
-          explanation: `A power of 1/2 means square root. ${base}^(1/2) = âˆš${base} = ${correct}.`
+          explanation: `A power of 1/2 means square root. ${base}^(1/2) = √${base} = ${correct}.`
         };
       }
 
       const a = pick([2, 3, 5], rng);
       const b = pick([2, 3, 5].filter((value) => value !== a), rng);
-      const correct = `âˆš${a * b}`;
-      const { options, answerIndex } = buildOptions(correct, [`âˆš${a + b}`, `${a}âˆš${b}`, `âˆš${a}âˆš${b}`], rng);
+      const correct = `√${a * b}`;
+      const { options, answerIndex } = buildOptions(correct, [`√${a + b}`, `${a}√${b}`, `√${a}√${b}`], rng);
       return {
-        prompt: `Simplify âˆš${a} x âˆš${b}.`,
+        prompt: `Simplify √${a} × √${b}.`,
         options,
         answerIndex,
-        explanation: `Multiply the radicands together: âˆš${a} x âˆš${b} = âˆš${a * b}.`
+        explanation: `Multiply the radicands together: √${a} × √${b} = √${a * b}.`
       };
     }
 
@@ -12655,9 +12664,9 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = "💡 Show Hint";
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -12667,7 +12676,7 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
 }
 
 function roundByGrade(value, grade) {
@@ -12827,7 +12836,7 @@ function showHintAfterWrong(question) {
   }
 
   elements.hintButton.classList.remove("hidden");
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = "💡 Show Hint";
   elements.hintBox.classList.add("hidden");
 }
 
@@ -12838,9 +12847,9 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = "💡 Show Hint";
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>ðŸ’¡ Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -12850,6 +12859,6 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "ðŸ’¡ Hide Hint" : "ðŸ’¡ Show Hint";
+  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
 }
 

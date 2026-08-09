@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Activated | Math & English Mastery Hub</title>
+  <meta name="theme-color" content="#12386f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Math & English Mastery Hub" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="auth-body">
+  <div class="auth-shell">
+    <section class="hero auth-card">
+      <div class="auth-copy">
+        <p id="activationEyebrow" class="eyebrow">Account activated</p>
+        <h1 id="activationTitle">Your account is ready.</h1>
+        <p id="activationText" class="hero-text">
+          Your account is set up and ready to use. Continue into the learning hub when you are ready.
+        </p>
+      </div>
+
+      <div class="profile-form auth-form">
+        <div class="auth-actions">
+          <a id="activationContinueButton" href="app.html" class="primary-button auth-back-link">Open App</a>
+          <a href="index.html" class="secondary-button auth-back-link">Back to Login</a>
+        </div>
+        <p id="activationNote" class="auth-message"></p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get("mode") || "activated";
+      const role = params.get("role") || "";
+
+      const eyebrow = document.getElementById("activationEyebrow");
+      const title = document.getElementById("activationTitle");
+      const text = document.getElementById("activationText");
+      const note = document.getElementById("activationNote");
+      const continueButton = document.getElementById("activationContinueButton");
+
+      if (mode === "password-reset") {
+        eyebrow.textContent = "Password updated";
+        title.textContent = "Your password has been changed.";
+        text.textContent = "You can go back into the app now with your updated password.";
+        note.textContent = "If you signed in on another device, use the new password there too.";
+      } else if (mode === "welcome") {
+        eyebrow.textContent = "Welcome";
+        title.textContent = role === "learner" ? "Learner account ready." : "Parent account ready.";
+        text.textContent = role === "learner"
+          ? "Your learner profile is active. Open the app to start grade-based practice."
+          : "Your parent account is active. Open the app to manage learners and view progress.";
+        note.textContent = role === "learner"
+          ? "You will open directly into your learner view."
+          : "You can add learners, set goals, and check performance from the parent dashboard.";
+      } else {
+        eyebrow.textContent = "Account activated";
+        title.textContent = role === "learner" ? "Learner account activated." : "Parent account activated.";
+        text.textContent = role === "learner"
+          ? "Your email has been confirmed. Open the app and start learning."
+          : "Your email has been confirmed. Open the app and begin managing learners.";
+        note.textContent = "You can return to the login page at any time if you want to switch accounts.";
+      }
+
+      if (window.location.protocol === "file:") {
+        continueButton.href = "app.html";
+      }
+    })();
+  </script>
+</body>
+</html>

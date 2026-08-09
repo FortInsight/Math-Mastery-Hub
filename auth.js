@@ -3,6 +3,7 @@
   const SUPABASE_KEY = window.SUPABASE_KEY || "";
   const learnerSessionKey = "maths-mastery-learner-session-v1";
   const profilesStoreKey = "maths-mastery-profiles-v1";
+  const activationStateKey = "mastery-activation-state-v1";
   const supabaseClient =
     SUPABASE_URL && SUPABASE_KEY && window.supabase?.createClient
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -70,6 +71,17 @@
     window.location.href = buildUrl("app.html");
   }
 
+  function goToActivation(mode = "activated", role = "") {
+    const target = new URL(buildUrl("activation.html"));
+    if (mode) {
+      target.searchParams.set("mode", mode);
+    }
+    if (role) {
+      target.searchParams.set("role", role);
+    }
+    window.location.href = target.href;
+  }
+
   function goToLearnerLogin() {
     window.location.href = buildUrl("learner-login.html");
   }
@@ -132,6 +144,31 @@
     const node = document.getElementById(id);
     if (node) {
       node.classList.toggle("hidden", hidden);
+    }
+  }
+
+  function savePendingActivation(state) {
+    try {
+      sessionStorage.setItem(activationStateKey, JSON.stringify(state));
+    } catch (error) {
+      // Ignore sessionStorage failures.
+    }
+  }
+
+  function readPendingActivation() {
+    try {
+      const raw = sessionStorage.getItem(activationStateKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function clearPendingActivation() {
+    try {
+      sessionStorage.removeItem(activationStateKey);
+    } catch (error) {
+      // Ignore sessionStorage failures.
     }
   }
 
@@ -208,10 +245,64 @@
     return value.includes("@") ? value : deriveChildEmailFromUsername(value);
   }
 
+  function normalizeLicenseKey(value) {
+    return String(value || "").trim().toUpperCase();
+  }
+
+  async function validateLicenseKey(rawKey) {
+    const licenseKey = normalizeLicenseKey(rawKey);
+    if (!licenseKey) {
+      return { ok: false, message: "Please enter the license key you were sent before signing up." };
+    }
+
+    const { data, error } = await supabaseClient
+      .from("mastery_license_keys")
+      .select("id, license_key, status, expires_at, redeemed_at, redeemed_by_email")
+      .eq("license_key", licenseKey)
+      .maybeSingle();
+
+    if (error) {
+      return { ok: false, message: `License check failed: ${error.message}` };
+    }
+
+    if (!data) {
+      return { ok: false, message: "That license key was not found. Please check the code you were sent." };
+    }
+
+    if (String(data.status || "").toLowerCase() !== "active") {
+      return { ok: false, message: "That license key is not active anymore. Please contact support for a fresh key." };
+    }
+
+    if (data.redeemed_at || data.redeemed_by_email) {
+      return { ok: false, message: "That license key has already been used. Please request another one." };
+    }
+
+    if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) {
+      return { ok: false, message: "That license key has expired. Please request a new one." };
+    }
+
+    return { ok: true, license: data, licenseKey };
+  }
+
+  async function redeemLicenseKey(licenseId, email) {
+    const { error } = await supabaseClient
+      .from("mastery_license_keys")
+      .update({
+        status: "redeemed",
+        redeemed_at: new Date().toISOString(),
+        redeemed_by_email: String(email || "").trim().toLowerCase()
+      })
+      .eq("id", licenseId)
+      .is("redeemed_at", null);
+
+    return { error };
+  }
+
   async function signUpUser() {
     const name = document.getElementById("authName")?.value.trim();
     const email = document.getElementById("authEmail")?.value.trim();
     const password = document.getElementById("authPassword")?.value;
+    const licenseKeyInput = document.getElementById("authLicenseKey")?.value;
     const role = getSelectedRole();
     const grade = Number(document.getElementById("authGrade")?.value || 1);
 
@@ -229,6 +320,12 @@
       return;
     }
 
+    const licenseCheck = await validateLicenseKey(licenseKeyInput);
+    if (!licenseCheck.ok) {
+      setAuthMessage(licenseCheck.message);
+      return;
+    }
+
     const { error } = await supabaseClient.auth.signUp({
       email,
       password,
@@ -238,16 +335,25 @@
           account_type: role,
           grade: role === "learner" ? grade : null
         },
-        emailRedirectTo: buildUrl("index.html")
+        emailRedirectTo: buildUrl(`activation.html?mode=activated&role=${encodeURIComponent(role)}`)
       }
     });
+
+    if (!error) {
+      const { error: licenseRedeemError } = await redeemLicenseKey(licenseCheck.license.id, email);
+      if (licenseRedeemError) {
+        setAuthMessage(`Account created, but the license key could not be marked as used yet: ${licenseRedeemError.message}`);
+        return;
+      }
+      savePendingActivation({ mode: "welcome", role });
+    }
 
     setAuthMessage(
       error
         ? `Sign up error: ${error.message}`
         : role === "learner"
-          ? "Learner account created. You can now log in and start learning."
-          : "Parent account created. You can now log in and manage learners."
+          ? "Learner account created. Check your email to activate the account, then sign in."
+          : "Parent account created. Check your email to activate the account, then sign in."
     );
   }
 
@@ -289,6 +395,14 @@
           ? "This login belongs to a parent account. A learner must use their own learner email or the username a parent created."
           : "This login belongs to a learner account. Choose Learner to log in."
       );
+      return;
+    }
+
+    const pendingActivation = readPendingActivation();
+    if (pendingActivation?.mode === "welcome") {
+      clearPendingActivation();
+      setAuthMessage("Login successful. Opening your activation page...");
+      goToActivation("welcome", selectedRole);
       return;
     }
 
@@ -343,8 +457,9 @@
       setUpdatePasswordMessage(`Update error: ${error.message}`);
       return;
     }
-    setUpdatePasswordMessage("Password updated. Opening the app...");
-    window.setTimeout(goToApp, 600);
+    clearPendingActivation();
+    setUpdatePasswordMessage("Password updated. Opening your activation page...");
+    window.setTimeout(() => goToActivation("password-reset"), 600);
   }
 
   // Reveals the app markup that app.html hides by default via CSS (see the inline <style> in
