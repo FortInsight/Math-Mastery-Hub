@@ -1,7 +1,7 @@
 {
-  "name": "Grammar & Maths Mastery Hub",
-  "short_name": "Grammar & Maths",
-  "description": "A Grade 1 to 12 grammar and maths learning app with levels, feedback, saved progress, and score history.",
+  "name": "Math & English Mastery Hub",
+  "short_name": "Math & English",
+  "description": "A Grade 1 to 12 math and english learning app with levels, feedback, saved progress, and score history.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

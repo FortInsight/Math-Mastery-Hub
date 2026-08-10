@@ -37,8 +37,10 @@
   }
 
   function getConfiguredBaseUrl() {
-    if (window.location.protocol === "file:") {
-      return "";
+    const current = new URL(window.location.href);
+    const basePath = current.pathname.replace(/[^/]*$/, "");
+    if (window.location.protocol !== "file:") {
+      return `${current.origin}${basePath}`;
     }
 
     const configured = (window.APP_BASE_URL || "").trim();
@@ -46,9 +48,7 @@
       return configured.endsWith("/") ? configured : `${configured}/`;
     }
 
-    const current = new URL(window.location.href);
-    const basePath = current.pathname.replace(/[^/]*$/, "");
-    return `${current.origin}${basePath}`;
+    return "";
   }
 
   function isHostedDeployment() {

@@ -935,7 +935,7 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
 
   const progressByChildId = new Map();
   for (const row of progressRows) {
-    const childId = row.owner_id;
+    const childId = row.child_id || row.owner_id;
     if (!childId) {
       continue;
     }
@@ -960,7 +960,11 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
       supabaseChildId: childRow.id,
       linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null
     });
-    const bundle = buildBundleFromProgressRows(progressByChildId.get(childRow.linked_profile_id) || []);
+    const bundle = buildBundleFromProgressRows(
+      progressByChildId.get(childRow.id)
+      || progressByChildId.get(childRow.linked_profile_id)
+      || []
+    );
     child.progress = bundle.progress;
     child.scoreHistory = bundle.scoreHistory;
     child.studyTime = bundle.studyTime;
@@ -1059,6 +1063,7 @@ async function loadSupabaseAccountData(session) {
   applyCurrentProfile();
   renderGradeButtons();
   renderCategories();
+  restoreResumeStateIfAvailable();
   if (role === "parent" && Object.keys(localAccount.children || {}).length) {
     setParentDashboardVisible(true);
   }
@@ -1169,6 +1174,7 @@ async function loadSupabaseAccountData(session) {
   applyCurrentProfile();
   renderGradeButtons();
   renderCategories();
+  restoreResumeStateIfAvailable();
 
   if (!hasRemoteLearningData) {
     await syncSupabaseAccountSnapshot(account, user);
@@ -1418,6 +1424,7 @@ function init() {
   applyCurrentProfile();
   renderGradeButtons();
   renderCategories();
+  restoreResumeStateIfAvailable();
   attachEvents();
   if (elements.openHeroPanelButton) {
     elements.openHeroPanelButton.textContent = "Activity";
@@ -1762,6 +1769,7 @@ function handleCategorySelect(event, track) {
     elements.mathCategorySelect.value = "";
   }
   state.selectedLevel = null;
+  clearCurrentResumeState();
   hideQuizViews();
   renderCategories();
   renderTopicSearch();
@@ -1786,6 +1794,7 @@ function renderGradeButtons() {
       state.selectedProbabilityMode = "mastery";
       state.selectedLevel = null;
       state.currentQuestions = [];
+      clearCurrentResumeState();
       hideQuizViews();
       renderGradeButtons();
       renderCategories();
@@ -2201,7 +2210,7 @@ function generateLevelQuestionOnDemand(grade, categoryId, patTabId, level, quest
   return uniquifyQuestionPrompt(fallback, questionIndex + 2);
 }
 
-function startLevel(level) {
+function startLevel(level, resumeState = null) {
   try {
     if (isProbabilityMasteryCategory() && state.selectedProbabilityMode !== "mastery") {
       state.selectedProbabilityMode = "mastery";
@@ -2217,6 +2226,21 @@ function startLevel(level) {
     state.lastResults = [];
     state.questionResults = Array.from({ length: QUESTIONS_PER_LEVEL }, () => null);
 
+    if (resumeState && Number(resumeState.level) === Number(level) && resumeState.categoryId === state.selectedCategoryId) {
+      const restoredResults = Array.isArray(resumeState.questionResults)
+        ? resumeState.questionResults.slice(0, QUESTIONS_PER_LEVEL).map((result) => (result ? { ...result } : null))
+        : [];
+      while (restoredResults.length < QUESTIONS_PER_LEVEL) {
+        restoredResults.push(null);
+      }
+      state.questionResults = restoredResults;
+      state.currentIndex = Math.max(0, Math.min(Number(resumeState.currentIndex || 0), QUESTIONS_PER_LEVEL - 1));
+      state.score = restoredResults.filter((result) => result?.correct).length;
+      state.lastResults = restoredResults
+        .filter(Boolean)
+        .map(({ selectedIndex: ignoredSelectedIndex, ...result }) => result);
+    }
+
     elements.resultsSection.classList.add("hidden");
     elements.quizSection.classList.remove("hidden");
     elements.reviewSection?.classList.add("hidden");
@@ -2224,6 +2248,7 @@ function startLevel(level) {
     if (state.currentQuestions.length) {
       renderQuestion();
     }
+    saveCurrentResumeState();
     renderStudyTime();
     elements.quizSection?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
@@ -2243,6 +2268,7 @@ function startLevel(level) {
     if (state.currentQuestions.length) {
       renderQuestion();
     }
+    saveCurrentResumeState();
     renderStudyTime();
     elements.quizSection?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -2373,6 +2399,7 @@ function checkAnswer(selectedIndex, selectedButton) {
   state.lastResults = state.questionResults
     .filter(Boolean)
     .map(({ selectedIndex: ignoredSelectedIndex, ...result }) => result);
+  saveCurrentResumeState();
 
   elements.liveScore.textContent = `${state.score} / ${state.currentIndex + 1}`;
   elements.feedbackBox.classList.remove("hidden");
@@ -2427,6 +2454,7 @@ function submitWritingAnswer() {
   state.lastResults = state.questionResults
     .filter(Boolean)
     .map(({ selectedIndex: ignoredSelectedIndex, ...result }) => result);
+  saveCurrentResumeState();
 
   elements.liveScore.textContent = `${state.score} / ${state.currentIndex + 1}`;
   if (elements.writingAnswer) {
@@ -2478,6 +2506,7 @@ function moveToPreviousQuestion() {
   }
 
   state.currentIndex -= 1;
+  saveCurrentResumeState();
   renderQuestion();
 }
 
@@ -2493,6 +2522,7 @@ function moveToNextQuestion() {
 
   state.currentIndex += 1;
   state.answered = false;
+  saveCurrentResumeState();
   renderQuestion();
 }
 
@@ -2503,6 +2533,7 @@ function completeLevel() {
   state.lastResults = state.questionResults
     .filter(Boolean)
     .map(({ selectedIndex: ignoredSelectedIndex, ...result }) => result);
+  clearCurrentResumeState();
   const savedToProfile = saveCompletedLevel(state.selectedGrade, activeContext.key, activeContext.title, state.selectedLevel, state.score);
   elements.quizSection.classList.add("hidden");
   elements.resultsSection.classList.remove("hidden");
@@ -2749,6 +2780,7 @@ function resetSelectedTopicProgress() {
   state.answered = false;
   state.lastResults = [];
   state.questionResults = [];
+  clearCurrentResumeState();
 
   hideQuizViews();
   elements.reviewDetails.classList.add("hidden");
@@ -3078,6 +3110,7 @@ function handleTopicSearchJump(event) {
     : getDefaultProbabilityMode(categoryId, targetGrade);
   state.selectedLevel = null;
   state.currentQuestions = [];
+  clearCurrentResumeState();
   hideQuizViews();
 
   if (isMasteryCategoryId(categoryId)) {
@@ -3212,8 +3245,20 @@ function looksLikeDecimalOption(value) {
   return /^-?\d+(\.\d+)?$/.test(String(value || "").trim());
 }
 
+function hasBrokenQuestionText(value) {
+  return /Ã|ðŸ|�/.test(String(value || ""));
+}
+
+function isPlaceholderChoiceLabel(value) {
+  return /^choice\s+[a-z]$/i.test(String(value || "").trim());
+}
+
 function isValidQuestion(question) {
   if (!question || typeof question.prompt !== "string" || !question.prompt.trim()) {
+    return false;
+  }
+
+  if (hasBrokenQuestionText(question.prompt) || hasBrokenQuestionText(question.explanation) || hasBrokenQuestionText(question.hint)) {
     return false;
   }
 
@@ -3222,12 +3267,21 @@ function isValidQuestion(question) {
   }
 
   const hasValidOptions = Array.isArray(question.options)
-    && question.options.length >= 2
+    && question.options.length === 4
     && Number.isInteger(question.answerIndex)
     && question.answerIndex >= 0
     && question.answerIndex < question.options.length;
 
   if (!hasValidOptions) {
+    return false;
+  }
+
+  const normalizedOptions = question.options.map((option) => String(option || "").trim());
+  if (normalizedOptions.some((option) => !option || hasBrokenQuestionText(option) || isPlaceholderChoiceLabel(option))) {
+    return false;
+  }
+
+  if (new Set(normalizedOptions.map((option) => option.toLowerCase())).size !== normalizedOptions.length) {
     return false;
   }
 
@@ -3615,10 +3669,10 @@ function loadGuestStore() {
   try {
     const stored = JSON.parse(localStorage.getItem(guestStoreKey));
     return stored && typeof stored === "object"
-      ? { progress: stored.progress || {}, scoreHistory: stored.scoreHistory || [], studyTime: stored.studyTime || null }
-      : { progress: {}, scoreHistory: [], studyTime: null };
+      ? { progress: stored.progress || {}, scoreHistory: stored.scoreHistory || [], studyTime: stored.studyTime || null, resumeState: stored.resumeState || null }
+      : { progress: {}, scoreHistory: [], studyTime: null, resumeState: null };
   } catch (error) {
-    return { progress: {}, scoreHistory: [], studyTime: null };
+    return { progress: {}, scoreHistory: [], studyTime: null, resumeState: null };
   }
 }
 
@@ -5665,6 +5719,7 @@ function createLearnerRecord({ id, name, grade, childEmail = "", childUsername =
     progress: {},
     scoreHistory: [],
     studyTime: createEmptyStudyTime(),
+    resumeState: null,
     goals: goals && typeof goals === "object"
       ? {
         selectedSubject: ["math", "english"].includes(String(goals.selectedSubject || goals.subjectFocus || "math"))
@@ -5740,6 +5795,120 @@ function getCurrentProfile() {
 
   ensureLearnerShape(account);
   return account;
+}
+
+function getCurrentResumeState() {
+  const account = getCurrentAccount();
+  const profile = getCurrentProfile();
+  if (profile) {
+    return profile.resumeState || null;
+  }
+  if (account) {
+    return null;
+  }
+  ensureGuestStoreShape();
+  return guestStore.resumeState || null;
+}
+
+function persistCurrentProfileState() {
+  const account = getCurrentAccount();
+  const profile = getCurrentProfile();
+  if (profile) {
+    if (account?.type === "parent") {
+      account.children[account.activeChildId] = profile;
+      profilesStore.profiles[account.id] = account;
+    } else {
+      profilesStore.profiles[profile.id] = profile;
+    }
+    saveProfilesStore();
+    return;
+  }
+
+  if (!account) {
+    saveGuestStore();
+  }
+}
+
+function saveCurrentResumeState() {
+  const account = getCurrentAccount();
+  const profile = getCurrentProfile();
+  const snapshot = state.selectedCategoryId && state.selectedLevel
+    ? {
+        grade: state.selectedGrade,
+        categoryId: state.selectedCategoryId,
+        patTabId: state.selectedPatTab || null,
+        probabilityMode: state.selectedProbabilityMode || "mastery",
+        level: state.selectedLevel,
+        currentIndex: state.currentIndex,
+        score: state.score,
+        questionResults: Array.isArray(state.questionResults)
+          ? state.questionResults.map((result) => (result ? { ...result } : null))
+          : [],
+        updatedAt: new Date().toISOString()
+      }
+    : null;
+
+  if (profile) {
+    profile.resumeState = snapshot;
+    persistCurrentProfileState();
+    return;
+  }
+
+  if (!account) {
+    ensureGuestStoreShape();
+    guestStore.resumeState = snapshot;
+    saveGuestStore();
+  }
+}
+
+function clearCurrentResumeState() {
+  const account = getCurrentAccount();
+  const profile = getCurrentProfile();
+
+  if (profile) {
+    profile.resumeState = null;
+    persistCurrentProfileState();
+    return;
+  }
+
+  if (!account) {
+    ensureGuestStoreShape();
+    guestStore.resumeState = null;
+    saveGuestStore();
+  }
+}
+
+function restoreResumeStateIfAvailable() {
+  const resumeState = getCurrentResumeState();
+  if (!resumeState?.categoryId || !resumeState?.level) {
+    return false;
+  }
+
+  const categories = curriculum[Number(resumeState.grade)] || [];
+  if (!categories.some((category) => category.id === resumeState.categoryId)) {
+    return false;
+  }
+
+  if (getSavedAttempt(Number(resumeState.grade), resumeState.categoryId, Number(resumeState.level))) {
+    return false;
+  }
+
+  state.selectedGrade = Number(resumeState.grade) || state.selectedGrade;
+  state.selectedCategoryId = resumeState.categoryId;
+  state.selectedPatTab = resumeState.patTabId || getDefaultPatTabId(state.selectedCategoryId, state.selectedGrade);
+  state.selectedProbabilityMode = resumeState.probabilityMode || getDefaultProbabilityMode(state.selectedCategoryId, state.selectedGrade);
+
+  renderGradeButtons();
+  renderCategories();
+  renderLevels();
+  renderReviewOptions();
+  renderStudyTime();
+
+  window.setTimeout(() => {
+    startLevel(Number(resumeState.level), resumeState);
+  }, 0);
+
+  return true;
 }
 
 function getActiveProgress() {
@@ -5925,6 +6094,9 @@ function ensureLearnerShape(profile) {
   } else {
     ensureStudyTimeShape(profile.studyTime);
   }
+  if (!profile.resumeState || typeof profile.resumeState !== "object") {
+    profile.resumeState = null;
+  }
   if (!profile.goals || typeof profile.goals !== "object") {
     profile.goals = createEmptyLearnerGoals();
   } else {
@@ -6001,6 +6173,9 @@ function ensureGuestStoreShape() {
     guestStore.studyTime = createEmptyStudyTime();
   } else {
     ensureStudyTimeShape(guestStore.studyTime);
+  }
+  if (!guestStore.resumeState || typeof guestStore.resumeState !== "object") {
+    guestStore.resumeState = null;
   }
 }
 
