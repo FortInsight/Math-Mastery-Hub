@@ -4132,7 +4132,7 @@ function renderParentPanel(account) {
     if (elements.childPasswordInput) {
       elements.childPasswordInput.value = "";
       elements.childPasswordInput.disabled = false;
-      elements.childPasswordInput.placeholder = hasUsername ? "Enter a new learner switch password (optional)" : "Enter a new learner password (optional)";
+      elements.childPasswordInput.placeholder = hasUsername ? "Enter a new learner switch password" : "Enter a new learner password";
     }
     if (elements.childUsernameNote) {
       elements.childUsernameNote.textContent = hasUsername
