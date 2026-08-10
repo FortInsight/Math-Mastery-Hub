@@ -1061,6 +1061,7 @@ async function loadSupabaseAccountData(session) {
   saveProfilesStore();
   state.currentProfileId = profileId;
   applyCurrentProfile();
+  restoreLearnerViewSession(localAccount);
   renderGradeButtons();
   renderCategories();
   restoreResumeStateIfAvailable();
@@ -1172,6 +1173,7 @@ async function loadSupabaseAccountData(session) {
 
   state.currentProfileId = profileId;
   applyCurrentProfile();
+  restoreLearnerViewSession(account);
   renderGradeButtons();
   renderCategories();
   restoreResumeStateIfAvailable();
@@ -1424,6 +1426,7 @@ window.dispatchEvent(new CustomEvent("mastery-app-ready"));
 function init() {
   populateProfileGradeOptions();
   applyCurrentProfile();
+  restoreLearnerViewSession();
   renderGradeButtons();
   renderCategories();
   restoreResumeStateIfAvailable();
@@ -1639,6 +1642,54 @@ function setChildViewMode(enabled, { allowGradeChange = false } = {}) {
   }
   elements.toggleHeroPanelButton?.classList.toggle("hidden", enabled);
   renderProfilePanel();
+}
+
+function saveLearnerViewSession(account, child) {
+  if (!account?.id || !child?.id) {
+    return;
+  }
+  localStorage.setItem(learnerSessionKey, JSON.stringify({
+    accountId: account.id,
+    childId: child.id,
+    learnerName: child.name || ""
+  }));
+}
+
+function restoreLearnerViewSession(account = getCurrentAccount()) {
+  if (!account || account.type !== "parent") {
+    return false;
+  }
+
+  let learnerSession = null;
+  try {
+    learnerSession = JSON.parse(localStorage.getItem(learnerSessionKey) || "null");
+  } catch (_error) {
+    clearLearnerSession();
+    return false;
+  }
+
+  if (!learnerSession || learnerSession.accountId !== account.id) {
+    return false;
+  }
+
+  let child = account.children?.[learnerSession.childId] || null;
+  if (!child && learnerSession.learnerName) {
+    const normalizedName = learnerSession.learnerName.trim().toLowerCase();
+    child = Object.values(account.children || {}).find(
+      (candidate) => String(candidate?.name || "").trim().toLowerCase() === normalizedName
+    ) || null;
+  }
+  if (!child) {
+    clearLearnerSession();
+    return false;
+  }
+
+  account.activeChildId = child.id;
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+  state.selectedGrade = Number(child.grade || 1);
+  setChildViewMode(true, { allowGradeChange: false });
+  return true;
 }
 
 function askParentPassword(actionLabel) {
@@ -4243,7 +4294,7 @@ async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this 
   }
 
   const learner = account.children[childId];
-  const savedCredential = getLearnerPasswordCredential(account.id, childId);
+  const savedCredential = getLearnerPasswordCredential(account.id, childId, learner.name);
   if (!learner.passwordHash && savedCredential) {
     learner.passwordHash = savedCredential;
     account.children[childId] = learner;
@@ -5020,6 +5071,7 @@ async function handleAddChild() {
 
       if (childPassword) {
         nextChild.passwordHash = hashPassword(childPassword);
+        saveLearnerPasswordCredential(account.id, nextChild.id, nextChild.passwordHash, nextChild.name);
       }
 
       if (currentChild.id !== nextChildId) {
@@ -5066,6 +5118,9 @@ async function handleAddChild() {
       avatarDataUrl,
       linkedProfileId: null
     });
+    if (childPassword) {
+      saveLearnerPasswordCredential(account.id, childId, account.children[childId].passwordHash, childName);
+    }
     account.activeChildId = childId;
     state.parentEditorChildId = null;
     profilesStore.profiles[account.id] = account;
@@ -5148,7 +5203,7 @@ function handleSaveChildSettings() {
   child.avatarDataUrl = nextAvatarDataUrl;
   if (nextPassword) {
     child.passwordHash = hashPassword(nextPassword);
-    saveLearnerPasswordCredential(account.id, child.id, child.passwordHash);
+    saveLearnerPasswordCredential(account.id, child.id, child.passwordHash, child.name);
   }
 
   account.children[child.id] = child;
@@ -5311,7 +5366,8 @@ function switchToChild(childId, { silent = false, enterChildMode = false } = {})
   hideQuizViews();
   setHeroPanelVisible(false);
   if (enterChildMode) {
-        setChildViewMode(true, { allowGradeChange: false });
+    saveLearnerViewSession(account, child);
+    setChildViewMode(true, { allowGradeChange: false });
   }
   renderProfilePanel();
   renderGradeButtons();
@@ -5354,10 +5410,11 @@ async function handleHeaderChildSwitch(event) {
 }
 
 async function handleBackToParent() {
-    const canReturn = await verifyParentPasswordForAction("return to the parent view");
+  const canReturn = await verifyParentPasswordForAction("return to the parent view");
   if (!canReturn) {
     return;
   }
+  clearLearnerSession();
   setChildViewMode(false);
   // setChildViewMode() only updates the profile panel/header â€” refresh the rest of the page
   // (grade buttons, topics, study time, activity chart, Family Dashboard) so the parent sees
@@ -5983,19 +6040,27 @@ function getLearnerPasswordCredentials() {
   }
 }
 
-function getLearnerPasswordCredential(accountId, childId) {
+function getLearnerPasswordCredential(accountId, childId, learnerName = "") {
   if (!accountId || !childId) {
     return "";
   }
-  return getLearnerPasswordCredentials()[`${accountId}:${childId}`] || "";
+  const credentials = getLearnerPasswordCredentials();
+  const normalizedName = String(learnerName || "").trim().toLowerCase();
+  return credentials[`${accountId}:${childId}`]
+    || (normalizedName ? credentials[`${accountId}:name:${normalizedName}`] : "")
+    || "";
 }
 
-function saveLearnerPasswordCredential(accountId, childId, passwordHash) {
+function saveLearnerPasswordCredential(accountId, childId, passwordHash, learnerName = "") {
   if (!accountId || !childId || !passwordHash) {
     return;
   }
   const credentials = getLearnerPasswordCredentials();
   credentials[`${accountId}:${childId}`] = passwordHash;
+  const normalizedName = String(learnerName || "").trim().toLowerCase();
+  if (normalizedName) {
+    credentials[`${accountId}:name:${normalizedName}`] = passwordHash;
+  }
   localStorage.setItem(learnerPasswordCredentialKey, JSON.stringify(credentials));
 }
 

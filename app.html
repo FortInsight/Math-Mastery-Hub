@@ -649,7 +649,7 @@
 
   <script src="auth.js"></script>
   <script src="avatar-library.js"></script>
-  <script src="app.js?v=20260810-unique-progressive-levels"></script>
+  <script src="app.js?v=20260810-learner-session-fix"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       window.addEventListener("load", function () {
@@ -657,7 +657,7 @@
         // HTTP layer (which can otherwise last up to 24 hours) — without this, bumping
         // CACHE_NAME inside the file doesn't help because the browser never even re-fetches the
         // file to see the change, especially on installed/home-screen PWAs.
-        navigator.serviceWorker.register("./service-worker.js?v=29", { updateViaCache: "none" });
+        navigator.serviceWorker.register("./service-worker.js?v=30", { updateViaCache: "none" });
       });
       // When a newer service worker takes over, it tells open windows to reload themselves —
       // this is what actually gets an installed/home-screen app off a stuck old version.
