@@ -964,7 +964,8 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
       childUsername: childRow.child_username || fallbackChild?.childUsername || "",
       avatarDataUrl: childRow.avatar_data_url || fallbackChild?.avatarDataUrl || "",
       supabaseChildId: childRow.id,
-      linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null
+      linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null,
+      passwordHash: fallbackChild?.passwordHash || ""
     });
     const bundle = buildBundleFromProgressRows(
       progressByChildId.get(childRow.id)
@@ -999,7 +1000,8 @@ function createLearnerAccountFromRemote(profileId, profileRow, progressRows, fal
   const learner = createLearnerRecord({
     id: profileId,
     name: profileRow?.display_name || fallbackAccount?.name || "Learner",
-    grade: Number(profileRow?.grade || fallbackAccount?.grade || 1)
+    grade: Number(profileRow?.grade || fallbackAccount?.grade || 1),
+    passwordHash: fallbackAccount?.passwordHash || ""
   });
   const bundle = buildBundleFromProgressRows(progressRows);
   learner.progress = bundle.progress;
@@ -4055,19 +4057,19 @@ function renderParentPanel(account) {
   // Manage Learners list and Family Dashboard so it doesn't clutter or get confused with actual
   // children. It's still reachable through the header's "Switch to Learner" control below,
   // which uses childEntries (including it), not this filtered list.
-  const showParentSwitchControls = !state.childViewMode;
+  const showHeaderChildSwitchControls = childEntries.length > 1;
 
   if (isSupabaseProfileId(account.id) && state.supabaseSessionActive && !state.supabaseChildRecoveryInFlight) {
     recoverParentChildrenFromSupabase(account);
   }
 
   if (elements.headerChildSelect) {
-    elements.headerChildSelect.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
+    elements.headerChildSelect.classList.toggle("hidden", !showHeaderChildSwitchControls);
     elements.headerChildSelect.innerHTML = childEntries
       .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(child.name)}</option>`)
       .join("");
   }
-  elements.headerChildSwitchButton?.classList.toggle("hidden", childEntries.length < 1 || !showParentSwitchControls);
+  elements.headerChildSwitchButton?.classList.toggle("hidden", !showHeaderChildSwitchControls);
 
   if (!childEntries.length) {
     if (isSupabaseProfileId(account.id) && state.supabaseSessionActive) {
@@ -4101,7 +4103,6 @@ function renderParentPanel(account) {
             <div>
               <strong>${escapeHtml(child.name)}</strong>
               <small>${escapeHtml(child.childUsername ? `Username: ${child.childUsername}` : (child.childEmail || "No login set yet"))}</small>
-              <div class="learner-sync-badge learner-sync-badge--${getLearnerSyncStatus(child)}">${getLearnerSyncLabel(child)}</div>
             </div>
           </div>
           <div class="parent-kid-meta">
@@ -4130,13 +4131,13 @@ function renderParentPanel(account) {
     }
     if (elements.childPasswordInput) {
       elements.childPasswordInput.value = "";
-      elements.childPasswordInput.disabled = hasUsername;
-      elements.childPasswordInput.placeholder = hasUsername ? "Username login already set" : "Set a password for login";
+      elements.childPasswordInput.disabled = false;
+      elements.childPasswordInput.placeholder = hasUsername ? "Enter a new learner switch password (optional)" : "Enter a new learner password (optional)";
     }
     if (elements.childUsernameNote) {
       elements.childUsernameNote.textContent = hasUsername
-        ? `This learner already logs in with username "${activeChild.childUsername}". Username and password can't be changed here yet.`
-        : "Username and password are optional â€” only needed if this child wants to log in on their own on a separate device (requires Supabase).";
+        ? `This learner already logs in with username "${activeChild.childUsername}". You can still add or update the learner switch password here.`
+        : "Every learner should have a password. Username is optional and only needed if this child wants to log in directly on another device (requires Supabase).";
     }
     elements.deleteChildButton?.classList.remove("hidden");
   } else {
@@ -4149,10 +4150,10 @@ function renderParentPanel(account) {
     }
     if (elements.childPasswordInput) {
       elements.childPasswordInput.disabled = false;
-      elements.childPasswordInput.placeholder = "Set a password for login";
+      elements.childPasswordInput.placeholder = "Set a learner password";
     }
     if (elements.childUsernameNote) {
-      elements.childUsernameNote.textContent = "Add a new learner here. Username and password are optional â€” only needed if this child wants to log in on their own on a separate device (requires Supabase).";
+      elements.childUsernameNote.textContent = "Add a new learner here. A learner password is required so they can switch profiles or log in independently. Username is optional for direct sign-in on another device (requires Supabase).";
     }
     elements.deleteChildButton?.classList.add("hidden");
   }
@@ -4178,6 +4179,88 @@ function handleParentDashboardLearnerClick(event) {
   saveProfilesStore();
   applyCurrentProfile();
   showProfileMessage(`Now viewing ${account.children[childId].name}'s family dashboard.`, "success");
+}
+
+async function askLearnerPassword(actionLabel, learnerName) {
+  const promptLabel = learnerName
+    ? `Enter ${learnerName}'s learner password to ${actionLabel}.`
+    : `Enter the learner password to ${actionLabel}.`;
+
+  if (!elements.parentPasswordModal || !elements.parentPasswordModalInput) {
+    return window.prompt(promptLabel);
+  }
+
+  return new Promise((resolve) => {
+    elements.parentPasswordModalMessage.textContent = promptLabel;
+    elements.parentPasswordModalInput.value = "";
+    if (elements.parentPasswordModalError) {
+      elements.parentPasswordModalError.textContent = "";
+      elements.parentPasswordModalError.classList.add("hidden");
+    }
+    elements.parentPasswordModal.classList.remove("hidden");
+
+    let settled = false;
+    const cleanup = () => {
+      elements.parentPasswordModal.classList.add("hidden");
+      elements.parentPasswordModalSubmit?.removeEventListener("click", onSubmit);
+      elements.parentPasswordModalCancel?.removeEventListener("click", onCancel);
+      elements.parentPasswordModalOverlay?.removeEventListener("click", onCancel);
+      elements.parentPasswordModalInput?.removeEventListener("keydown", onKeydown);
+    };
+    const finish = (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+    const onSubmit = () => finish(elements.parentPasswordModalInput.value);
+    const onCancel = () => finish("");
+    const onKeydown = (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        onSubmit();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel();
+      }
+    };
+
+    elements.parentPasswordModalSubmit?.addEventListener("click", onSubmit);
+    elements.parentPasswordModalCancel?.addEventListener("click", onCancel);
+    elements.parentPasswordModalOverlay?.addEventListener("click", onCancel);
+    elements.parentPasswordModalInput?.addEventListener("keydown", onKeydown);
+    window.requestAnimationFrame(() => {
+      elements.parentPasswordModalInput?.focus();
+    });
+  });
+}
+
+async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this learner") {
+  const account = getCurrentAccount();
+  if (!account || account.type !== "parent" || !childId || !account.children?.[childId]) {
+    return false;
+  }
+
+  const learner = account.children[childId];
+  if (!learner.passwordHash) {
+    showProfileMessage(`${learner.name} does not have a learner switch password saved yet. Ask the parent to set it up again from Manage Learners or use the Learner Login page.`, "error");
+    return false;
+  }
+
+  const password = await askLearnerPassword(actionLabel, learner.name);
+  if (!password) {
+    showProfileMessage("Learner password is required to switch profiles.", "error");
+    return false;
+  }
+
+  const matches = learner.passwordHash === hashPassword(password);
+  if (!matches) {
+    showProfileMessage(`That learner password is not correct for ${learner.name}.`, "error");
+  }
+  return matches;
 }
 
 function handleParentChildEditorChange() {
@@ -4617,7 +4700,6 @@ function renderParentDashboard() {
             : `<div class="parent-dashboard-learner-photo parent-dashboard-learner-photo--placeholder">${escapeHtml((child.name || "?").charAt(0).toUpperCase())}</div>`}
           <strong>${escapeHtml(child.name)}</strong>
           <small>Grade ${child.grade}</small>
-          <span class="learner-sync-badge learner-sync-badge--${getLearnerSyncStatus(child)}">${getLearnerSyncLabel(child)}</span>
         </button>
       `)
       .join("");
@@ -4853,13 +4935,16 @@ async function handleAddChild() {
       showProfileMessage("Enter the child's name before adding them.", "error");
       return;
     }
-    if (childUsername && !childPassword) {
-      showProfileMessage("Choose a password for the child's username login.", "error");
+    if (!childPassword) {
+      showProfileMessage("Set a learner password before adding this learner.", "error");
       return;
     }
 
     const childId = buildProfileId(childName);
-    if (account.children[childId]) {
+    const editorChildId = state.parentEditorChildId || elements.parentChildSelect?.value || "";
+    const activeEditorChild = editorChildId ? account.children?.[editorChildId] : null;
+    const isEditingExistingChild = Boolean(activeEditorChild);
+    if (account.children[childId] && (!isEditingExistingChild || childId !== editorChildId)) {
       const existingChild = account.children[childId];
       if (!existingChild.supabaseChildId) {
         const retrySessionUser = await getSupabaseSessionUser();
@@ -4909,6 +4994,64 @@ async function handleAddChild() {
       return;
     }
 
+    if (isEditingExistingChild) {
+      const currentChild = activeEditorChild;
+      const nextChildId = childId;
+      if (currentChild.id !== nextChildId && account.children[nextChildId]) {
+        showProfileMessage("Another learner already uses that name. Choose a different learner name.", "error");
+        return;
+      }
+
+      const nextChild = {
+        ...currentChild,
+        id: nextChildId,
+        name: childName,
+        grade: childGrade,
+        childEmail,
+        avatarDataUrl
+      };
+
+      if (!currentChild.childUsername && childUsername) {
+        nextChild.childUsername = sanitizeUsername(childUsername);
+      }
+      if (childPassword) {
+        nextChild.passwordHash = hashPassword(childPassword);
+      }
+
+      if (currentChild.id !== nextChildId) {
+        delete account.children[currentChild.id];
+      }
+      account.children[nextChildId] = nextChild;
+      account.activeChildId = nextChildId;
+      state.parentEditorChildId = nextChildId;
+      profilesStore.profiles[account.id] = account;
+      saveProfilesStore();
+
+      try {
+        const sessionUser = await getSupabaseSessionUser();
+        if (sessionUser?.id && account.type === "parent") {
+          state.supabaseUserId = sessionUser.id;
+          state.supabaseUserEmail = sessionUser.email || state.supabaseUserEmail || "";
+          await syncParentChildrenOnline(account, { silent: true, sessionUser });
+        }
+      } catch (error) {
+        console.error("Sync after learner update failed", error);
+      }
+
+      renderProfilePanel();
+      renderGradeButtons();
+      renderCategories();
+      renderStudyTime();
+      renderHeroActivity();
+      showProfileMessage(
+        childPassword
+          ? `${childName}'s profile was updated and their learner password was saved.`
+          : `${childName}'s profile was updated.`,
+        "success"
+      );
+      return;
+    }
+
     let linkedProfileId = null;
     if (childUsername) {
       if (!hasSupabasePersistence()) {
@@ -4936,6 +5079,7 @@ async function handleAddChild() {
       id: childId,
       name: childName,
       grade: childGrade,
+      passwordHash: childPassword ? hashPassword(childPassword) : "",
       childEmail,
       childUsername: childUsername ? sanitizeUsername(childUsername) : "",
       avatarDataUrl,
@@ -5177,7 +5321,14 @@ async function handleSwitchChild() {
 }
 
 async function handleHeaderChildSwitch() {
-  switchToChild(elements.headerChildSelect?.value, { enterChildMode: true });
+  const childId = elements.headerChildSelect?.value || "";
+  if (state.childViewMode) {
+    const canSwitch = await verifyLearnerPasswordForSwitch(childId, "switch to this learner");
+    if (!canSwitch) {
+      return;
+    }
+  }
+  switchToChild(childId, { enterChildMode: true });
 }
 
 async function handleBackToParent() {
@@ -5749,12 +5900,13 @@ async function createChildSupabaseLogin({ childName, grade, username, password }
   }
 }
 
-function createLearnerRecord({ id, name, grade, childEmail = "", childUsername = "", avatarDataUrl = "", supabaseChildId = null, linkedProfileId = null, goals = null }) {
+function createLearnerRecord({ id, name, grade, passwordHash = "", childEmail = "", childUsername = "", avatarDataUrl = "", supabaseChildId = null, linkedProfileId = null, goals = null }) {
   return {
     id,
     type: "learner",
     name,
     grade,
+    passwordHash,
     childEmail,
     childUsername,
     avatarDataUrl,
@@ -6115,6 +6267,9 @@ function renderScoreHistory() {
 }
 
 function ensureLearnerShape(profile) {
+  if (typeof profile.passwordHash !== "string") {
+    profile.passwordHash = "";
+  }
   if (typeof profile.childEmail !== "string") {
     profile.childEmail = "";
   }
