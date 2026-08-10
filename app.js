@@ -1,6 +1,12 @@
 ﻿const grades = Array.from({ length: 12 }, (_, index) => index + 1);
 const ENABLE_PAT_PRACTICE = true;
 
+const UI_EMOJIS = {
+  hint: String.fromCodePoint(0x1F4A1),
+  success: String.fromCodePoint(0x1F604),
+  error: String.fromCodePoint(0x1F622)
+};
+
 const curriculum = {
   1: [
     makeCategory("numbers", "Numbers to 100", "Count, compare, order, and build number sense.", "numberSense", { min: 0, max: 100 }),
@@ -2057,7 +2063,7 @@ function showHintAfterWrong(question) {
   }
 
   elements.hintButton.classList.remove("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
   elements.hintBox.classList.add("hidden");
 }
 
@@ -2275,23 +2281,36 @@ function startLevel(level, resumeState = null) {
 }
 
 function renderQuestion() {
-  if (!state.currentQuestions[state.currentIndex]) {
-    state.currentQuestions[state.currentIndex] = generateLevelQuestionOnDemand(
-      state.selectedGrade,
-      state.selectedCategoryId,
-      state.selectedPatTab,
-      state.selectedLevel,
-      state.currentIndex,
-      state.currentQuestions
-    );
-  }
+  const existingQuestion = state.currentQuestions[state.currentIndex];
+  state.currentQuestions[state.currentIndex] = existingQuestion
+    ? ensureRenderableQuestion(existingQuestion, state.currentIndex)
+    : generateLevelQuestionOnDemand(
+        state.selectedGrade,
+        state.selectedCategoryId,
+        state.selectedPatTab,
+        state.selectedLevel,
+        state.currentIndex,
+        state.currentQuestions
+      );
 
   const question = state.currentQuestions[state.currentIndex];
   if (!question) {
     return;
   }
   const questionNumber = state.currentIndex + 1;
-  const existingResult = state.questionResults[state.currentIndex];
+  let existingResult = state.questionResults[state.currentIndex];
+  if (existingResult && question.type !== "writing") {
+    const invalidSelectedIndex = !Number.isInteger(existingResult.selectedIndex)
+      || existingResult.selectedIndex < 0
+      || existingResult.selectedIndex >= question.options.length;
+    const mismatchedSelectedAnswer = existingResult.selectedAnswer && question.options[existingResult.selectedIndex] !== existingResult.selectedAnswer;
+    const mismatchedCorrectAnswer = question.options[question.answerIndex] !== existingResult.answer;
+    if (invalidSelectedIndex || mismatchedSelectedAnswer || mismatchedCorrectAnswer) {
+      clearSavedResultForCurrentQuestion();
+      existingResult = null;
+      saveCurrentResumeState();
+    }
+  }
   const answeredCount = getAnsweredCount();
   const promptParts = splitQuestionPrompt(question.prompt);
 
@@ -2406,7 +2425,7 @@ function checkAnswer(selectedIndex, selectedButton) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
+      <span class="feedback-emoji">${isCorrect ? UI_EMOJIS.success : UI_EMOJIS.error}</span>
       <strong class="feedback-title">${isCorrect ? "Correct!" : "Not quite."}</strong>
     </div>
     <div>${question.explanation}</div>
@@ -2479,13 +2498,13 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
-  elements.hintButton.textContent = "💡 Show Hint";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>${UI_EMOJIS.hint} Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>${UI_EMOJIS.hint} Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
+  elements.hintBox.innerHTML = hasHint ? `<strong>${UI_EMOJIS.hint} Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -2495,9 +2514,9 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? `${UI_EMOJIS.hint} Hide Hint` : `${UI_EMOJIS.hint} Show Hint`;
+  elements.hintButton.textContent = isHidden ? `${UI_EMOJIS.hint} Hide Hint` : `${UI_EMOJIS.hint} Show Hint`;
+  elements.hintButton.textContent = isHidden ? `${UI_EMOJIS.hint} Hide Hint` : `${UI_EMOJIS.hint} Show Hint`;
 }
 
 function moveToPreviousQuestion() {
@@ -2651,7 +2670,7 @@ function showFeedback(isCorrect, explanation) {
   elements.feedbackBox.classList.add(isCorrect ? "success" : "error");
   elements.feedbackBox.innerHTML = `
     <div class="feedback-reaction">
-      <span class="feedback-emoji">${isCorrect ? "😄" : "😢"}</span>
+      <span class="feedback-emoji">${isCorrect ? UI_EMOJIS.success : UI_EMOJIS.error}</span>
       <strong class="feedback-title">${isCorrect ? "Yeah!" : "Oh no."}</strong>
     </div>
     <div>${isCorrect ? "Yeah, you got it." : "That is not correct. Check the hint to learn more."}</div>
@@ -3251,6 +3270,31 @@ function hasBrokenQuestionText(value) {
 
 function isPlaceholderChoiceLabel(value) {
   return /^choice\s+[a-z]$/i.test(String(value || "").trim());
+}
+
+function clearSavedResultForCurrentQuestion() {
+  state.questionResults[state.currentIndex] = null;
+  state.lastResults = state.questionResults
+    .filter(Boolean)
+    .map(({ selectedIndex: ignoredSelectedIndex, ...result }) => result);
+  state.score = state.questionResults.filter((result) => result?.correct).length;
+}
+
+function ensureRenderableQuestion(question, questionIndex) {
+  if (isValidQuestion(question)) {
+    return question;
+  }
+
+  const rebuiltQuestion = generateLevelQuestionOnDemand(
+    state.selectedGrade,
+    state.selectedCategoryId,
+    state.selectedPatTab,
+    state.selectedLevel,
+    questionIndex,
+    state.currentQuestions.filter((item, index) => index !== questionIndex)
+  );
+
+  return isValidQuestion(rebuiltQuestion) ? rebuiltQuestion : null;
 }
 
 function isValidQuestion(question) {
@@ -4705,7 +4749,7 @@ function renderParentDashboard() {
     if (!topicAnalytics.length) {
       elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">This learner has not completed any topic yet.</div>`;
     } else if (!weakTopics.length) {
-      elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">Nice work â€” every topic is scoring ${WEAK_TOPIC_THRESHOLD}% or higher.</div>`;
+      elements.parentDashboardWeakAreas.innerHTML = `<div class="history-empty">Nice work - every topic is scoring ${WEAK_TOPIC_THRESHOLD}% or higher.</div>`;
     } else {
       elements.parentDashboardWeakAreas.innerHTML = `
         <div class="parent-dashboard-analysis-table">
@@ -12839,9 +12883,9 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>${UI_EMOJIS.hint} Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -12851,7 +12895,7 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? `${UI_EMOJIS.hint} Hide Hint` : `${UI_EMOJIS.hint} Show Hint`;
 }
 
 function roundByGrade(value, grade) {
@@ -13011,7 +13055,7 @@ function showHintAfterWrong(question) {
   }
 
   elements.hintButton.classList.remove("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
   elements.hintBox.classList.add("hidden");
 }
 
@@ -13022,9 +13066,9 @@ function renderHint(question) {
 
   const hasHint = Boolean(question.hint);
   elements.hintButton.classList.add("hidden");
-  elements.hintButton.textContent = "💡 Show Hint";
+  elements.hintButton.textContent = `${UI_EMOJIS.hint} Show Hint`;
   elements.hintBox.className = "feedback-box hint-box hidden";
-  elements.hintBox.innerHTML = hasHint ? `<strong>💡 Hint</strong><div>${question.hint}</div>` : "";
+  elements.hintBox.innerHTML = hasHint ? `<strong>${UI_EMOJIS.hint} Hint</strong><div>${question.hint}</div>` : "";
 }
 
 function toggleHint() {
@@ -13034,6 +13078,6 @@ function toggleHint() {
 
   const isHidden = elements.hintBox.classList.contains("hidden");
   elements.hintBox.classList.toggle("hidden", !isHidden);
-  elements.hintButton.textContent = isHidden ? "💡 Hide Hint" : "💡 Show Hint";
+  elements.hintButton.textContent = isHidden ? `${UI_EMOJIS.hint} Hide Hint` : `${UI_EMOJIS.hint} Show Hint`;
 }
 
