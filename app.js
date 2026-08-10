@@ -434,12 +434,14 @@ async function recoverParentChildrenFromSupabase(account) {
     childRows.forEach((childRow) => {
       const childLocalId = buildProfileId(childRow.child_name);
       const existingChild = account.children[childLocalId];
+      const remotePasswordHash = decodeLearnerCredential(childRow.child_username);
       const nextChild = createLearnerRecord({
         id: childLocalId,
         name: childRow.child_name,
         grade: Number(childRow.grade || existingChild?.grade || 1),
         childEmail: childRow.child_email || existingChild?.childEmail || "",
         childUsername: childRow.child_username || existingChild?.childUsername || "",
+        passwordHash: remotePasswordHash || existingChild?.passwordHash || "",
         avatarDataUrl: childRow.avatar_data_url || existingChild?.avatarDataUrl || "",
         supabaseChildId: childRow.id,
         linkedProfileId: childRow.linked_profile_id || existingChild?.linkedProfileId || null
@@ -948,6 +950,7 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
     const childLocalId = buildProfileId(childRow.child_name);
     remoteNames.add(childRow.child_name.trim().toLowerCase());
     const fallbackChild = fallbackAccount?.children?.[childLocalId];
+    const remotePasswordHash = decodeLearnerCredential(childRow.child_username);
     const child = createLearnerRecord({
       id: childLocalId,
       name: childRow.child_name,
@@ -957,7 +960,7 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
       avatarDataUrl: childRow.avatar_data_url || fallbackChild?.avatarDataUrl || "",
       supabaseChildId: childRow.id,
       linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null,
-      passwordHash: fallbackChild?.passwordHash || ""
+      passwordHash: remotePasswordHash || fallbackChild?.passwordHash || ""
     });
     const bundle = buildBundleFromProgressRows(
       progressByChildId.get(childRow.id)
@@ -4295,8 +4298,11 @@ async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this 
 
   const learner = account.children[childId];
   const savedCredential = getLearnerPasswordCredential(account.id, childId, learner.name);
-  if (!learner.passwordHash && savedCredential) {
-    learner.passwordHash = savedCredential;
+  const cloudCredential = decodeLearnerCredential(learner.childUsername);
+  const recoveredCredential = learner.passwordHash || cloudCredential || savedCredential;
+  if (recoveredCredential && learner.passwordHash !== recoveredCredential) {
+    learner.passwordHash = recoveredCredential;
+    learner.childUsername = encodeLearnerCredential(recoveredCredential, learner.id);
     account.children[childId] = learner;
     profilesStore.profiles[account.id] = account;
     saveProfilesStore();
@@ -5071,6 +5077,7 @@ async function handleAddChild() {
 
       if (childPassword) {
         nextChild.passwordHash = hashPassword(childPassword);
+        nextChild.childUsername = encodeLearnerCredential(nextChild.passwordHash, nextChild.id);
         saveLearnerPasswordCredential(account.id, nextChild.id, nextChild.passwordHash, nextChild.name);
       }
 
@@ -5108,13 +5115,14 @@ async function handleAddChild() {
       return;
     }
 
+    const newLearnerPasswordHash = childPassword ? hashPassword(childPassword) : "";
     account.children[childId] = createLearnerRecord({
       id: childId,
       name: childName,
       grade: childGrade,
-      passwordHash: childPassword ? hashPassword(childPassword) : "",
+      passwordHash: newLearnerPasswordHash,
       childEmail,
-      childUsername: "",
+      childUsername: encodeLearnerCredential(newLearnerPasswordHash, childId),
       avatarDataUrl,
       linkedProfileId: null
     });
@@ -5203,6 +5211,7 @@ function handleSaveChildSettings() {
   child.avatarDataUrl = nextAvatarDataUrl;
   if (nextPassword) {
     child.passwordHash = hashPassword(nextPassword);
+    child.childUsername = encodeLearnerCredential(child.passwordHash, child.id);
     saveLearnerPasswordCredential(account.id, child.id, child.passwordHash, child.name);
   }
 
@@ -6030,6 +6039,20 @@ function hashPassword(password) {
 }
 
 const learnerPasswordCredentialKey = "mastery-hub-learner-passwords-v1";
+const learnerCredentialPrefix = "pwdhash:";
+
+function encodeLearnerCredential(passwordHash, childId = "") {
+  const suffix = String(childId || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  return passwordHash ? `${learnerCredentialPrefix}${passwordHash}:${suffix || "learner"}` : "";
+}
+
+function decodeLearnerCredential(value) {
+  const credential = String(value || "");
+  if (!credential.startsWith(learnerCredentialPrefix)) {
+    return "";
+  }
+  return credential.slice(learnerCredentialPrefix.length).split(":")[0] || "";
+}
 
 function getLearnerPasswordCredentials() {
   try {
