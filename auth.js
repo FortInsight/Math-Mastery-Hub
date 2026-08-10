@@ -60,15 +60,26 @@
     return new URL(fileName, configuredBase || window.location.href).href;
   }
 
+  function buildLocalFileUrl(fileName) {
+    return new URL(fileName, window.location.href).href;
+  }
+
+  function buildNavigationUrl(fileName) {
+    if (window.location.protocol === "file:") {
+      return buildLocalFileUrl(fileName);
+    }
+    return buildUrl(fileName);
+  }
+
   // index.html is now the login page (the default/landing page for the site) and app.html is
   // the practice app. login.html still exists as a working alias for old links/bookmarks, but
   // index.html is the canonical one going forward.
   function goToLogin() {
-    window.location.href = buildUrl("index.html");
+    window.location.href = buildNavigationUrl("index.html");
   }
 
   function goToApp() {
-    window.location.href = buildUrl("app.html");
+    window.location.href = buildNavigationUrl("app.html");
   }
 
   function goToActivation(mode = "activated", role = "") {
@@ -83,7 +94,7 @@
   }
 
   function goToLearnerLogin() {
-    window.location.href = buildUrl("learner-login.html");
+    window.location.href = buildNavigationUrl("learner-login.html");
   }
 
   function getStoredCurrentProfileId() {

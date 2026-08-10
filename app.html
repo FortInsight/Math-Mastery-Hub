@@ -16,7 +16,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon-192.svg" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260810-profile-switch-rules" />
   <style>
     /* app.html is a protected page: hide the whole app (and the parent-password modal) until
        auth.js's handleAppPage() confirms an active Supabase session or a local account and adds
@@ -47,6 +47,7 @@
 </head>
 <body>
   <div id="auth-check-loading">Checking your account&hellip;</div>
+  <div id="global-profile-message" class="feedback-box profile-toast hidden" role="status" aria-live="polite"></div>
   <div class="page-shell">
     <header class="hero">
       <div class="hero-copy">
@@ -83,7 +84,8 @@
               </div>
             </div>
             <div class="hero-account-actions">
-              <select id="header-child-select" class="secondary-button hero-account-button hero-child-select hidden" aria-label="Switch child"></select>
+              <span id="header-child-select-label" class="hero-switch-label hidden">Switch learner</span>
+              <select id="header-child-select" class="secondary-button hero-account-button hero-child-select hidden" aria-label="Switch learner"></select>
               <button id="header-child-switch-button" class="secondary-button hero-account-button hidden" type="button">Open Learner</button>
               <button id="open-account-tools-button" class="secondary-button hero-account-button hidden" type="button">Manage Learners</button>
               <button id="back-to-parent-button" class="secondary-button hero-account-button hidden" type="button">Back to Parent</button>
@@ -204,20 +206,15 @@
                 <label class="field-label" for="child-grade">Grade</label>
                 <select id="child-grade"></select>
 
-                <div id="child-username-group">
-                  <label class="field-label" for="child-username">Login Username (optional)</label>
-                  <input id="child-username" type="text" placeholder="Only needed for the separate Learner Login page" autocomplete="off" />
-
-                  <label class="field-label" for="child-password">Login Password (optional)</label>
-                  <input id="child-password" type="password" placeholder="Only needed if you set a username" autocomplete="new-password" />
-                </div>
+                <label class="field-label" for="child-password">Learner Password</label>
+                <input id="child-password" type="password" placeholder="Set a learner password" autocomplete="new-password" />
 
                 <label class="field-label" for="child-photo">Profile Photo</label>
                 <input id="child-photo" type="file" accept="image/*" />
                 <div class="child-photo-preview-wrap">
                   <img id="child-photo-preview" class="child-photo-preview hidden" alt="Child profile preview" />
                 </div>
-                <p id="child-username-note" class="profile-note">Just enter a name and grade to add a child you can switch to from your own account. Username and password are only needed if this child wants to log in on their own on a separate device (requires Supabase).</p>
+                <p id="child-username-note" class="profile-note">Enter the learner name, grade, and learner password here. After that, the learner can switch into their own profile directly.</p>
 
                 <div class="profile-actions">
                   <button id="add-child-button" class="primary-button" type="button">Add Child</button>
@@ -236,7 +233,7 @@
           </div>
 
           <p class="profile-note">Everything here is saved to this device and this browser only.</p>
-          <div id="profile-message" class="feedback-box hidden"></div>
+          <div id="profile-message" class="feedback-box hidden" role="status" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -652,7 +649,7 @@
 
   <script src="auth.js"></script>
   <script src="avatar-library.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260810-unique-progressive-levels"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       window.addEventListener("load", function () {
@@ -660,7 +657,7 @@
         // HTTP layer (which can otherwise last up to 24 hours) — without this, bumping
         // CACHE_NAME inside the file doesn't help because the browser never even re-fetches the
         // file to see the change, especially on installed/home-screen PWAs.
-        navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
+        navigator.serviceWorker.register("./service-worker.js?v=29", { updateViaCache: "none" });
       });
       // When a newer service worker takes over, it tells open windows to reload themselves —
       // this is what actually gets an installed/home-screen app off a stuck old version.

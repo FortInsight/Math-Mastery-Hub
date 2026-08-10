@@ -311,14 +311,6 @@ function mergeChildrenIntoParentAccount(targetAccount, sourceChildren) {
   }
 }
 
-function getLearnerSyncStatus(child) {
-  return child?.supabaseChildId ? "online" : "local";
-}
-
-function getLearnerSyncLabel(child) {
-  return getLearnerSyncStatus(child) === "online" ? "Saved to account" : "Only on this browser";
-}
-
 function getSupabaseFetchHelpMessage(error, actionLabel = "save online") {
   const rawMessage = String(error?.message || "").toLowerCase();
   const isFetchFailure = rawMessage.includes("failed to fetch") || rawMessage.includes("networkerror");
@@ -1244,9 +1236,11 @@ const elements = {
   loginProfileButton: document.getElementById("login-profile-button"),
   logoutProfileButton: document.getElementById("logout-profile-button"),
   profileMessage: document.getElementById("profile-message"),
+  globalProfileMessage: document.getElementById("global-profile-message"),
   parentPanel: document.getElementById("parent-panel"),
   parentChildSelect: document.getElementById("parent-child-select"),
   switchChildButton: document.getElementById("switch-child-button"),
+  headerChildSelectLabel: document.getElementById("header-child-select-label"),
   headerChildSelect: document.getElementById("header-child-select"),
   headerChildSwitchButton: document.getElementById("header-child-switch-button"),
   childNameInput: document.getElementById("child-name"),
@@ -1469,7 +1463,6 @@ function attachEvents() {
   bindClick(elements.deleteChildButton, handleDeleteChild);
   bindClick(elements.switchChildButton, handleSwitchChild);
   bindChange(elements.parentChildSelect, handleParentChildEditorChange);
-  bindChange(elements.headerChildSelect, handleHeaderChildSwitch);
   bindClick(elements.headerChildSwitchButton, handleHeaderChildSwitch);
   bindClick(elements.backToParentButton, handleBackToParent);
   bindChange(elements.childPhotoInput, handleChildPhotoSelected);
@@ -1655,7 +1648,11 @@ function askParentPassword(actionLabel) {
       return;
     }
 
+    if (elements.parentPasswordModalTitle) {
+      elements.parentPasswordModalTitle.textContent = "Enter parent password";
+    }
     elements.parentPasswordModalMessage.textContent = `Enter the parent password to ${actionLabel}.`;
+    elements.parentPasswordModalInput.placeholder = "Parent password";
     elements.parentPasswordModalInput.value = "";
     if (elements.parentPasswordModalError) {
       elements.parentPasswordModalError.textContent = "";
@@ -2176,46 +2173,13 @@ function generateLevelQuestionOnDemand(grade, categoryId, patTabId, level, quest
     return null;
   }
 
-  const cacheKey = `${grade}-${categoryId}-${patTabId || "base"}-level-${level}-slot-${questionIndex}`;
-  const seedBase = hashCode(cacheKey);
-  const difficulty = level;
   const absoluteIndex = ((level - 1) * QUESTIONS_PER_LEVEL) + questionIndex;
-  const seenPrompts = new Set(
-    existingQuestions
-      .filter(Boolean)
-      .map((question) => normalizeQuestionPrompt(question.prompt))
-  );
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const rng = mulberry32(seedBase + attempt * 997);
-    const question = safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex + attempt, difficulty);
-    if (!question) {
-      continue;
-    }
-    const normalizedPrompt = normalizeQuestionPrompt(question.prompt);
-    if (!seenPrompts.has(normalizedPrompt)) {
-      return question;
-    }
+  const bankQuestion = getQuestionBank(grade, categoryId, patTabId)[absoluteIndex];
+  if (bankQuestion) {
+    return bankQuestion;
   }
 
-  if (category.factory.startsWith("english")) {
-    const englishFallbackRng = mulberry32(seedBase + 7919);
-    const englishFallback = safeGenerateQuestion(category, englishFallbackRng, grade, patTabId, absoluteIndex + 50, Math.min(10, difficulty + 4));
-    if (englishFallback) {
-      const normalizedEnglishFallback = normalizeQuestionPrompt(englishFallback.prompt);
-      return seenPrompts.has(normalizedEnglishFallback)
-        ? uniquifyQuestionPrompt(englishFallback, questionIndex + 2)
-        : englishFallback;
-    }
-  }
-
-  const fallback = buildEmergencyQuestion(category, grade, difficulty, absoluteIndex);
-  const normalizedFallback = normalizeQuestionPrompt(fallback.prompt);
-  if (!seenPrompts.has(normalizedFallback)) {
-    return fallback;
-  }
-
-  return uniquifyQuestionPrompt(fallback, questionIndex + 2);
+  return buildEmergencyQuestion(category, grade, level, absoluteIndex);
 }
 
 function startLevel(level, resumeState = null) {
@@ -2930,16 +2894,42 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     return [];
   }
   const seedBase = hashCode(cacheKey);
-  const bank = Array.from({ length: QUESTIONS_PER_TOPIC }, (_, index) => {
-    const difficulty = Math.floor(index / QUESTIONS_PER_LEVEL) + 1;
-    const rng = mulberry32(seedBase + index * 97 + 1);
-    return safeGenerateQuestion(category, rng, grade, patTabId, index, difficulty)
-      || buildEmergencyQuestion(category, grade, difficulty, index);
-  });
+  const bank = [];
+  const seenPrompts = new Set();
 
-  const uniqueBank = enforceUniqueQuestionPrompts(bank);
-  questionBankCache.set(cacheKey, uniqueBank);
-  return uniqueBank;
+  for (let index = 0; index < QUESTIONS_PER_TOPIC; index += 1) {
+    const difficulty = Math.floor(index / QUESTIONS_PER_LEVEL) + 1;
+    let question = null;
+
+    // Reject duplicates across all five levels, not just within one level.
+    // A different seed and a widely spaced index give template-based factories
+    // enough variation to produce a genuinely different question.
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const rng = mulberry32(seedBase + index * 977 + attempt * 7919 + 1);
+      const candidateIndex = index + attempt;
+      const candidate = safeGenerateQuestion(category, rng, grade, patTabId, candidateIndex, difficulty);
+      const signature = normalizeQuestionPrompt(candidate?.prompt);
+      if (candidate && signature && !seenPrompts.has(signature)) {
+        question = candidate;
+        seenPrompts.add(signature);
+        break;
+      }
+    }
+
+    if (!question) {
+      const fallback = buildEmergencyQuestion(category, grade, difficulty, index);
+      const signature = normalizeQuestionPrompt(fallback.prompt);
+      question = seenPrompts.has(signature)
+        ? uniquifyQuestionPrompt(fallback, index + 2)
+        : fallback;
+      seenPrompts.add(normalizeQuestionPrompt(question.prompt));
+    }
+
+    bank.push(question);
+  }
+
+  questionBankCache.set(cacheKey, bank);
+  return bank;
 }
 
 function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
@@ -3908,7 +3898,7 @@ function renderHeaderAccountBadge(account, learner) {
   }
 
   elements.headerAvatarUploadLabel?.classList.toggle("hidden", !learnerInControl);
-  elements.logoutAuthButton?.classList.toggle("hidden", !account);
+  elements.logoutAuthButton?.classList.toggle("hidden", !account || state.childViewMode);
   if (elements.openAccountToolsButton) {
     elements.openAccountToolsButton.classList.toggle("hidden", Boolean(account && state.childViewMode));
   }
@@ -4043,6 +4033,7 @@ function renderParentPanel(account) {
     elements.deleteChildButton?.classList.add("hidden");
     elements.parentKidsDashboard.innerHTML = `<div class="history-empty">Create or open a parent account to view children here.</div>`;
     setChildPhotoPreview("");
+    elements.headerChildSelectLabel?.classList.add("hidden");
     elements.headerChildSelect?.classList.add("hidden");
     elements.headerChildSwitchButton?.classList.add("hidden");
     return;
@@ -4057,13 +4048,14 @@ function renderParentPanel(account) {
   // Manage Learners list and Family Dashboard so it doesn't clutter or get confused with actual
   // children. It's still reachable through the header's "Switch to Learner" control below,
   // which uses childEntries (including it), not this filtered list.
-  const showHeaderChildSwitchControls = childEntries.length > 1;
+  const showHeaderChildSwitchControls = childEntries.length > 0;
 
   if (isSupabaseProfileId(account.id) && state.supabaseSessionActive && !state.supabaseChildRecoveryInFlight) {
     recoverParentChildrenFromSupabase(account);
   }
 
   if (elements.headerChildSelect) {
+    elements.headerChildSelectLabel?.classList.toggle("hidden", !showHeaderChildSwitchControls);
     elements.headerChildSelect.classList.toggle("hidden", !showHeaderChildSwitchControls);
     elements.headerChildSelect.innerHTML = childEntries
       .map((child) => `<option value="${child.id}" ${child.id === account.activeChildId ? "selected" : ""}>${escapeHtml(child.name)}</option>`)
@@ -4102,7 +4094,7 @@ function renderParentPanel(account) {
             ${child.avatarDataUrl ? `<img class="parent-kid-avatar" src="${child.avatarDataUrl}" alt="${escapeHtml(child.name)}" />` : `<div class="parent-kid-avatar parent-kid-avatar--placeholder">${escapeHtml((child.name || "?").charAt(0).toUpperCase())}</div>`}
             <div>
               <strong>${escapeHtml(child.name)}</strong>
-              <small>${escapeHtml(child.childUsername ? `Username: ${child.childUsername}` : (child.childEmail || "No login set yet"))}</small>
+              <small>${escapeHtml(child.childEmail || "Learner profile")}</small>
             </div>
           </div>
           <div class="parent-kid-meta">
@@ -4124,20 +4116,18 @@ function renderParentPanel(account) {
     elements.childEmailInput && (elements.childEmailInput.value = activeChild.childEmail || "");
     setChildPhotoPreview(activeChild.avatarDataUrl || "");
 
-    const hasUsername = Boolean(activeChild.childUsername);
+    elements.childUsernameGroup?.classList.add("hidden");
     if (elements.childUsernameInput) {
-      elements.childUsernameInput.value = activeChild.childUsername || "";
-      elements.childUsernameInput.disabled = hasUsername;
+      elements.childUsernameInput.value = "";
+      elements.childUsernameInput.disabled = true;
     }
     if (elements.childPasswordInput) {
       elements.childPasswordInput.value = "";
       elements.childPasswordInput.disabled = false;
-      elements.childPasswordInput.placeholder = hasUsername ? "Enter a new learner switch password" : "Enter a new learner password";
+      elements.childPasswordInput.placeholder = "Enter a new learner password";
     }
     if (elements.childUsernameNote) {
-      elements.childUsernameNote.textContent = hasUsername
-        ? `This learner already logs in with username "${activeChild.childUsername}". You can still add or update the learner switch password here.`
-        : "Every learner should have a password. Username is optional and only needed if this child wants to log in directly on another device (requires Supabase).";
+      elements.childUsernameNote.textContent = "Update the learner name, grade, photo, or learner password here. Learners use their password to switch into their own profile.";
     }
     elements.deleteChildButton?.classList.remove("hidden");
   } else {
@@ -4146,14 +4136,16 @@ function renderParentPanel(account) {
       elements.childGradeInput.value = String(state.selectedGrade || 1);
     }
     if (elements.childUsernameInput) {
-      elements.childUsernameInput.disabled = false;
+      elements.childUsernameInput.value = "";
+      elements.childUsernameInput.disabled = true;
     }
+    elements.childUsernameGroup?.classList.add("hidden");
     if (elements.childPasswordInput) {
       elements.childPasswordInput.disabled = false;
       elements.childPasswordInput.placeholder = "Set a learner password";
     }
     if (elements.childUsernameNote) {
-      elements.childUsernameNote.textContent = "Add a new learner here. A learner password is required so they can switch profiles or log in independently. Username is optional for direct sign-in on another device (requires Supabase).";
+      elements.childUsernameNote.textContent = "Add a new learner here. A learner password is required so they can switch into their own profile later.";
     }
     elements.deleteChildButton?.classList.add("hidden");
   }
@@ -4191,8 +4183,14 @@ async function askLearnerPassword(actionLabel, learnerName) {
   }
 
   return new Promise((resolve) => {
-    elements.parentPasswordModalMessage.textContent = promptLabel;
+    if (elements.parentPasswordModalTitle) {
+      elements.parentPasswordModalTitle.textContent = "Enter learner password";
+    }
+    if (elements.parentPasswordModalMessage) {
+      elements.parentPasswordModalMessage.textContent = promptLabel;
+    }
     elements.parentPasswordModalInput.value = "";
+    elements.parentPasswordModalInput.placeholder = "Learner password";
     if (elements.parentPasswordModalError) {
       elements.parentPasswordModalError.textContent = "";
       elements.parentPasswordModalError.classList.add("hidden");
@@ -4245,8 +4243,18 @@ async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this 
   }
 
   const learner = account.children[childId];
+  const savedCredential = getLearnerPasswordCredential(account.id, childId);
+  if (!learner.passwordHash && savedCredential) {
+    learner.passwordHash = savedCredential;
+    account.children[childId] = learner;
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
+  }
   if (!learner.passwordHash) {
-    showProfileMessage(`${learner.name} does not have a learner switch password saved yet. Ask the parent to set it up again from Manage Learners or use the Learner Login page.`, "error");
+    state.parentEditorChildId = childId;
+    setAccountToolsVisible(true);
+    renderParentPanel(account);
+    showProfileMessage(`${learner.name} does not have a learner password saved yet. Enter one in Learner Password, then click Save Selected Child.`, "error");
     return false;
   }
 
@@ -4927,7 +4935,6 @@ async function handleAddChild() {
     const childName = elements.childNameInput?.value.trim();
     const childGrade = Number(elements.childGradeInput?.value || state.selectedGrade || 1);
     const childEmail = elements.childEmailInput?.value.trim() || "";
-    const childUsername = elements.childUsernameInput?.value.trim() || "";
     const childPassword = elements.childPasswordInput?.value || "";
     const avatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
 
@@ -5011,9 +5018,6 @@ async function handleAddChild() {
         avatarDataUrl
       };
 
-      if (!currentChild.childUsername && childUsername) {
-        nextChild.childUsername = sanitizeUsername(childUsername);
-      }
       if (childPassword) {
         nextChild.passwordHash = hashPassword(childPassword);
       }
@@ -5052,38 +5056,15 @@ async function handleAddChild() {
       return;
     }
 
-    let linkedProfileId = null;
-    if (childUsername) {
-      if (!hasSupabasePersistence()) {
-        showProfileMessage("Sign in with your Supabase parent account before creating a child login.", "error");
-        return;
-      }
-
-      showProfileMessage("Creating the child's login...", "success");
-      const result = await createChildSupabaseLogin({
-        childName,
-        grade: childGrade,
-        username: childUsername,
-        password: childPassword
-      });
-
-      if (result.error) {
-        showProfileMessage(result.error, "error");
-        return;
-      }
-
-      linkedProfileId = result.linkedProfileId;
-    }
-
     account.children[childId] = createLearnerRecord({
       id: childId,
       name: childName,
       grade: childGrade,
       passwordHash: childPassword ? hashPassword(childPassword) : "",
       childEmail,
-      childUsername: childUsername ? sanitizeUsername(childUsername) : "",
+      childUsername: "",
       avatarDataUrl,
-      linkedProfileId
+      linkedProfileId: null
     });
     account.activeChildId = childId;
     state.parentEditorChildId = null;
@@ -5134,9 +5115,7 @@ async function handleAddChild() {
       syncNote = " This learner is only saved on this device/browser â€” sign in with your online parent account to see them on other devices too.";
     }
     showProfileMessage(
-      (childUsername
-        ? `${childName} was added. They can log in on the Learner Login page with username "${sanitizeUsername(childUsername)}".`
-        : `${childName} was added and is now the active learner.`) + syncNote,
+      `${childName} was added and is now the active learner.` + syncNote,
       syncStatus
     );
   } catch (error) {
@@ -5157,6 +5136,7 @@ function handleSaveChildSettings() {
   const nextName = elements.childNameInput?.value.trim() || child.name;
   const nextGrade = Number(elements.childGradeInput?.value || child.grade || state.selectedGrade || 1);
   const nextAvatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
+  const nextPassword = elements.childPasswordInput?.value || "";
 
   if (!nextName) {
     showProfileMessage("Enter the child's name before saving.", "error");
@@ -5166,6 +5146,10 @@ function handleSaveChildSettings() {
   child.name = nextName;
   child.grade = nextGrade;
   child.avatarDataUrl = nextAvatarDataUrl;
+  if (nextPassword) {
+    child.passwordHash = hashPassword(nextPassword);
+    saveLearnerPasswordCredential(account.id, child.id, child.passwordHash);
+  }
 
   account.children[child.id] = child;
   profilesStore.profiles[account.id] = account;
@@ -5181,7 +5165,30 @@ function handleSaveChildSettings() {
   renderStudyTime();
   renderHeroActivity();
 
-  showProfileMessage(`Saved learner settings for ${child.name}.`, "success");
+  if (elements.childPasswordInput) {
+    elements.childPasswordInput.value = "";
+  }
+
+  showProfileMessage(
+    nextPassword
+      ? `Saved learner settings and learner password for ${child.name}.`
+      : `Saved learner settings for ${child.name}.`,
+    "success"
+  );
+
+  if (elements.childUsernameNote) {
+    elements.childUsernameNote.textContent = nextPassword
+      ? `Password saved for ${child.name}. Use Open Learner to enter their profile.`
+      : `Learner settings saved for ${child.name}.`;
+    elements.childUsernameNote.classList.add("learner-save-confirmation");
+  }
+  if (elements.saveChildButton) {
+    const originalLabel = elements.saveChildButton.textContent;
+    elements.saveChildButton.textContent = nextPassword ? "Password Saved" : "Settings Saved";
+    window.setTimeout(() => {
+      elements.saveChildButton.textContent = originalLabel;
+    }, 2500);
+  }
 
   queueSupabaseWrite(async (_client, ownerId) => {
     await syncParentChildrenOnline(account, {
@@ -5317,12 +5324,27 @@ function switchToChild(childId, { silent = false, enterChildMode = false } = {})
 }
 
 async function handleSwitchChild() {
-  switchToChild(elements.parentChildSelect?.value, { enterChildMode: true });
+  const childId = elements.parentChildSelect?.value || "";
+  if (state.childViewMode) {
+    const canSwitch = await verifyLearnerPasswordForSwitch(childId, "switch to this learner");
+    if (!canSwitch) {
+      return;
+    }
+  }
+  switchToChild(childId, { enterChildMode: true });
 }
 
-async function handleHeaderChildSwitch() {
-  const childId = elements.headerChildSelect?.value || "";
+async function handleHeaderChildSwitch(event) {
+  event?.preventDefault?.();
+  const account = getCurrentAccount();
+  const childId = elements.headerChildSelect?.value || account?.activeChildId || "";
+  if (!account || account.type !== "parent" || !childId || !account.children?.[childId]) {
+    showProfileMessage("Choose a learner before selecting Open Learner.", "error");
+    return;
+  }
+  const learner = account.children[childId];
   if (state.childViewMode) {
+    showProfileMessage(`Enter ${learner.name}'s learner password to continue.`, "success");
     const canSwitch = await verifyLearnerPasswordForSwitch(childId, "switch to this learner");
     if (!canSwitch) {
       return;
@@ -5517,9 +5539,17 @@ function clearProfileFields() {
 }
 
 function showProfileMessage(message, type) {
-  elements.profileMessage.className = `feedback-box ${type === "error" ? "error" : "success"}`;
-  elements.profileMessage.textContent = message;
-  elements.profileMessage.classList.remove("hidden");
+  const messageClass = `feedback-box ${type === "error" ? "error" : "success"}`;
+  if (elements.profileMessage) {
+    elements.profileMessage.className = messageClass;
+    elements.profileMessage.textContent = message;
+    elements.profileMessage.classList.remove("hidden");
+  }
+  if (elements.globalProfileMessage) {
+    elements.globalProfileMessage.className = `${messageClass} profile-toast`;
+    elements.globalProfileMessage.textContent = message;
+    elements.globalProfileMessage.classList.remove("hidden");
+  }
 }
 
 function setChildPhotoPreview(src) {
@@ -5940,6 +5970,33 @@ function ensureSelfLearnerProfile(account) {
 
 function hashPassword(password) {
   return String(hashCode(`maths-profile:${password}`));
+}
+
+const learnerPasswordCredentialKey = "mastery-hub-learner-passwords-v1";
+
+function getLearnerPasswordCredentials() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(learnerPasswordCredentialKey) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function getLearnerPasswordCredential(accountId, childId) {
+  if (!accountId || !childId) {
+    return "";
+  }
+  return getLearnerPasswordCredentials()[`${accountId}:${childId}`] || "";
+}
+
+function saveLearnerPasswordCredential(accountId, childId, passwordHash) {
+  if (!accountId || !childId || !passwordHash) {
+    return;
+  }
+  const credentials = getLearnerPasswordCredentials();
+  credentials[`${accountId}:${childId}`] = passwordHash;
+  localStorage.setItem(learnerPasswordCredentialKey, JSON.stringify(credentials));
 }
 
 function clearLearnerSession() {
@@ -12451,48 +12508,83 @@ const questionFactories = {
 
   trigonometry(rng, grade, config, index, difficulty) {
     if (config.level <= 10) {
-      const angleSet = [0, 30, 45, 60, 90];
-      const mode = index % 3;
+      const tier = Math.max(1, Math.min(5, difficulty));
+      const roundTenth = (value) => Math.round(value * 10) / 10;
 
-      if (mode === 0) {
-        const angle = angleSet[Math.floor(index / 3) % angleSet.length];
-        const sinMap = { 0: "0", 30: "1/2", 45: "sqrt(2)/2", 60: "sqrt(3)/2", 90: "1" };
-        const correct = sinMap[angle];
-        const distractorPool = ["0", "1", "1/2", "sqrt(2)/2", "sqrt(3)/2"];
-        const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+      if (tier === 1) {
+        const ratio = ["sine", "cosine", "tangent"][index % 3];
+        const descriptions = {
+          sine: ["opposite / hypotenuse", "adjacent / hypotenuse", "opposite / adjacent", "hypotenuse / opposite"],
+          cosine: ["adjacent / hypotenuse", "opposite / hypotenuse", "opposite / adjacent", "hypotenuse / adjacent"],
+          tangent: ["opposite / adjacent", "adjacent / hypotenuse", "opposite / hypotenuse", "adjacent / opposite"]
+        };
+        const correct = descriptions[ratio][0];
+        const { options, answerIndex } = buildOptions(correct, descriptions[ratio].slice(1), rng);
+        const context = ["a roof triangle", "a wheelchair ramp", "a surveyor's right triangle", "a ladder diagram", "a support cable diagram"][Math.floor(index / 3) % 5];
         return {
-          prompt: `What is sin(${angle} degrees)?`,
+          prompt: `In ${context}, which side ratio represents ${ratio} of angle theta?`,
           options,
           answerIndex,
-          explanation: `Using special triangles, sin(${angle} degrees) = ${correct}.`
+          explanation: `${ratio[0].toUpperCase()}${ratio.slice(1)} uses ${correct}. Identify the sides relative to angle theta first.`
         };
       }
 
-      if (mode === 1) {
-        const angle = angleSet[Math.floor(index / 3) % angleSet.length];
-        const cosMap = { 0: "1", 30: "sqrt(3)/2", 45: "sqrt(2)/2", 60: "1/2", 90: "0" };
-        const correct = cosMap[angle];
-        const distractorPool = ["0", "1", "1/2", "sqrt(2)/2", "sqrt(3)/2"];
-        const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+      if (tier === 2) {
+        const angle = pick([25, 28, 32, 35, 38, 41, 47, 52, 56, 63], rng);
+        const knownSide = number(6, 24, rng);
+        const mode = index % 3;
+        const ratios = [Math.sin(angle * Math.PI / 180), Math.cos(angle * Math.PI / 180), Math.tan(angle * Math.PI / 180)];
+        const correct = roundTenth(knownSide * ratios[mode]);
+        const labels = ["opposite side", "adjacent side", "opposite side"];
+        const givens = ["hypotenuse", "hypotenuse", "adjacent side"];
+        const ratioNames = ["sine", "cosine", "tangent"];
+        const { options, answerIndex } = buildOptions(correct, [roundTenth(correct + 2), roundTenth(Math.max(0.1, correct - 2)), roundTenth(knownSide / ratios[mode])], rng);
         return {
-          prompt: `What is cos(${angle} degrees)?`,
+          prompt: `A right triangle has an angle of ${angle} degrees and a ${givens[mode]} of ${knownSide} cm. Find the ${labels[mode]} to the nearest tenth.`,
           options,
           answerIndex,
-          explanation: `Using special triangles, cos(${angle} degrees) = ${correct}.`
+          explanation: `Use ${ratioNames[mode]}: the required side is ${knownSide} x ${ratioNames[mode]}(${angle} degrees) = ${correct} cm.`
         };
       }
 
-      const tanAngleSet = [0, 30, 45, 60];
-      const angle = tanAngleSet[Math.floor(index / 3) % tanAngleSet.length];
-      const tanMap = { 0: "0", 30: "sqrt(3)/3", 45: "1", 60: "sqrt(3)" };
-      const correct = tanMap[angle];
-      const distractorPool = ["0", "1", "sqrt(3)", "sqrt(3)/3", "1/2"];
-      const { options, answerIndex } = buildOptions(correct, distractorPool.filter((item) => item !== correct).slice(0, 3), rng);
+      if (tier === 3) {
+        const adjacent = number(5, 22, rng);
+        const opposite = number(4, 20, rng);
+        const angle = roundTenth(Math.atan(opposite / adjacent) * 180 / Math.PI);
+        const { options, answerIndex } = buildOptions(angle, [roundTenth(90 - angle), roundTenth(angle + 8), roundTenth(Math.max(1, angle - 8))], rng);
+        return {
+          prompt: `In a right triangle, the side opposite angle theta is ${opposite} m and the adjacent side is ${adjacent} m. Find theta to the nearest tenth of a degree.`,
+          options,
+          answerIndex,
+          explanation: `tan(theta) = ${opposite}/${adjacent}. Therefore theta = tan^-1(${opposite}/${adjacent}) = ${angle} degrees.`
+        };
+      }
+
+      if (tier === 4) {
+        const angle = number(24, 58, rng);
+        const horizontal = number(12, 48, rng);
+        const eyeHeight = pick([1.5, 1.6, 1.7], rng);
+        const height = roundTenth(horizontal * Math.tan(angle * Math.PI / 180) + eyeHeight);
+        const { options, answerIndex } = buildOptions(height, [roundTenth(height - eyeHeight), roundTenth(horizontal / Math.tan(angle * Math.PI / 180)), roundTenth(height + horizontal / 10)], rng);
+        return {
+          prompt: `From ${horizontal} m away, a surveyor measures an angle of elevation of ${angle} degrees to the top of a building. The instrument is ${eyeHeight} m high. Find the building height to the nearest tenth.`,
+          options,
+          answerIndex,
+          explanation: `First find the rise: ${horizontal}tan(${angle} degrees). Then add the ${eyeHeight} m instrument height, giving ${height} m.`
+        };
+      }
+
+      const angle = number(28, 62, rng);
+      const shadow = number(9, 35, rng);
+      const firstHeight = roundTenth(shadow * Math.tan(angle * Math.PI / 180));
+      const extension = number(2, 8, rng);
+      const finalHeight = roundTenth(firstHeight + extension);
+      const { options, answerIndex } = buildOptions(finalHeight, [firstHeight, roundTenth(finalHeight - extension / 2), roundTenth(shadow / Math.tan(angle * Math.PI / 180) + extension)], rng);
       return {
-        prompt: `What is tan(${angle} degrees)?`,
+        prompt: `A tower casts a ${shadow} m shadow when the angle of elevation is ${angle} degrees. A ${extension} m antenna sits on top. Find the total height to the nearest tenth.`,
         options,
         answerIndex,
-        explanation: `Using special triangles, tan(${angle} degrees) = sin/cos = ${correct}.`
+        explanation: `Tower height = ${shadow}tan(${angle} degrees) = ${firstHeight} m. Add the ${extension} m antenna: ${firstHeight} + ${extension} = ${finalHeight} m.`
       };
     }
 
