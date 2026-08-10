@@ -875,8 +875,23 @@ h1 {
 }
 
 .parent-dashboard-learner-card.is-active {
-  border-color: rgba(99, 102, 241, 0.48);
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15);
+  background: #0f9f6e;
+  border-color: #34d399;
+  box-shadow:
+    0 0 0 2px rgba(52, 211, 153, 0.22),
+    0 16px 30px rgba(9, 23, 51, 0.28);
+  transform: translateY(-2px);
+}
+
+.parent-dashboard-learner-card.is-active strong,
+.parent-dashboard-learner-card.is-active small {
+  color: #ffffff;
+}
+
+.parent-dashboard-learner-card.is-active .parent-dashboard-learner-photo,
+.parent-dashboard-learner-card.is-active .parent-dashboard-learner-photo--placeholder {
+  border-color: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14);
 }
 
 .parent-dashboard-learner-photo,

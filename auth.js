@@ -540,7 +540,7 @@
 
     const { data } = await supabaseClient.auth.getSession();
     if (data?.session && !inRecoveryMode()) {
-      setAuthMessage("You are already signed in. Use Log In with another account, or open the app when you are ready.");
+      setAuthMessage("");
     }
 
     setRecoveryMode(inRecoveryMode());
