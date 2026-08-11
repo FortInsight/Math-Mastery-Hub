@@ -790,6 +790,26 @@ async function upsertSingleSupabaseChild(ownerId, child) {
     childId = rpcResponse.data || null;
   }
 
+  // Older deployments of the RPC did not persist child_username even though
+  // they returned success. Write and read it explicitly so a saved learner
+  // password cannot disappear after hydration or on another browser.
+  if (childId && payload.child_username) {
+    const credentialResponse = await client
+      .from("mastery_children")
+      .update({ child_username: payload.child_username })
+      .eq("id", childId)
+      .eq("parent_id", ownerId)
+      .select("id, child_username")
+      .single();
+
+    if (credentialResponse.error) {
+      throw credentialResponse.error;
+    }
+    if (credentialResponse.data?.child_username !== payload.child_username) {
+      throw new Error("The learner password could not be verified online.");
+    }
+  }
+
   child.supabaseChildId = childId;
   return child.supabaseChildId;
 }
@@ -965,6 +985,10 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
       linkedProfileId: childRow.linked_profile_id || fallbackChild?.linkedProfileId || null,
       passwordHash: remotePasswordHash || fallbackChild?.passwordHash || ""
     });
+    if (child.passwordHash) {
+      saveLearnerPasswordCredential(account.id, child.id, child.passwordHash, child.name);
+      saveLearnerPasswordCredential(account.id, childRow.id, child.passwordHash, child.name);
+    }
     const bundle = buildBundleFromProgressRows(
       progressByChildId.get(childRow.id)
       || progressByChildId.get(childRow.linked_profile_id)
@@ -4338,7 +4362,29 @@ async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this 
   const learner = account.children[childId];
   const savedCredential = getLearnerPasswordCredential(account.id, childId, learner.name);
   const cloudCredential = decodeLearnerCredential(learner.childUsername);
-  const recoveredCredential = learner.passwordHash || cloudCredential || savedCredential;
+  let recoveredCredential = learner.passwordHash || cloudCredential || savedCredential;
+
+  // A stale browser snapshot can predate a password saved from another device.
+  // Read the current child row once before claiming that no password exists.
+  if (!recoveredCredential && state.supabaseSessionActive) {
+    const client = getSupabaseClient();
+    const ownerId = state.supabaseUserId;
+    if (client && ownerId) {
+      let credentialQuery = client
+        .from("mastery_children")
+        .select("id, child_username")
+        .eq("parent_id", ownerId);
+      credentialQuery = learner.supabaseChildId
+        ? credentialQuery.eq("id", learner.supabaseChildId)
+        : credentialQuery.eq("child_name", learner.name);
+      const credentialResponse = await credentialQuery.maybeSingle();
+      if (!credentialResponse.error && credentialResponse.data) {
+        learner.supabaseChildId = credentialResponse.data.id || learner.supabaseChildId;
+        learner.childUsername = credentialResponse.data.child_username || learner.childUsername;
+        recoveredCredential = decodeLearnerCredential(credentialResponse.data.child_username);
+      }
+    }
+  }
   if (recoveredCredential && learner.passwordHash !== recoveredCredential) {
     learner.passwordHash = recoveredCredential;
     learner.childUsername = encodeLearnerCredential(recoveredCredential, learner.id);
@@ -5298,6 +5344,12 @@ async function handleSaveChildSettings() {
   if (sessionUser?.id) {
     try {
       await upsertSingleSupabaseChild(sessionUser.id, child);
+      if (child.passwordHash) {
+        saveLearnerPasswordCredential(account.id, child.id, child.passwordHash, child.name);
+        if (child.supabaseChildId) {
+          saveLearnerPasswordCredential(account.id, child.supabaseChildId, child.passwordHash, child.name);
+        }
+      }
       account.children[child.id] = child;
       profilesStore.profiles[account.id] = account;
       saveProfilesStore();
