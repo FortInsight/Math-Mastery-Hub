@@ -158,7 +158,9 @@ const state = {
   supabaseChildrenSyncInFlight: false,
   childViewMode: false,
   avatarLibraryOpen: false,
-  parentEditorChildId: null
+  parentEditorChildId: null,
+  parentGoalDraftKey: "",
+  parentGoalDraftDirty: false
 };
 
 const questionBankCache = new Map();
@@ -178,6 +180,7 @@ const AVATAR_MAX_SIZE = 160;
 const AVATAR_JPEG_QUALITY = 0.82;
 let supabaseWriteQueue = Promise.resolve();
 let lastProfilesStoreError = "";
+let profileMessageTimerId = null;
 
 function getSupabaseClient() {
   return window.masterySupabase?.client || null;
@@ -1333,6 +1336,10 @@ const elements = {
   heroPanelOverlay: document.getElementById("hero-panel-overlay"),
   toggleHeroPanelButton: document.getElementById("toggle-hero-panel-button"),
   heroPanelContent: document.getElementById("hero-panel-content"),
+  learnerGoalProgressWrap: document.getElementById("learner-goal-progress-wrap"),
+  learnerGoalProgress: document.getElementById("learner-goal-progress"),
+  learnerCourseAnalysisWrap: document.getElementById("learner-course-analysis-wrap"),
+  learnerCourseAnalysis: document.getElementById("learner-course-analysis"),
   toggleProfilePanelButton: document.getElementById("toggle-profile-panel-button"),
   profilePanelContent: document.getElementById("profile-panel-content"),
   toggleGradePanelButton: document.getElementById("toggle-grade-panel-button"),
@@ -1478,6 +1485,16 @@ function attachEvents() {
   bindClick(elements.clearAvatarButton, handleClearCurrentAvatar);
   bindClick(elements.avatarLibraryGrid, handleAvatarLibraryGridClick);
   bindClick(elements.parentGoalsSaveButton, handleSaveParentGoals);
+  bindChange(elements.parentGoalSubjectInput, handleParentGoalSubjectChange);
+  elements.parentGoalDailyMinutesInput?.addEventListener("input", () => {
+    state.parentGoalDraftDirty = true;
+  });
+  elements.parentGoalDailyLevelsInput?.addEventListener("input", () => {
+    state.parentGoalDraftDirty = true;
+  });
+  elements.topicSearchInput?.addEventListener("focus", clearEmailAutofillFromTopicSearch);
+  window.setTimeout(clearEmailAutofillFromTopicSearch, 250);
+  window.setTimeout(clearEmailAutofillFromTopicSearch, 1200);
   bindClick(elements.openAccountToolsButton, () => {
     if (!getCurrentAccount()) {
       // Guests don't have a local account to open â€” send them to the real (Supabase) sign-in
@@ -1532,6 +1549,22 @@ function attachEvents() {
   window.addEventListener("beforeunload", flushStudyTime);
 }
 
+function clearEmailAutofillFromTopicSearch() {
+  const input = elements.topicSearchInput;
+  if (!input) {
+    return;
+  }
+
+  const value = String(input.value || "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    return;
+  }
+
+  input.value = "";
+  state.searchQuery = "";
+  renderTopicSearchResults();
+}
+
 
 function toggleProfilePanel() {
   const isHidden = elements.profilePanelContent.classList.toggle("hidden");
@@ -1581,7 +1614,9 @@ function setHeroPanelVisible(visible) {
     return;
   }
   elements.heroPanelContent.classList.toggle("hidden", !visible);
-  elements.toggleHeroPanelButton.textContent = visible ? "Hide Performance" : "Show Performance";
+  elements.toggleHeroPanelButton.textContent = visible
+    ? "Hide Performance"
+    : state.childViewMode ? "View Performance" : "Show Performance";
   elements.toggleHeroPanelButton.setAttribute("aria-expanded", String(visible));
 }
 
@@ -1638,12 +1673,14 @@ function setChildViewMode(enabled, { allowGradeChange = false } = {}) {
   // signs in and chooses "I'm a Learner" for themselves, they pick their own grade directly, so
   // allowGradeChange keeps the grade picker visible in that one case.
   elements.gradePanelSection?.classList.toggle("hidden", enabled && !allowGradeChange);
-  // The performance/activity panel is progress-tracking for parents, not something a kid needs
-  // to see while practicing. Force it closed and hide the toggle entirely in child view.
+  // Learners may view only their own activity. Parent-only family controls remain hidden.
   if (enabled) {
     setHeroPanelVisible(false);
   }
-  elements.toggleHeroPanelButton?.classList.toggle("hidden", enabled);
+  elements.toggleHeroPanelButton?.classList.remove("hidden");
+  if (elements.toggleHeroPanelButton) {
+    elements.toggleHeroPanelButton.textContent = enabled ? "View Performance" : "Show Performance";
+  }
   renderProfilePanel();
 }
 
@@ -4814,22 +4851,19 @@ function renderParentDashboard() {
   renderMiniActivityChart(elements.parentDashboardChart, activeChild.studyTime || createEmptyStudyTime(), activeChild.scoreHistory || []);
   renderSubjectProgressChart(elements.parentGoalSubjectChart, subjectSummary);
 
-  syncInputValueIfNotFocused(elements.parentGoalDailyMinutesInput, Number(selectedGoal.dailyMinutes || 0));
-  syncInputValueIfNotFocused(
-    elements.parentGoalSubjectInput,
-    selectedSubject
-  );
-  syncInputValueIfNotFocused(elements.parentGoalDailyLevelsInput, Number(selectedGoal.dailyLevels || 0));
+  const goalDraftKey = `${activeChild.id}:${selectedSubject}`;
+  if (state.parentGoalDraftKey !== goalDraftKey || !state.parentGoalDraftDirty) {
+    syncInputValueIfNotFocused(elements.parentGoalDailyMinutesInput, Number(selectedGoal.dailyMinutes || 0));
+    syncInputValueIfNotFocused(elements.parentGoalDailyLevelsInput, Number(selectedGoal.dailyLevels || 0));
+    state.parentGoalDraftKey = goalDraftKey;
+  }
+  syncInputValueIfNotFocused(elements.parentGoalSubjectInput, selectedSubject);
   if (elements.parentGoalEditorName) {
     elements.parentGoalEditorName.textContent = `Editing goals for: ${activeChild.name}`;
   }
   if (elements.parentGoalEditorCurrent) {
     elements.parentGoalEditorCurrent.textContent = `Current goals: ${formatSubjectGoalSummary("Maths", mathGoal)} | ${formatSubjectGoalSummary("English", englishGoal)}`;
   }
-  if (elements.parentGoalsApplyAllInput) {
-    elements.parentGoalsApplyAllInput.checked = false;
-  }
-
   if (elements.parentGoalMathMinutesStatus) {
     elements.parentGoalMathMinutesStatus.textContent = mathGoal.enabled
       ? `${todayMathMinutes}m / ${Number(mathGoal.dailyMinutes || 0)}m`
@@ -4918,6 +4952,29 @@ function renderParentDashboard() {
   }
 }
 
+function handleParentGoalSubjectChange() {
+  const account = getCurrentAccount();
+  const activeChild = account?.activeChildId ? account.children?.[account.activeChildId] : null;
+  if (!activeChild || account?.type !== "parent" || state.childViewMode) {
+    return;
+  }
+
+  ensureLearnerShape(activeChild);
+  const selectedSubject = elements.parentGoalSubjectInput?.value === "english" ? "english" : "math";
+  activeChild.goals.selectedSubject = selectedSubject;
+  state.parentGoalDraftKey = `${activeChild.id}:${selectedSubject}`;
+  state.parentGoalDraftDirty = false;
+  const selectedGoal = getLearnerGoalBucket(activeChild.goals, selectedSubject);
+  if (elements.parentGoalDailyMinutesInput) {
+    elements.parentGoalDailyMinutesInput.value = String(selectedGoal.dailyMinutes || 0);
+  }
+  if (elements.parentGoalDailyLevelsInput) {
+    elements.parentGoalDailyLevelsInput.value = String(selectedGoal.dailyLevels || 0);
+  }
+  profilesStore.profiles[account.id] = account;
+  saveProfilesStore();
+}
+
 function handleSaveParentGoals() {
   const account = getCurrentAccount();
   if (!account || account.type !== "parent" || state.childViewMode) {
@@ -4958,6 +5015,8 @@ function handleSaveParentGoals() {
 
   profilesStore.profiles[account.id] = account;
   saveProfilesStore();
+  state.parentGoalDraftKey = `${activeChild.id}:${subjectFocus === "english" ? "english" : "math"}`;
+  state.parentGoalDraftDirty = false;
   if (elements.parentGoalsApplyAllInput) {
     elements.parentGoalsApplyAllInput.checked = false;
   }
@@ -5616,6 +5675,14 @@ function showProfileMessage(message, type) {
     elements.globalProfileMessage.textContent = message;
     elements.globalProfileMessage.classList.remove("hidden");
   }
+  if (profileMessageTimerId) {
+    window.clearTimeout(profileMessageTimerId);
+  }
+  profileMessageTimerId = window.setTimeout(() => {
+    elements.profileMessage?.classList.add("hidden");
+    elements.globalProfileMessage?.classList.add("hidden");
+    profileMessageTimerId = null;
+  }, type === "error" ? 6500 : 4000);
 }
 
 function setChildPhotoPreview(src) {
@@ -6071,6 +6138,7 @@ function getLearnerPasswordCredential(accountId, childId, learnerName = "") {
   const normalizedName = String(learnerName || "").trim().toLowerCase();
   return credentials[`${accountId}:${childId}`]
     || (normalizedName ? credentials[`${accountId}:name:${normalizedName}`] : "")
+    || (normalizedName ? credentials[`learner:name:${normalizedName}`] : "")
     || "";
 }
 
@@ -6083,6 +6151,7 @@ function saveLearnerPasswordCredential(accountId, childId, passwordHash, learner
   const normalizedName = String(learnerName || "").trim().toLowerCase();
   if (normalizedName) {
     credentials[`${accountId}:name:${normalizedName}`] = passwordHash;
+    credentials[`learner:name:${normalizedName}`] = passwordHash;
   }
   localStorage.setItem(learnerPasswordCredentialKey, JSON.stringify(credentials));
 }
@@ -6799,6 +6868,111 @@ function renderHeroActivity() {
       `;
     })
     .join("");
+
+  renderLearnerCourseAnalysis(profile);
+  renderLearnerGoalProgress(profile);
+}
+
+function renderLearnerGoalProgress(profile) {
+  if (!elements.learnerGoalProgressWrap || !elements.learnerGoalProgress) {
+    return;
+  }
+
+  const account = getCurrentAccount();
+  const learnerCanView = Boolean(profile) && (account?.type === "learner" || state.childViewMode);
+  elements.learnerGoalProgressWrap.classList.toggle("hidden", !learnerCanView);
+  if (!learnerCanView) {
+    elements.learnerGoalProgress.innerHTML = "";
+    return;
+  }
+
+  ensureLearnerShape(profile);
+  const mathGoal = getLearnerGoalBucket(profile.goals, "math");
+  const englishGoal = getLearnerGoalBucket(profile.goals, "english");
+  const rows = [
+    {
+      label: "Maths study time",
+      actual: Math.round(getTodaySubjectSeconds(profile.studyTime, "math", profile.scoreHistory || []) / 60),
+      target: mathGoal.dailyMinutes,
+      enabled: mathGoal.enabled,
+      suffix: "m"
+    },
+    {
+      label: "Maths units",
+      actual: getTodayCompletedLevelsBySubject(profile.scoreHistory || [], "math"),
+      target: mathGoal.dailyLevels,
+      enabled: mathGoal.enabled,
+      suffix: ""
+    },
+    {
+      label: "English study time",
+      actual: Math.round(getTodaySubjectSeconds(profile.studyTime, "english", profile.scoreHistory || []) / 60),
+      target: englishGoal.dailyMinutes,
+      enabled: englishGoal.enabled,
+      suffix: "m"
+    },
+    {
+      label: "English units",
+      actual: getTodayCompletedLevelsBySubject(profile.scoreHistory || [], "english"),
+      target: englishGoal.dailyLevels,
+      enabled: englishGoal.enabled,
+      suffix: ""
+    }
+  ].filter((row) => row.enabled);
+
+  if (!rows.length) {
+    elements.learnerGoalProgress.innerHTML = `<div class="history-empty">No daily goals have been set yet.</div>`;
+    return;
+  }
+
+  elements.learnerGoalProgress.innerHTML = rows.map((row) => `
+    <div class="goal-progress-block">
+      <div class="goal-progress-head">
+        <span>${row.label}</span>
+        <strong>${row.actual}${row.suffix} / ${row.target}${row.suffix}</strong>
+      </div>
+      <div class="goal-progress-track">
+        <div class="goal-progress-bar" style="width:${getGoalProgressPercent(row.actual, row.target)}%"></div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderLearnerCourseAnalysis(profile) {
+  if (!elements.learnerCourseAnalysisWrap || !elements.learnerCourseAnalysis) {
+    return;
+  }
+
+  const account = getCurrentAccount();
+  const learnerCanView = Boolean(profile) && (account?.type === "learner" || state.childViewMode);
+  elements.learnerCourseAnalysisWrap.classList.toggle("hidden", !learnerCanView);
+  if (!learnerCanView) {
+    elements.learnerCourseAnalysis.innerHTML = "";
+    return;
+  }
+
+  const analytics = getTopicAnalytics(profile);
+  if (!analytics.length) {
+    elements.learnerCourseAnalysis.innerHTML = `<div class="history-empty">Complete a level to see your course analysis here.</div>`;
+    return;
+  }
+
+  elements.learnerCourseAnalysis.innerHTML = `
+    <div class="parent-dashboard-analysis-table">
+      <div class="parent-dashboard-analysis-head">Course</div>
+      <div class="parent-dashboard-analysis-head">Grade</div>
+      <div class="parent-dashboard-analysis-head">Attempts</div>
+      <div class="parent-dashboard-analysis-head">Best Score</div>
+      <div class="parent-dashboard-analysis-head">Study Time</div>
+      ${analytics.map((item) => `
+        <div class="parent-dashboard-analysis-cell">${escapeHtml(item.title)}</div>
+        <div class="parent-dashboard-analysis-cell">Grade ${item.grade}</div>
+        <div class="parent-dashboard-analysis-cell">${item.attempts}</div>
+        <div class="parent-dashboard-analysis-cell">${item.bestScore}/${QUESTIONS_PER_LEVEL} (${item.bestPercentage}%)</div>
+        <div class="parent-dashboard-analysis-cell">${formatStudyTime(item.timeSeconds)}</div>
+      `).join("")}
+    </div>
+  `;
 }
 
 function getPastSevenDaysActivity(byDay, scoreHistory) {
