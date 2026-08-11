@@ -1338,6 +1338,8 @@ const elements = {
   heroPanelContent: document.getElementById("hero-panel-content"),
   learnerGoalProgressWrap: document.getElementById("learner-goal-progress-wrap"),
   learnerGoalProgress: document.getElementById("learner-goal-progress"),
+  learnerSubjectProgressWrap: document.getElementById("learner-subject-progress-wrap"),
+  learnerSubjectProgressChart: document.getElementById("learner-subject-progress-chart"),
   learnerCourseAnalysisWrap: document.getElementById("learner-course-analysis-wrap"),
   learnerCourseAnalysis: document.getElementById("learner-course-analysis"),
   toggleProfilePanelButton: document.getElementById("toggle-profile-panel-button"),
@@ -5246,7 +5248,7 @@ async function handleAddChild() {
   }
 }
 
-function handleSaveChildSettings() {
+async function handleSaveChildSettings() {
   const account = getCurrentAccount();
   const editorChildId = state.parentEditorChildId || elements.parentChildSelect?.value || "";
   if (!account || account.type !== "parent" || !editorChildId || !account.children?.[editorChildId]) {
@@ -5292,6 +5294,23 @@ function handleSaveChildSettings() {
     elements.childPasswordInput.value = "";
   }
 
+  const sessionUser = await getSupabaseSessionUser();
+  if (sessionUser?.id) {
+    try {
+      await upsertSingleSupabaseChild(sessionUser.id, child);
+      account.children[child.id] = child;
+      profilesStore.profiles[account.id] = account;
+      saveProfilesStore();
+    } catch (error) {
+      console.error("Saving learner settings online failed", error);
+      showProfileMessage(
+        `Saved ${child.name} on this browser, but the online save failed: ${error?.message || "Unknown error"}.`,
+        "error"
+      );
+      return;
+    }
+  }
+
   showProfileMessage(
     nextPassword
       ? `Saved learner settings and learner password for ${child.name}.`
@@ -5313,15 +5332,6 @@ function handleSaveChildSettings() {
     }, 2500);
   }
 
-  queueSupabaseWrite(async (_client, ownerId) => {
-    await syncParentChildrenOnline(account, {
-      silent: true,
-      sessionUser: {
-        id: ownerId,
-        email: state.supabaseUserEmail
-      }
-    });
-  });
 }
 
 async function handleDeleteChild() {
@@ -6883,12 +6893,21 @@ function renderLearnerGoalProgress(profile) {
   elements.learnerGoalProgressWrap.classList.toggle("hidden", !learnerCanView);
   if (!learnerCanView) {
     elements.learnerGoalProgress.innerHTML = "";
+    elements.learnerSubjectProgressWrap?.classList.add("hidden");
+    if (elements.learnerSubjectProgressChart) {
+      elements.learnerSubjectProgressChart.innerHTML = "";
+    }
     return;
   }
 
   ensureLearnerShape(profile);
   const mathGoal = getLearnerGoalBucket(profile.goals, "math");
   const englishGoal = getLearnerGoalBucket(profile.goals, "english");
+  if (elements.learnerSubjectProgressWrap && elements.learnerSubjectProgressChart) {
+    elements.learnerSubjectProgressWrap.classList.remove("hidden");
+    renderSubjectProgressChart(elements.learnerSubjectProgressChart, getSubjectProgressSummary(profile));
+  }
+
   const rows = [
     {
       label: "Maths study time",
@@ -6918,21 +6937,16 @@ function renderLearnerGoalProgress(profile) {
       enabled: englishGoal.enabled,
       suffix: ""
     }
-  ].filter((row) => row.enabled);
-
-  if (!rows.length) {
-    elements.learnerGoalProgress.innerHTML = `<div class="history-empty">No daily goals have been set yet.</div>`;
-    return;
-  }
+  ];
 
   elements.learnerGoalProgress.innerHTML = rows.map((row) => `
     <div class="goal-progress-block">
       <div class="goal-progress-head">
         <span>${row.label}</span>
-        <strong>${row.actual}${row.suffix} / ${row.target}${row.suffix}</strong>
+        <strong>${row.enabled ? `${row.actual}${row.suffix} / ${row.target}${row.suffix}` : "Not set"}</strong>
       </div>
       <div class="goal-progress-track">
-        <div class="goal-progress-bar" style="width:${getGoalProgressPercent(row.actual, row.target)}%"></div>
+        <div class="goal-progress-bar" style="width:${row.enabled ? getGoalProgressPercent(row.actual, row.target) : 0}%"></div>
       </div>
     </div>
   `).join("");

@@ -487,15 +487,7 @@
   // access is granted.
   async function handleAppPage() {
     if (!authEnabled()) {
-      if (isHostedDeployment()) {
-        goToLogin();
-        return;
-      }
-      if (!hasLocalAccessSession()) {
-        goToLogin();
-        return;
-      }
-      grantAppAccess();
+      goToLogin();
       return;
     }
 
@@ -508,11 +500,7 @@
           goToLogin();
           return;
         }
-        if (isHostedDeployment() || !hasLocalAccessSession()) {
-          goToLogin();
-          return;
-        }
-        grantAppAccess();
+        goToLogin();
         return;
       }
 
@@ -535,11 +523,7 @@
       console.error("Session check failed", error);
       // On the hosted app, always fall back to the real login page instead of browser-only
       // profiles, so learner lists and progress stay shared across browsers/devices.
-      if (isHostedDeployment() || !hasLocalAccessSession()) {
-        goToLogin();
-      } else {
-        grantAppAccess();
-      }
+      goToLogin();
     }
   }
 

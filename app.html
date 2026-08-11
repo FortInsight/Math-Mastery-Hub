@@ -264,6 +264,13 @@
           </div>
           <div id="learner-goal-progress"></div>
         </div>
+        <div id="learner-subject-progress-wrap" class="hero-chart-wrap hidden">
+          <div class="hero-chart-heading">
+            <span>Subject Progress</span>
+            <small>Levels completed, study time, and average score</small>
+          </div>
+          <div id="learner-subject-progress-chart" class="subject-progress-chart"></div>
+        </div>
         <div id="learner-course-analysis-wrap" class="hero-chart-wrap hidden">
           <div class="hero-chart-heading">
             <span>Course Analysis</span>
@@ -661,9 +668,9 @@
     </div>
   </div>
 
-  <script src="auth.js"></script>
+  <script src="auth.js?v=20260810-session-guard"></script>
   <script src="avatar-library.js"></script>
-  <script src="app.js?v=20260810-search-autofill-fix"></script>
+  <script src="app.js?v=20260810-learner-performance-fix"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       window.addEventListener("load", function () {
@@ -671,7 +678,7 @@
         // HTTP layer (which can otherwise last up to 24 hours) — without this, bumping
         // CACHE_NAME inside the file doesn't help because the browser never even re-fetches the
         // file to see the change, especially on installed/home-screen PWAs.
-        navigator.serviceWorker.register("./service-worker.js?v=35", { updateViaCache: "none" });
+        navigator.serviceWorker.register("./service-worker.js?v=36", { updateViaCache: "none" });
       });
       // When a newer service worker takes over, it tells open windows to reload themselves —
       // this is what actually gets an installed/home-screen app off a stuck old version.
