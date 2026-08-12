@@ -49,6 +49,15 @@ alter table public.mastery_profiles add column if not exists updated_at timestam
 
 alter table public.mastery_children add column if not exists child_email text;
 alter table public.mastery_children add column if not exists child_username text;
+alter table public.mastery_children add column if not exists learner_password_hash text;
+
+-- Move credentials saved by older app versions out of the username column.
+update public.mastery_children
+set
+  learner_password_hash = split_part(substring(child_username from 9), ':', 1),
+  child_username = null
+where child_username like 'pwdhash:%'
+  and coalesce(learner_password_hash, '') = '';
 alter table public.mastery_children add column if not exists linked_profile_id uuid references public.mastery_profiles(id) on delete set null;
 alter table public.mastery_children add column if not exists avatar_data_url text;
 

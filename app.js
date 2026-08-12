@@ -423,7 +423,7 @@ async function recoverParentChildrenFromSupabase(account) {
   try {
     const { data: childRows, error } = await client
       .from("mastery_children")
-      .select("id, parent_id, child_name, child_email, child_username, linked_profile_id, avatar_data_url, grade")
+      .select("id, parent_id, child_name, child_email, child_username, learner_password_hash, linked_profile_id, avatar_data_url, grade")
       .eq("parent_id", state.supabaseUserId);
 
     if (error) {
@@ -437,7 +437,7 @@ async function recoverParentChildrenFromSupabase(account) {
     childRows.forEach((childRow) => {
       const childLocalId = buildProfileId(childRow.child_name);
       const existingChild = account.children[childLocalId];
-      const remotePasswordHash = decodeLearnerCredential(childRow.child_username);
+      const remotePasswordHash = childRow.learner_password_hash || decodeLearnerCredential(childRow.child_username);
       const nextChild = createLearnerRecord({
         id: childLocalId,
         name: childRow.child_name,
@@ -608,7 +608,7 @@ async function syncSupabaseChildren(account, ownerId) {
 
   const { data: existingRows, error } = await client
     .from("mastery_children")
-    .select("id, child_name, child_email, child_username, linked_profile_id, avatar_data_url, grade")
+    .select("id, child_name, child_email, child_username, learner_password_hash, linked_profile_id, avatar_data_url, grade")
     .eq("parent_id", ownerId);
 
   if (error) {
@@ -742,7 +742,8 @@ async function upsertSingleSupabaseChild(ownerId, child) {
     parent_id: ownerId,
     child_name: child.name,
     child_email: child.childEmail || null,
-    child_username: child.childUsername || null,
+    child_username: child.childUsername && !decodeLearnerCredential(child.childUsername) ? child.childUsername : null,
+    learner_password_hash: child.passwordHash || decodeLearnerCredential(child.childUsername) || null,
     linked_profile_id: child.linkedProfileId || null,
     avatar_data_url: child.avatarDataUrl || null,
     grade: Number(child.grade)
@@ -793,19 +794,19 @@ async function upsertSingleSupabaseChild(ownerId, child) {
   // Older deployments of the RPC did not persist child_username even though
   // they returned success. Write and read it explicitly so a saved learner
   // password cannot disappear after hydration or on another browser.
-  if (childId && payload.child_username) {
+  if (childId && payload.learner_password_hash) {
     const credentialResponse = await client
       .from("mastery_children")
-      .update({ child_username: payload.child_username })
+      .update({ learner_password_hash: payload.learner_password_hash })
       .eq("id", childId)
       .eq("parent_id", ownerId)
-      .select("id, child_username")
+      .select("id, learner_password_hash")
       .single();
 
     if (credentialResponse.error) {
       throw credentialResponse.error;
     }
-    if (credentialResponse.data?.child_username !== payload.child_username) {
+    if (credentialResponse.data?.learner_password_hash !== payload.learner_password_hash) {
       throw new Error("The learner password could not be verified online.");
     }
   }
@@ -973,7 +974,7 @@ function createParentAccountFromRemote(profileId, profileRow, childrenRows, prog
     const childLocalId = buildProfileId(childRow.child_name);
     remoteNames.add(childRow.child_name.trim().toLowerCase());
     const fallbackChild = fallbackAccount?.children?.[childLocalId];
-    const remotePasswordHash = decodeLearnerCredential(childRow.child_username);
+    const remotePasswordHash = childRow.learner_password_hash || decodeLearnerCredential(childRow.child_username);
     const child = createLearnerRecord({
       id: childLocalId,
       name: childRow.child_name,
@@ -4372,7 +4373,7 @@ async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this 
     if (client && ownerId) {
       let credentialQuery = client
         .from("mastery_children")
-        .select("id, child_username")
+        .select("id, child_username, learner_password_hash")
         .eq("parent_id", ownerId);
       credentialQuery = learner.supabaseChildId
         ? credentialQuery.eq("id", learner.supabaseChildId)
@@ -4381,13 +4382,16 @@ async function verifyLearnerPasswordForSwitch(childId, actionLabel = "open this 
       if (!credentialResponse.error && credentialResponse.data) {
         learner.supabaseChildId = credentialResponse.data.id || learner.supabaseChildId;
         learner.childUsername = credentialResponse.data.child_username || learner.childUsername;
-        recoveredCredential = decodeLearnerCredential(credentialResponse.data.child_username);
+        recoveredCredential = credentialResponse.data.learner_password_hash
+          || decodeLearnerCredential(credentialResponse.data.child_username);
       }
     }
   }
   if (recoveredCredential && learner.passwordHash !== recoveredCredential) {
     learner.passwordHash = recoveredCredential;
-    learner.childUsername = encodeLearnerCredential(recoveredCredential, learner.id);
+    learner.childUsername = learner.childUsername && !decodeLearnerCredential(learner.childUsername)
+      ? learner.childUsername
+      : "";
     account.children[childId] = learner;
     profilesStore.profiles[account.id] = account;
     saveProfilesStore();
@@ -5318,7 +5322,9 @@ async function handleSaveChildSettings() {
   child.avatarDataUrl = nextAvatarDataUrl;
   if (nextPassword) {
     child.passwordHash = hashPassword(nextPassword);
-    child.childUsername = encodeLearnerCredential(child.passwordHash, child.id);
+    child.childUsername = child.childUsername && !decodeLearnerCredential(child.childUsername)
+      ? child.childUsername
+      : "";
     saveLearnerPasswordCredential(account.id, child.id, child.passwordHash, child.name);
   }
 

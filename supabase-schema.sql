@@ -43,6 +43,15 @@ alter table public.mastery_children add column if not exists avatar_data_url tex
 -- (see app.js deriveChildEmailFromUsername) so it can still use normal Supabase email/password
 -- auth under the hood. Usernames must be globally unique because they map 1:1 to that hidden email.
 alter table public.mastery_children add column if not exists child_username text;
+alter table public.mastery_children add column if not exists learner_password_hash text;
+
+-- Move credentials saved by older app versions out of the username column.
+update public.mastery_children
+set
+  learner_password_hash = split_part(substring(child_username from 9), ':', 1),
+  child_username = null
+where child_username like 'pwdhash:%'
+  and coalesce(learner_password_hash, '') = '';
 
 create unique index if not exists mastery_children_child_email_unique
 on public.mastery_children (parent_id, lower(child_email))
