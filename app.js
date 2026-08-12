@@ -5300,7 +5300,10 @@ async function handleAddChild() {
 
 async function handleSaveChildSettings() {
   const account = getCurrentAccount();
-  const editorChildId = state.parentEditorChildId || elements.parentChildSelect?.value || "";
+  const selectedChildId = elements.parentChildSelect?.value || "";
+  const editorChildId = selectedChildId && account?.children?.[selectedChildId]
+    ? selectedChildId
+    : state.parentEditorChildId || "";
   if (!account || account.type !== "parent" || !editorChildId || !account.children?.[editorChildId]) {
     showProfileMessage("Choose a child first before saving learner settings.", "error");
     return;
@@ -5311,6 +5314,7 @@ async function handleSaveChildSettings() {
   const nextGrade = Number(elements.childGradeInput?.value || child.grade || state.selectedGrade || 1);
   const nextAvatarDataUrl = elements.childPhotoPreview?.getAttribute("src") || "";
   const nextPassword = elements.childPasswordInput?.value || "";
+  state.parentEditorChildId = editorChildId;
 
   if (!nextName) {
     showProfileMessage("Enter the child's name before saving.", "error");
@@ -5326,6 +5330,10 @@ async function handleSaveChildSettings() {
       ? child.childUsername
       : "";
     saveLearnerPasswordCredential(account.id, child.id, child.passwordHash, child.name);
+    if (getLearnerPasswordCredential(account.id, child.id, child.name) !== child.passwordHash) {
+      showProfileMessage(`Could not verify ${child.name}'s learner password in this browser. Please try again.`, "error");
+      return;
+    }
   }
 
   account.children[child.id] = child;
@@ -5367,6 +5375,22 @@ async function handleSaveChildSettings() {
       );
       return;
     }
+  }
+
+  // A background cloud refresh may complete during this save. Reapply the confirmed
+  // credential to the current learner before reporting that the password was saved.
+  const currentAccount = getCurrentAccount();
+  const currentChild = currentAccount?.children?.[editorChildId];
+  if (nextPassword && currentChild) {
+    currentChild.passwordHash = child.passwordHash;
+    currentChild.supabaseChildId = child.supabaseChildId || currentChild.supabaseChildId;
+    currentAccount.children[editorChildId] = currentChild;
+    profilesStore.profiles[currentAccount.id] = currentAccount;
+    saveLearnerPasswordCredential(currentAccount.id, editorChildId, child.passwordHash, currentChild.name);
+    if (currentChild.supabaseChildId) {
+      saveLearnerPasswordCredential(currentAccount.id, currentChild.supabaseChildId, child.passwordHash, currentChild.name);
+    }
+    saveProfilesStore();
   }
 
   showProfileMessage(
