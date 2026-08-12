@@ -3054,12 +3054,19 @@ function getQuestionBank(grade, categoryId, patTabId = null) {
     }
 
     if (!question) {
-      const fallback = buildEmergencyQuestion(category, grade, difficulty, index);
-      const signature = normalizeQuestionPrompt(fallback.prompt);
-      question = seenPrompts.has(signature)
-        ? uniquifyQuestionPrompt(fallback, index + 2)
-        : fallback;
-      seenPrompts.add(normalizeQuestionPrompt(question.prompt));
+      for (let fallbackAttempt = 0; fallbackAttempt < 200; fallbackAttempt += 1) {
+        const fallback = buildEmergencyQuestion(category, grade, difficulty, index + fallbackAttempt * QUESTIONS_PER_TOPIC);
+        const signature = normalizeQuestionPrompt(fallback.prompt);
+        if (signature && !seenPrompts.has(signature) && isValidQuestion(fallback)) {
+          question = fallback;
+          seenPrompts.add(signature);
+          break;
+        }
+      }
+    }
+
+    if (!question) {
+      throw new Error(`Unable to build a unique question for ${category.id} at index ${index}.`);
     }
 
     bank.push(question);
@@ -3075,23 +3082,11 @@ function getQuestionsForLevel(grade, categoryId, patTabId = null, level = 1) {
     return levelQuestionCache.get(cacheKey);
   }
 
-  const category = getCategoryById(categoryId, grade);
-  if (!category || !questionFactories[category.factory]) {
-    return [];
-  }
-
-  const seedBase = hashCode(cacheKey);
-  const difficulty = level;
-  const bank = Array.from({ length: QUESTIONS_PER_LEVEL }, (_, questionIndex) => {
-    const absoluteIndex = ((level - 1) * QUESTIONS_PER_LEVEL) + questionIndex;
-    const rng = mulberry32(seedBase + questionIndex * 97 + 1);
-    return safeGenerateQuestion(category, rng, grade, patTabId, absoluteIndex, difficulty)
-      || buildEmergencyQuestion(category, grade, difficulty, absoluteIndex);
-  });
-
-  const uniqueBank = enforceUniqueQuestionPrompts(bank);
-  levelQuestionCache.set(cacheKey, uniqueBank);
-  return uniqueBank;
+  const topicBank = getQuestionBank(grade, categoryId, patTabId);
+  const startIndex = (level - 1) * QUESTIONS_PER_LEVEL;
+  const levelQuestions = topicBank.slice(startIndex, startIndex + QUESTIONS_PER_LEVEL);
+  levelQuestionCache.set(cacheKey, levelQuestions);
+  return levelQuestions;
 }
 
 function renderTopicSearch() {
@@ -3445,6 +3440,10 @@ function isValidQuestion(question) {
     return false;
   }
 
+  if (/^practice\s+version\s+\d+\s*:/i.test(question.prompt.trim())) {
+    return false;
+  }
+
   if (hasBrokenQuestionText(question.prompt) || hasBrokenQuestionText(question.explanation) || hasBrokenQuestionText(question.hint)) {
     return false;
   }
@@ -3526,14 +3525,31 @@ function buildEnglishEmergencyQuestion(category, grade, difficulty, index) {
   const rng = mulberry32(hashCode(`english-fallback-${category.id}-${grade}-${difficulty}-${index}`));
 
   if (category.factory === "englishGrammar") {
-    const sets = [
-      ["The student explains the answer clearly.", "The student explain the answer clearly.", "The student explaining the answer clearly.", "The student explains the answer clearly"],
-      ["The musicians practise after school.", "The musicians practises after school.", "The musicians practising after school.", "The musicians practise after school"],
-      ["Maya writes a careful conclusion.", "Maya write a careful conclusion.", "Maya writing a careful conclusion.", "Maya writes a careful conclusion"]
+    const subjects = [
+      ["The student", "explains", "explain"], ["The musicians", "practise", "practises"],
+      ["Maya", "writes", "write"], ["The teachers", "prepare", "prepares"],
+      ["My neighbour", "walks", "walk"], ["The athletes", "train", "trains"],
+      ["Each volunteer", "brings", "bring"], ["The puppy", "chases", "chase"],
+      ["Those machines", "operate", "operates"], ["Our captain", "encourages", "encourage"],
+      ["The scientists", "record", "records"], ["Every applicant", "submits", "submit"],
+      ["The actors", "rehearse", "rehearses"], ["Her brother", "studies", "study"],
+      ["The neighbours", "share", "shares"]
     ];
-    const [correct, ...distractors] = sets[index % sets.length];
+    const endings = [
+      "the answer clearly", "after school", "a careful conclusion", "before the deadline", "every morning"
+    ];
+    const subjectIndex = index % subjects.length;
+    const endingIndex = Math.floor(index / subjects.length) % endings.length;
+    const [subject, correctVerb, wrongVerb] = subjects[subjectIndex];
+    const ending = endings[endingIndex];
+    const correct = `${subject} ${correctVerb} ${ending}.`;
+    const distractors = [
+      `${subject} ${wrongVerb} ${ending}.`,
+      `${subject} ${correctVerb} ${ending}`,
+      `${subject} ${correctVerb} ${ending},`
+    ];
     return {
-      prompt: "Which sentence uses correct subject-verb agreement and punctuation?",
+      prompt: `Which option correctly edits this sentence: “${subject} ${wrongVerb} ${ending}”?`,
       ...buildOptions(correct, distractors, rng),
       explanation: `${correct} has a verb that agrees with its subject and ends with correct punctuation.`,
       hint: "Match the verb to the subject, then check the ending punctuation."
@@ -3546,11 +3562,23 @@ function buildEnglishEmergencyQuestion(category, grade, difficulty, index) {
       ["vivid", "clear and detailed", "weak and uncertain", "silent and empty", "ordinary and dull"],
       ["reluctant", "unwilling or hesitant", "eager and ready", "careless", "completely certain"],
       ["credible", "believable and trustworthy", "funny", "difficult to hear", "very colourful"],
-      ["infer", "reach a conclusion from evidence", "copy every word", "ask a question", "forget a detail"]
+      ["infer", "reach a conclusion from evidence", "copy every word", "ask a question", "forget a detail"],
+      ["analyze", "examine carefully", "ignore completely", "memorize quickly", "decorate brightly"],
+      ["contrast", "show important differences", "repeat exactly", "hide evidence", "combine randomly"],
+      ["significant", "important or meaningful", "tiny and invisible", "accidental", "ordinary"],
+      ["justify", "support with reasons or evidence", "guess without thinking", "shorten a sentence", "change the topic"],
+      ["coherent", "logical and well connected", "very humorous", "brief but incomplete", "copied word for word"],
+      ["precise", "exact and specific", "uncertain", "overly emotional", "unrelated"],
+      ["evaluate", "judge using criteria", "list alphabetically", "read aloud", "translate"],
+      ["perspective", "a particular point of view", "a proven fact", "a spelling rule", "a final paragraph"],
+      ["relevant", "closely connected to the topic", "difficult to pronounce", "written in the past", "always incorrect"],
+      ["synthesize", "combine ideas into a new understanding", "separate every detail", "copy one source", "remove all evidence"]
     ];
+    const contexts = ["an academic article", "a class discussion", "a research report", "a persuasive essay", "a textbook passage"];
     const [word, correct, ...distractors] = words[index % words.length];
+    const context = contexts[Math.floor(index / words.length) % contexts.length];
     return {
-      prompt: `What does “${word}” mean in academic reading?`,
+      prompt: `In ${context}, what does “${word}” mean?`,
       ...buildOptions(correct, distractors, rng),
       explanation: `“${word}” means ${correct}.`,
       hint: "Choose the meaning that would fit the word in a formal sentence."
@@ -3558,27 +3586,31 @@ function buildEnglishEmergencyQuestion(category, grade, difficulty, index) {
   }
 
   if (category.factory === "englishReading") {
-    const settings = ["school library", "community garden", "science fair", "local park", "student newspaper"];
+    const settings = ["school library", "community garden", "science fair", "local park", "student newspaper", "food bank", "music club", "recycling program", "sports team", "history museum", "animal shelter", "coding club", "neighbourhood trail", "school council", "theatre group"];
+    const challenges = ["solved a shared problem", "organized a successful event", "improved an important service", "completed a difficult project", "helped their community"];
     const setting = settings[index % settings.length];
-    const correct = `The ${setting} improved because people worked together.`;
+    const challenge = challenges[Math.floor(index / settings.length) % challenges.length];
+    const correct = `People working together ${challenge} at the ${setting}.`;
     return {
-      prompt: `Students noticed a problem in the ${setting}, made a plan, and shared the work until it improved. Which statement best expresses the main idea?`,
+      prompt: `At the ${setting}, students made a plan, divided the work, and ${challenge}. Which statement best expresses the main idea?`,
       ...buildOptions(correct, [
-        `The ${setting} closed because nobody cared about it.`,
-        `Only one person was allowed to use the ${setting}.`,
-        `The ${setting} was replaced by a shopping centre.`
+        `The ${setting} closed because nobody participated.`,
+        `One person completed all the work without help.`,
+        `The students abandoned their plan immediately.`
       ], rng),
       explanation: "All the important details show cooperation leading to improvement.",
       hint: "Choose the statement supported by all the important details."
     };
   }
 
-  const topics = ["school clubs", "healthy lunches", "public libraries", "recycling", "team sports"];
+  const topics = ["school clubs", "healthy lunches", "public libraries", "recycling", "team sports", "homework routines", "community gardens", "school uniforms", "digital citizenship", "volunteering", "arts education", "public transit", "reading programs", "outdoor learning", "student leadership"];
+  const purposes = ["an informative paragraph", "a persuasive paragraph", "a school newsletter", "a formal report", "a presentation introduction"];
   const topic = topics[index % topics.length];
+  const purpose = purposes[Math.floor(index / topics.length) % purposes.length];
   const opening = `${topic.charAt(0).toUpperCase()}${topic.slice(1)}`;
   const correct = `${opening} benefit students by building useful skills and stronger communities.`;
   return {
-    prompt: `Which is the strongest topic sentence for a paragraph about ${topic}?`,
+    prompt: `Which is the strongest topic sentence for ${purpose} about ${topic}?`,
     ...buildOptions(correct, [
       `${opening} are things.`,
       `This paragraph will talk about ${topic}.`,
@@ -3785,7 +3817,7 @@ function uniquifyQuestionPrompt(question, occurrence) {
   // text twice in a row (that would stall the caller's dedup loop forever).
   const variantBuilder = replacements[Math.min(occurrence - 1, replacements.length - 1)];
   const variant = variantBuilder(prompt);
-  const nextPrompt = variant !== prompt ? variant : `Practice version ${occurrence}: ${prompt}`;
+  const nextPrompt = variant !== prompt ? variant : prompt;
 
   return {
     ...question,
