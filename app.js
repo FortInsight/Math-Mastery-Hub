@@ -149,6 +149,8 @@ const state = {
   currentProfileId: null,
   studyTimerId: null,
   lastStudyTickAt: 0,
+  lastStudyActivityAt: 0,
+  studyContextSignature: "",
   isStartingLevel: false,
   supabaseUserId: null,
   supabaseUserEmail: "",
@@ -172,6 +174,8 @@ const guestStoreKey = "maths-mastery-guest-v1";
 const guestStore = loadGuestStore();
 const learnerSessionKey = "maths-mastery-learner-session-v1";
 const studyTickMs = 1000;
+const studyIdleLimitMs = 60000;
+const maximumStudyTickMs = 5000;
 const LEVEL_COUNT = 5;
 const QUESTIONS_PER_LEVEL = 15;
 const QUESTIONS_PER_TOPIC = LEVEL_COUNT * QUESTIONS_PER_LEVEL;
@@ -1519,9 +1523,12 @@ function attachEvents() {
   elements.parentGoalDailyLevelsInput?.addEventListener("input", () => {
     state.parentGoalDraftDirty = true;
   });
-  elements.topicSearchInput?.addEventListener("focus", clearEmailAutofillFromTopicSearch);
+  elements.topicSearchInput?.addEventListener("pointerdown", unlockTopicSearchInput);
+  elements.topicSearchInput?.addEventListener("focus", unlockTopicSearchInput);
   window.setTimeout(clearEmailAutofillFromTopicSearch, 250);
   window.setTimeout(clearEmailAutofillFromTopicSearch, 1200);
+  window.setTimeout(clearEmailAutofillFromTopicSearch, 3000);
+  window.addEventListener("pageshow", clearEmailAutofillFromTopicSearch);
   bindClick(elements.openAccountToolsButton, () => {
     if (!getCurrentAccount()) {
       // Guests don't have a local account to open â€” send them to the real (Supabase) sign-in
@@ -1572,6 +1579,9 @@ function attachEvents() {
   elements.parentDashboardLearnerGrid?.addEventListener("click", handleParentDashboardLearnerClick);
   bindClick(elements.toggleSearchPanelButton, toggleSearchPanel);
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener("pointerdown", markStudyActivity, { passive: true });
+  document.addEventListener("keydown", markStudyActivity);
+  document.addEventListener("input", markStudyActivity);
   window.addEventListener("online", handleBrowserOnline);
   window.addEventListener("beforeunload", flushStudyTime);
 }
@@ -1590,6 +1600,15 @@ function clearEmailAutofillFromTopicSearch() {
   input.value = "";
   state.searchQuery = "";
   renderTopicSearchResults();
+}
+
+function unlockTopicSearchInput() {
+  const input = elements.topicSearchInput;
+  if (!input) {
+    return;
+  }
+  clearEmailAutofillFromTopicSearch();
+  input.readOnly = false;
 }
 
 
@@ -6790,13 +6809,35 @@ function getTotalStudySeconds(studyTime) {
 }
 
 function isStudySessionActive() {
-  return document.visibilityState === "visible" && Boolean(state.selectedCategoryId);
+  const quizIsVisible = Boolean(elements.quizSection && !elements.quizSection.classList.contains("hidden"));
+  const recentlyActive = Date.now() - state.lastStudyActivityAt <= studyIdleLimitMs;
+  return document.visibilityState === "visible"
+    && document.hasFocus()
+    && quizIsVisible
+    && state.currentQuestions.length > 0
+    && Boolean(state.selectedCategoryId)
+    && recentlyActive;
+}
+
+function getStudyContextSignature() {
+  const account = getCurrentAccount();
+  const profile = getCurrentProfile();
+  const learnerId = profile?.id || account?.id || "guest";
+  const activeContext = getActiveCategoryContext();
+  return `${learnerId}|${state.selectedGrade}|${activeContext.key || ""}|${state.selectedLevel || ""}`;
+}
+
+function markStudyActivity() {
+  state.lastStudyActivityAt = Date.now();
 }
 
 function handleVisibilityChange() {
   if (document.visibilityState !== "visible") {
     flushStudyTime();
+    return;
   }
+  state.lastStudyTickAt = Date.now();
+  markStudyActivity();
 }
 
 function startStudyTimer() {
@@ -6805,10 +6846,20 @@ function startStudyTimer() {
   }
 
   state.lastStudyTickAt = Date.now();
+  state.lastStudyActivityAt = Date.now();
+  state.studyContextSignature = getStudyContextSignature();
   state.studyTimerId = window.setInterval(() => {
     const now = Date.now();
-    const elapsedMs = now - state.lastStudyTickAt;
+    const elapsedMs = Math.min(now - state.lastStudyTickAt, maximumStudyTickMs);
     state.lastStudyTickAt = now;
+
+    const currentSignature = getStudyContextSignature();
+    if (state.studyContextSignature !== currentSignature) {
+      state.studyContextSignature = currentSignature;
+      state.lastStudyActivityAt = now;
+      renderStudyTime();
+      return;
+    }
 
     if (!isStudySessionActive()) {
       renderStudyTime();
@@ -6826,7 +6877,7 @@ function flushStudyTime() {
   }
 
   const now = Date.now();
-  const elapsedMs = now - state.lastStudyTickAt;
+  const elapsedMs = Math.min(now - state.lastStudyTickAt, maximumStudyTickMs);
   state.lastStudyTickAt = now;
 
   if (isStudySessionActive() && elapsedMs > 0) {
