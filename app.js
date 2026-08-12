@@ -3394,11 +3394,25 @@ function looksLikeDecimalOption(value) {
 }
 
 function hasBrokenQuestionText(value) {
-  return /Ã|ðŸ|�/.test(String(value || ""));
+  return /Ã|Â|â€|â€™|ðŸ|�/.test(String(value || ""));
 }
 
 function isPlaceholderChoiceLabel(value) {
-  return /^choice\s+[a-z]$/i.test(String(value || "").trim());
+  return /^(choice\s+[a-z]|option\s+[a-z]|answer\s+[a-z])$/i.test(String(value || "").trim());
+}
+
+function isEnglishCategory(category) {
+  return String(category?.id || "").startsWith("english-")
+    || String(category?.factory || "").startsWith("english");
+}
+
+function hasMathContamination(question) {
+  const prompt = String(question?.prompt || "");
+  return /which sign makes|__\s*-?\d|\bsolve\b.*[=+÷×]|\bcalculate\b|\bsquare root\b|\bsin\(|\bcos\(|\btan\(/i.test(prompt);
+}
+
+function isQuestionAppropriateForCategory(category, question) {
+  return !isEnglishCategory(category) || !hasMathContamination(question);
 }
 
 function clearSavedResultForCurrentQuestion() {
@@ -3466,6 +3480,10 @@ function isValidQuestion(question) {
 }
 
 function buildEmergencyQuestion(category, grade, difficulty, index) {
+  if (isEnglishCategory(category)) {
+    return buildEnglishEmergencyQuestion(category, grade, difficulty, index);
+  }
+
   if (category?.factory === "fractionsDecimalsPercent") {
     const fractionDecimalPool = [
       { fraction: "1/2", decimal: "0.5" },
@@ -3501,6 +3519,73 @@ function buildEmergencyQuestion(category, grade, difficulty, index) {
     answerIndex,
     explanation: `${compareA} ${correct} ${compareB}, so ${correct} is the correct sign.`,
     hint: "Compare the two numbers carefully from greatest to least."
+  };
+}
+
+function buildEnglishEmergencyQuestion(category, grade, difficulty, index) {
+  const rng = mulberry32(hashCode(`english-fallback-${category.id}-${grade}-${difficulty}-${index}`));
+
+  if (category.factory === "englishGrammar") {
+    const sets = [
+      ["The student explains the answer clearly.", "The student explain the answer clearly.", "The student explaining the answer clearly.", "The student explains the answer clearly"],
+      ["The musicians practise after school.", "The musicians practises after school.", "The musicians practising after school.", "The musicians practise after school"],
+      ["Maya writes a careful conclusion.", "Maya write a careful conclusion.", "Maya writing a careful conclusion.", "Maya writes a careful conclusion"]
+    ];
+    const [correct, ...distractors] = sets[index % sets.length];
+    return {
+      prompt: "Which sentence uses correct subject-verb agreement and punctuation?",
+      ...buildOptions(correct, distractors, rng),
+      explanation: `${correct} has a verb that agrees with its subject and ends with correct punctuation.`,
+      hint: "Match the verb to the subject, then check the ending punctuation."
+    };
+  }
+
+  if (category.factory === "englishVocabulary") {
+    const words = [
+      ["concise", "brief and clear", "long and confusing", "angry and loud", "old-fashioned"],
+      ["vivid", "clear and detailed", "weak and uncertain", "silent and empty", "ordinary and dull"],
+      ["reluctant", "unwilling or hesitant", "eager and ready", "careless", "completely certain"],
+      ["credible", "believable and trustworthy", "funny", "difficult to hear", "very colourful"],
+      ["infer", "reach a conclusion from evidence", "copy every word", "ask a question", "forget a detail"]
+    ];
+    const [word, correct, ...distractors] = words[index % words.length];
+    return {
+      prompt: `What does “${word}” mean in academic reading?`,
+      ...buildOptions(correct, distractors, rng),
+      explanation: `“${word}” means ${correct}.`,
+      hint: "Choose the meaning that would fit the word in a formal sentence."
+    };
+  }
+
+  if (category.factory === "englishReading") {
+    const settings = ["school library", "community garden", "science fair", "local park", "student newspaper"];
+    const setting = settings[index % settings.length];
+    const correct = `The ${setting} improved because people worked together.`;
+    return {
+      prompt: `Students noticed a problem in the ${setting}, made a plan, and shared the work until it improved. Which statement best expresses the main idea?`,
+      ...buildOptions(correct, [
+        `The ${setting} closed because nobody cared about it.`,
+        `Only one person was allowed to use the ${setting}.`,
+        `The ${setting} was replaced by a shopping centre.`
+      ], rng),
+      explanation: "All the important details show cooperation leading to improvement.",
+      hint: "Choose the statement supported by all the important details."
+    };
+  }
+
+  const topics = ["school clubs", "healthy lunches", "public libraries", "recycling", "team sports"];
+  const topic = topics[index % topics.length];
+  const opening = `${topic.charAt(0).toUpperCase()}${topic.slice(1)}`;
+  const correct = `${opening} benefit students by building useful skills and stronger communities.`;
+  return {
+    prompt: `Which is the strongest topic sentence for a paragraph about ${topic}?`,
+    ...buildOptions(correct, [
+      `${opening} are things.`,
+      `This paragraph will talk about ${topic}.`,
+      `Some people sometimes think about ${topic} and other things.`
+    ], rng),
+    explanation: "The strongest topic sentence states a clear main idea that the paragraph can develop.",
+    hint: "Choose a complete, specific sentence that gives the paragraph a clear direction."
   };
 }
 
@@ -3675,7 +3760,7 @@ function safeGenerateQuestion(category, rng, grade, patTabId, index, difficulty)
   try {
     const rawQuestion = questionFactories[category.factory](rng, grade, { ...category.config, patTabId }, index, difficulty);
     const question = ensureQuestionHint(category.factory, rawQuestion, difficulty, category.config);
-    return isValidQuestion(question) ? question : null;
+    return isValidQuestion(question) && isQuestionAppropriateForCategory(category, question) ? question : null;
   } catch (error) {
     return null;
   }
