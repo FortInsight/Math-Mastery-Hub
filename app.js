@@ -11417,6 +11417,149 @@ const questionFactories = {
       };
     }
 
+    if (level === 10) {
+      const mode = index % 8;
+
+      if (mode === 0) {
+        const a = number(3, difficultyStep(9, difficulty, 26), rng);
+        const b = number(4, difficultyStep(11, difficulty, 32), rng);
+        const exact = Math.sqrt((a * a) + (b * b));
+        const correct = (Math.round(exact * 10) / 10).toFixed(1);
+        const { options, answerIndex } = buildOptions(correct, [
+          (Math.round((a + b) * 10) / 10).toFixed(1),
+          (Math.round(Math.abs(a - b) * 10) / 10).toFixed(1),
+          (Math.round((exact + 2) * 10) / 10).toFixed(1)
+        ], rng);
+        return {
+          prompt: `A right triangle has legs ${a} and ${b}. Which is closest to the hypotenuse length?`,
+          options,
+          answerIndex,
+          explanation: `Step 1: Use the Pythagorean theorem, c^2 = ${a}^2 + ${b}^2.<br>Step 2: Compute ${a * a} + ${b * b} = ${(a * a) + (b * b)}.<br>Step 3: Take the square root: c ≈ ${correct}.`,
+          diagram: triangleDiagram(a, b)
+        };
+      }
+
+      if (mode === 1) {
+        const l = number(4, difficultyStep(9, difficulty, 26), rng);
+        const w = number(3, difficultyStep(8, difficulty, 20), rng);
+        const h = number(2, difficultyStep(6, difficulty, 16), rng);
+        const correct = 2 * ((l * w) + (l * h) + (w * h));
+        const { options, answerIndex } = buildOptions(correct, [correct + (l * w), correct - (w * h), correct + 2 * h], rng);
+        return {
+          prompt: `Find the surface area of this rectangular prism.`,
+          options: options.map((option) => `${option} cm^2`),
+          answerIndex,
+          explanation: `Surface area = 2(lw + lh + wh) = 2(${l * w} + ${l * h} + ${w * h}) = ${correct} cm^2.`,
+          diagram: prismDiagram(l, w, h)
+        };
+      }
+
+      if (mode === 2) {
+        const side = number(2, difficultyStep(9, difficulty, 26), rng);
+        const correct = side * side * side;
+        const { options, answerIndex } = buildOptions(correct, [side * side, 6 * side * side, correct + side], rng);
+        return {
+          prompt: `What is the volume of a cube with side length ${side} cm?`,
+          options: options.map((option) => `${option} cm^3`),
+          answerIndex,
+          explanation: `Volume of a cube is side^3, so ${side}^3 = ${correct} cm^3.`,
+          diagram: cubeDiagram(side)
+        };
+      }
+
+      if (mode === 3) {
+        const x1 = number(-8, 8, rng);
+        const y1 = number(-8, 8, rng);
+        const x2 = number(-8, 8, rng);
+        const y2 = number(-8, 8, rng);
+        const distSq = ((x2 - x1) ** 2) + ((y2 - y1) ** 2);
+        const exact = Math.sqrt(distSq);
+        const correct = (Math.round(exact * 10) / 10).toFixed(1);
+        const { options, answerIndex } = buildOptions(correct, [
+          (Math.round((Math.abs(x2 - x1) + Math.abs(y2 - y1)) * 10) / 10).toFixed(1),
+          (Math.round((exact + 2) * 10) / 10).toFixed(1),
+          (Math.round(Math.abs(exact - 2) * 10) / 10).toFixed(1)
+        ], rng);
+        return {
+          prompt: `What is the distance between points (${x1}, ${y1}) and (${x2}, ${y2}), to the nearest tenth?`,
+          options,
+          answerIndex,
+          explanation: `Use the distance formula: d = √((x2 - x1)^2 + (y2 - y1)^2) = √((${x2 - x1})^2 + (${y2 - y1})^2) = √${distSq} ≈ ${correct}.`
+        };
+      }
+
+      if (mode === 4) {
+        const x1 = number(-10, 10, rng);
+        const y1 = number(-10, 10, rng);
+        const x2 = x1 + (2 * pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5], rng));
+        const y2 = y1 + (2 * pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5], rng));
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2;
+        const correct = `(${midX}, ${midY})`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `(${x1}, ${y1})`,
+          `(${midX + 1}, ${midY})`,
+          `(${midX}, ${midY + 1})`
+        ], rng);
+        return {
+          prompt: `What is the midpoint of the segment joining (${x1}, ${y1}) and (${x2}, ${y2})?`,
+          options,
+          answerIndex,
+          explanation: `Midpoint = ((x1 + x2)/2, (y1 + y2)/2) = ((${x1} + ${x2})/2, (${y1} + ${y2})/2) = ${correct}.`
+        };
+      }
+
+      if (mode === 5) {
+        const radius = number(2, difficultyStep(4, difficulty, 10), rng);
+        const height = number(3, difficultyStep(6, difficulty, 20), rng);
+        const correct = Math.round(Math.PI * radius * radius * height);
+        const { options, answerIndex } = buildOptions(correct, [
+          Math.round(2 * Math.PI * radius * height),
+          Math.round(Math.PI * radius * height),
+          correct + Math.round(Math.PI * radius * radius)
+        ], rng);
+        return {
+          prompt: `What is the volume of a cylinder with radius ${radius} cm and height ${height} cm? Use pi ≈ 3.14 and round to the nearest whole number.`,
+          options: options.map((option) => `${option} cm^3`),
+          answerIndex,
+          explanation: `Volume = pi r^2 h = pi x ${radius}^2 x ${height} ≈ ${correct} cm^3.`
+        };
+      }
+
+      if (mode === 6) {
+        const leg = number(4, difficultyStep(10, difficulty, 24), rng);
+        const hyp = leg + number(3, difficultyStep(8, difficulty, 20), rng);
+        const exact = Math.sqrt((hyp * hyp) - (leg * leg));
+        const correct = (Math.round(exact * 10) / 10).toFixed(1);
+        const { options, answerIndex } = buildOptions(correct, [
+          (Math.round((hyp - leg) * 10) / 10).toFixed(1),
+          (Math.round((exact + 2) * 10) / 10).toFixed(1),
+          (Math.round(Math.abs(exact - 2) * 10) / 10).toFixed(1)
+        ], rng);
+        return {
+          prompt: `A right triangle has a hypotenuse of ${hyp} and one leg of ${leg}. Which is closest to the length of the other leg?`,
+          options,
+          answerIndex,
+          explanation: `Use the Pythagorean theorem: leg^2 = hypotenuse^2 - leg^2 = ${hyp}^2 - ${leg}^2 = ${(hyp * hyp) - (leg * leg)}. Take the square root: ≈ ${correct}.`
+        };
+      }
+
+      const radius = number(2, difficultyStep(4, difficulty, 9), rng);
+      const height = number(3, difficultyStep(5, difficulty, 18), rng);
+      const correct = Math.round((2 * Math.PI * radius * radius) + (2 * Math.PI * radius * height));
+      const { options, answerIndex } = buildOptions(correct, [
+        Math.round(2 * Math.PI * radius * height),
+        Math.round(Math.PI * radius * radius * height),
+        correct + Math.round(2 * Math.PI * radius)
+      ], rng);
+      return {
+        prompt: `What is the surface area of a cylinder with radius ${radius} cm and height ${height} cm? Use pi ≈ 3.14 and round to the nearest whole number.`,
+        options: options.map((option) => `${option} cm^2`),
+        answerIndex,
+        explanation: `Surface area = 2 pi r^2 + 2 pi r h = (2 x pi x ${radius}^2) + (2 x pi x ${radius} x ${height}) ≈ ${correct} cm^2.`
+      };
+    }
+
     if (level >= 4 && index % 5 === 2) {
       const symmetrySetPool = [
         { shape: "an equilateral triangle", order: "3" },
@@ -11785,26 +11928,43 @@ const questionFactories = {
     }
 
     if (config.skill === "powersRadicals") {
-      const mode = index % 4;
+      const mode = index % 7;
       const radicalTable = [
         { radicand: 8, simplified: "2√2" },
         { radicand: 12, simplified: "2√3" },
         { radicand: 18, simplified: "3√2" },
         { radicand: 20, simplified: "2√5" },
+        { radicand: 24, simplified: "2√6" },
         { radicand: 27, simplified: "3√3" },
+        { radicand: 28, simplified: "2√7" },
         { radicand: 32, simplified: "4√2" },
+        { radicand: 40, simplified: "2√10" },
+        { radicand: 44, simplified: "2√11" },
         { radicand: 45, simplified: "3√5" },
+        { radicand: 48, simplified: "4√3" },
         { radicand: 50, simplified: "5√2" },
+        { radicand: 52, simplified: "2√13" },
+        { radicand: 63, simplified: "3√7" },
+        { radicand: 72, simplified: "6√2" },
         { radicand: 75, simplified: "5√3" },
+        { radicand: 80, simplified: "4√5" },
+        { radicand: 90, simplified: "3√10" },
         { radicand: 98, simplified: "7√2" },
+        { radicand: 99, simplified: "3√11" },
+        { radicand: 108, simplified: "6√3" },
+        { radicand: 112, simplified: "4√7" },
         { radicand: 120, simplified: "2√30" },
+        { radicand: 125, simplified: "5√5" },
+        { radicand: 147, simplified: "7√3" },
         { radicand: 150, simplified: "5√6" },
+        { radicand: 162, simplified: "9√2" },
+        { radicand: 175, simplified: "5√7" },
         { radicand: 200, simplified: "10√2" }
       ];
 
       if (mode === 0) {
-        const pool = difficulty <= 2 ? radicalTable.slice(0, 5) : difficulty <= 4 ? radicalTable.slice(0, 10) : radicalTable;
-        const selected = pool[Math.floor(index / 4) % pool.length];
+        const pool = difficulty <= 2 ? radicalTable.slice(0, 10) : difficulty <= 4 ? radicalTable.slice(0, 20) : radicalTable;
+        const selected = pool[Math.floor(index / 7) % pool.length];
         const { options, answerIndex } = buildOptions(selected.simplified, radicalTable.filter((item) => item.simplified !== selected.simplified).slice(0, 3).map((item) => item.simplified), rng);
         return {
           prompt: `Simplify √${selected.radicand}.`,
@@ -11815,7 +11975,7 @@ const questionFactories = {
       }
 
       if (mode === 1) {
-        const base = pick([2, 3, 4, 5, 6, 10], rng);
+        const base = pick([2, 3, 4, 5, 6, 7, 8, 9, 10], rng);
         const exponent = number(1, difficultyStep(2, difficulty, 7), rng);
         const correct = `1/${base}^${exponent}`;
         const { options, answerIndex } = buildOptions(correct, [`${base}^${exponent}`, `-${base}^${exponent}`, `1/${base}`], rng);
@@ -11828,8 +11988,9 @@ const questionFactories = {
       }
 
       if (mode === 2) {
-        const basePool = difficulty <= 3 ? [4, 9, 16, 25, 36, 49, 64] : [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144];
-        const base = basePool[Math.floor(index / 4) % basePool.length];
+        const basePool = [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361, 400, 441];
+        const usablePool = difficulty <= 3 ? basePool.slice(0, 11) : basePool;
+        const base = usablePool[Math.floor(index / 7) % usablePool.length];
         const root = Math.round(Math.sqrt(base));
         const correct = String(root);
         const { options, answerIndex } = buildOptions(correct, [String(root + 1), String(Math.max(1, root - 1)), String(base)], rng);
@@ -11841,20 +12002,73 @@ const questionFactories = {
         };
       }
 
-      const a = pick([2, 3, 5], rng);
-      const b = pick([2, 3, 5].filter((value) => value !== a), rng);
-      const correct = `√${a * b}`;
-      const { options, answerIndex } = buildOptions(correct, [`√${a + b}`, `${a}√${b}`, `√${a}√${b}`], rng);
+      if (mode === 3) {
+        const radicandPool = [2, 3, 5, 6, 7, 10, 11, 13];
+        const a = pick(radicandPool, rng);
+        const b = pick(radicandPool.filter((value) => value !== a), rng);
+        const correct = `√${a * b}`;
+        const { options, answerIndex } = buildOptions(correct, [`√${a + b}`, `${a}√${b}`, `√${a}√${b}`], rng);
+        return {
+          prompt: `Simplify √${a} × √${b}.`,
+          options,
+          answerIndex,
+          explanation: `Multiply the radicands together: √${a} × √${b} = √${a * b}.`
+        };
+      }
+
+      if (mode === 4) {
+        const cubePool = [8, 27, 64, 125, 216, 343, 512, 729, 1000, 1331, 1728];
+        const usablePool = difficulty <= 3 ? cubePool.slice(0, 6) : cubePool;
+        const base = usablePool[Math.floor(index / 7) % usablePool.length];
+        const root = Math.round(Math.cbrt(base));
+        const correct = String(root);
+        const { options, answerIndex } = buildOptions(correct, [String(root + 1), String(Math.max(1, root - 1)), String(base)], rng);
+        return {
+          prompt: `Simplify ${base}^(1/3).`,
+          options,
+          answerIndex,
+          explanation: `A power of 1/3 means cube root. ${base}^(1/3) is the cube root of ${base}, which is ${correct} because ${correct}^3 = ${base}.`
+        };
+      }
+
+      if (mode === 5) {
+        const radicandPool = [2, 3, 5, 6, 7, 10, 11, 13, 14, 15];
+        const radicand = pick(radicandPool, rng);
+        const c1 = number(2, difficultyStep(3, difficulty, 9), rng);
+        const c2 = number(2, difficultyStep(3, difficulty, 9), rng);
+        const correct = `${c1 + c2}√${radicand}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${c1 * c2}√${radicand}`,
+          `${c1 + c2}√${radicand * 2}`,
+          `${Math.abs(c1 - c2)}√${radicand}`
+        ], rng);
+        return {
+          prompt: `Simplify: ${c1}√${radicand} + ${c2}√${radicand}`,
+          options,
+          answerIndex,
+          explanation: `Like radicals add just like like terms: combine the coefficients and keep the radical the same. ${c1}√${radicand} + ${c2}√${radicand} = ${correct}.`
+        };
+      }
+
+      const a = pick([2, 3, 4, 5], rng);
+      const b = number(2, difficultyStep(2, difficulty, 6), rng);
+      const c = number(1, difficultyStep(2, difficulty, 5), rng);
+      const correct = `${a}^${b + c}`;
+      const { options, answerIndex } = buildOptions(correct, [
+        `${a}^${b * c}`,
+        `${a * 2}^${b + c}`,
+        `${a}^${Math.abs(b - c)}`
+      ], rng);
       return {
-        prompt: `Simplify √${a} × √${b}.`,
+        prompt: `Simplify ${a}^${b} × ${a}^${c}.`,
         options,
         answerIndex,
-        explanation: `Multiply the radicands together: √${a} × √${b} = √${a * b}.`
+        explanation: `When multiplying powers with the same base, add the exponents: ${a}^${b} × ${a}^${c} = ${correct}.`
       };
     }
 
     if (level === 10) {
-      const mode = index % 4;
+      const mode = index % 8;
 
       if (mode === 0) {
         const a = number(2, difficultyStep(3, difficulty, 12), rng);
@@ -11909,16 +12123,80 @@ const questionFactories = {
         };
       }
 
-      const x = number(2, difficultyStep(3, difficulty, 9), rng);
-      const leftCoeff = pick([2, 3, 4], rng);
-      const constant = number(2, difficultyStep(3, difficulty, 12), rng);
-      const total = (leftCoeff * x) + constant;
-      const { options, answerIndex } = buildOptions(`x = ${x}`, [`x = ${total}`, `x = ${constant}`, `x = ${x + 1}`], rng);
+      if (mode === 3) {
+        const x = number(2, difficultyStep(3, difficulty, 9), rng);
+        const leftCoeff = pick([2, 3, 4], rng);
+        const constant = number(2, difficultyStep(3, difficulty, 12), rng);
+        const total = (leftCoeff * x) + constant;
+        const { options, answerIndex } = buildOptions(`x = ${x}`, [`x = ${total}`, `x = ${constant}`, `x = ${x + 1}`], rng);
+        return {
+          prompt: `Solve for x: ${leftCoeff}x + ${constant} = ${total}`,
+          options,
+          answerIndex,
+          explanation: `Subtract ${constant} from both sides to get ${leftCoeff}x = ${total - constant}. Then divide by ${leftCoeff}, so x = ${x}.`
+        };
+      }
+
+      if (mode === 4) {
+        const x = number(2, difficultyStep(3, difficulty, 9), rng);
+        const leftCoeff = pick([2, 3, 4], rng);
+        const constant = number(2, difficultyStep(3, difficulty, 12), rng);
+        const total = (leftCoeff * x) - constant;
+        const { options, answerIndex } = buildOptions(`x = ${x}`, [`x = ${total}`, `x = ${-x}`, `x = ${x - 1}`], rng);
+        return {
+          prompt: `Solve for x: ${leftCoeff}x - ${constant} = ${total}`,
+          options,
+          answerIndex,
+          explanation: `Add ${constant} to both sides to get ${leftCoeff}x = ${total + constant}. Then divide by ${leftCoeff}, so x = ${x}.`
+        };
+      }
+
+      if (mode === 5) {
+        const gcf = pick([2, 3, 4, 5], rng);
+        const k = number(2, difficultyStep(3, difficulty, 10), rng);
+        const term = gcf * k;
+        const correct = `${gcf}(x + ${k})`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `${gcf}(x + ${term})`,
+          `${k}(x + ${gcf})`,
+          `${gcf}x + ${k}`
+        ], rng);
+        return {
+          prompt: `Factor: ${gcf}x + ${term}`,
+          options,
+          answerIndex,
+          explanation: `Both terms share a common factor of ${gcf}. Divide each term by ${gcf}: ${gcf}x + ${term} = ${correct}.`
+        };
+      }
+
+      if (mode === 6) {
+        const a = number(1, difficultyStep(2, difficulty, 8), rng);
+        const b = number(1, difficultyStep(2, difficulty, 8), rng);
+        const correct = `x^2 + ${a + b}x + ${a * b}`;
+        const { options, answerIndex } = buildOptions(correct, [
+          `x^2 + ${a * b}x + ${a + b}`,
+          `x^2 + ${a + b}x - ${a * b}`,
+          `x^2 + ${a}x + ${b}`
+        ], rng);
+        return {
+          prompt: `Expand: (x + ${a})(x + ${b})`,
+          options,
+          answerIndex,
+          explanation: `Use FOIL: x times x gives x^2. The outer and inner terms give ${a}x + ${b}x = ${a + b}x. The last terms give ${a} x ${b} = ${a * b}. So the result is ${correct}.`
+        };
+      }
+
+      const x = number(-4, difficultyStep(4, difficulty, 8), rng);
+      const a = number(1, difficultyStep(2, difficulty, 5), rng);
+      const b = number(1, difficultyStep(3, difficulty, 10), rng);
+      const c = number(1, difficultyStep(3, difficulty, 10), rng);
+      const correct = (a * x * x) - (b * x) + c;
+      const { options, answerIndex } = buildOptions(correct, [correct + a, correct - a, (a * x) - b + c], rng);
       return {
-        prompt: `Solve for x: ${leftCoeff}x + ${constant} = ${total}`,
+        prompt: `If x = ${x}, what is ${a}x^2 - ${b}x + ${c}?`,
         options,
         answerIndex,
-        explanation: `Subtract ${constant} from both sides to get ${leftCoeff}x = ${total - constant}. Then divide by ${leftCoeff}, so x = ${x}.`
+        explanation: `Substitute x = ${x}: ${a}(${x})^2 - ${b}(${x}) + ${c} = ${correct}.`
       };
     }
 
@@ -12148,6 +12426,99 @@ const questionFactories = {
         options,
         answerIndex,
         explanation: `Use the complement: 1 - ${fractionString(favorable, total, true)} = ${correct}.`
+      };
+    }
+
+    if (config.level >= 9 && config.level < 11) {
+      const topicMode = index % 6;
+
+      if (topicMode === 0) {
+        const dataLength = difficulty >= 4 ? 5 : 4;
+        const dataMax = difficultyStep(8, difficulty, 55);
+        const data = Array.from({ length: dataLength }, () => number(2, dataMax, rng));
+        const correct = Math.round(data.reduce((sum, value) => sum + value, 0) / data.length);
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, Math.max(0, correct - 1), data[0]], rng);
+        return {
+          prompt: `Which value is the mean rounded to the nearest whole number for ${data.join(", ")}?`,
+          options,
+          answerIndex,
+          explanation: `Step 1: Add the values: ${data.join(" + ")} = ${data.reduce((sum, value) => sum + value, 0)}.<br>Step 2: Divide by ${data.length}.<br>Step 3: Round the result to the nearest whole number. The mean is about ${correct}.`
+        };
+      }
+
+      if (topicMode === 1) {
+        const size = difficulty >= 4 ? 7 : 5;
+        const values = Array.from({ length: size }, () => number(2, difficultyStep(8, difficulty, 60), rng)).sort((a, b) => a - b);
+        const midIndex = Math.floor(size / 2);
+        const correct = values[midIndex];
+        const { options, answerIndex } = buildOptions(correct, [values[midIndex - 1], values[midIndex + 1] || correct + 2, values[0]], rng);
+        return {
+          prompt: `What is the median of ${shuffle(values, rng).join(", ")}?`,
+          options,
+          answerIndex,
+          explanation: `Arrange the values in order: ${values.join(", ")}. The middle value is the median, which is ${correct}.`
+        };
+      }
+
+      if (topicMode === 2) {
+        const modeValue = pick([3, 4, 5, 6, 7, 8, 9], rng);
+        const others = Array.from({ length: 4 }, () => number(1, 12, rng)).filter((value) => value !== modeValue);
+        const data = shuffle([modeValue, modeValue, modeValue, ...others].slice(0, 6), rng);
+        const distractors = [...new Set(data.filter((value) => value !== modeValue))].slice(0, 3);
+        const { options, answerIndex } = buildOptions(modeValue, distractors, rng);
+        return {
+          prompt: `What is the mode of ${data.join(", ")}?`,
+          options,
+          answerIndex,
+          explanation: `The mode is the value that appears most often. Here, ${modeValue} appears the most.`
+        };
+      }
+
+      if (topicMode === 3) {
+        const size = difficulty >= 4 ? 6 : 5;
+        const values = Array.from({ length: size }, () => number(2, difficultyStep(10, difficulty, 70), rng));
+        const correct = Math.max(...values) - Math.min(...values);
+        const { options, answerIndex } = buildOptions(correct, [correct + 2, Math.max(0, correct - 2), Math.max(...values)], rng);
+        return {
+          prompt: `What is the range of this data set: ${values.join(", ")}?`,
+          options,
+          answerIndex,
+          explanation: `Range = greatest value - least value = ${Math.max(...values)} - ${Math.min(...values)} = ${correct}.`
+        };
+      }
+
+      if (topicMode === 4) {
+        const total = pick([6, 8, 10, 12, 15, 20], rng);
+        const favorable = number(1, total - 1, rng);
+        const correct = fractionString(favorable, total, true);
+        const { options, answerIndex } = buildOptions(correct, [
+          fractionString(total - favorable, total, true),
+          fractionString(favorable, total - 1, true),
+          fractionString(Math.min(total, favorable + 1), total, true)
+        ], rng);
+        return {
+          prompt: `An event has ${favorable} favorable outcomes out of ${total} equally likely outcomes. What is the probability?`,
+          options,
+          answerIndex,
+          explanation: `Step 1: Probability = favorable outcomes / total outcomes.<br>Step 2: Write ${favorable}/${total}.<br>Step 3: Simplify if possible. The probability is ${correct}.`
+        };
+      }
+
+      const red = number(3, 9, rng);
+      const blue = number(3, 9, rng);
+      const total = red + blue;
+      const singleProbability = red / total;
+      const correct = formatDecimalAnswer(singleProbability * singleProbability, 3, 2);
+      const { options, answerIndex } = buildOptions(correct, [
+        formatDecimalAnswer(singleProbability, 3, 2),
+        formatDecimalAnswer(singleProbability * (blue / total), 3, 2),
+        formatDecimalAnswer((red + red) / (total + total), 3, 2)
+      ], rng);
+      return {
+        prompt: `A bag has ${red} red marbles and ${blue} blue marbles. You draw one marble, replace it, then draw again. What is the probability both draws are red?`,
+        options,
+        answerIndex,
+        explanation: `Since the marble is replaced, the draws are independent. Multiply the probabilities: (${red}/${total}) x (${red}/${total}) = ${correct}.`
       };
     }
 
@@ -12686,7 +13057,9 @@ const questionFactories = {
     }
 
     if (level < 11) {
-      if (index % 3 === 0) {
+      const relationsMode = index % 6;
+
+      if (relationsMode === 0) {
         const a = pick([1, 2, 3], rng);
         const h = number(-4, 4, rng);
         const k = number(-6, 6, rng);
@@ -12704,7 +13077,7 @@ const questionFactories = {
         };
       }
 
-      if (index % 3 === 1) {
+      if (relationsMode === 1) {
         const a = pick([1, 2, 3], rng);
         const b = pick([2, 3, 4, 5], rng);
         const x = number(1, 4, rng);
@@ -12722,21 +13095,64 @@ const questionFactories = {
         };
       }
 
-      const x = number(1, 5, rng);
-      const a = pick([1, 2, 3], rng);
-      const b = number(-5, 5, rng);
-      const c = number(-6, 6, rng);
-      const correct = (a * x * x) + (b * x) + c;
-      const { options, answerIndex } = buildOptions(correct, [
-        correct + a,
-        correct - a,
-        (a * x) + b + c
-      ], rng);
+      if (relationsMode === 2) {
+        const x = number(1, 5, rng);
+        const a = pick([1, 2, 3], rng);
+        const b = number(-5, 5, rng);
+        const c = number(-6, 6, rng);
+        const correct = (a * x * x) + (b * x) + c;
+        const { options, answerIndex } = buildOptions(correct, [
+          correct + a,
+          correct - a,
+          (a * x) + b + c
+        ], rng);
+        return {
+          prompt: `If f(x) = ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}, what is f(${x})?`,
+          options,
+          answerIndex,
+          explanation: `Substitute x = ${x} into the quadratic and simplify to get ${correct}.`
+        };
+      }
+
+      if (relationsMode === 3) {
+        const a = pick([1, 2, 3], rng);
+        const h = number(-6, 6, rng);
+        const k = number(-6, 6, rng);
+        const correct = `x = ${h}`;
+        const { options, answerIndex } = buildOptions(correct, [`x = ${-h}`, `x = ${k}`, `x = ${h + 1}`], rng);
+        return {
+          prompt: `What is the axis of symmetry for y = ${a}(x ${h < 0 ? "+" : "-"} ${Math.abs(h)})^2 ${k < 0 ? "-" : "+"} ${Math.abs(k)}?`,
+          options,
+          answerIndex,
+          explanation: `In vertex form y = a(x - h)^2 + k, the axis of symmetry is the vertical line x = h. So the axis of symmetry is ${correct}.`
+        };
+      }
+
+      if (relationsMode === 4) {
+        const x1 = number(-6, 3, rng);
+        const x2 = x1 + number(1, difficultyStep(3, difficulty, 8), rng);
+        const slope = pick([2, 3, -2, -3, 4], rng);
+        const y1 = number(-8, 8, rng);
+        const y2 = y1 + (slope * (x2 - x1));
+        const correct = slope;
+        const { options, answerIndex } = buildOptions(correct, [correct + 1, correct - 1, y2 - y1], rng);
+        return {
+          prompt: `A line passes through (${x1}, ${y1}) and (${x2}, ${y2}). What is its slope?`,
+          options,
+          answerIndex,
+          explanation: `Slope = (y2 - y1) / (x2 - x1) = (${y2} - ${y1}) / (${x2} - ${x1}) = ${correct}.`
+        };
+      }
+
+      const a = pick([2, 3, 4, 5, 6], rng);
+      const b = pick([2, 3, 4, 5], rng);
+      const correct = a;
+      const { options, answerIndex } = buildOptions(correct, [correct + b, correct * b, correct - 1 < 1 ? correct + 2 : correct - 1], rng);
       return {
-        prompt: `If f(x) = ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}, what is f(${x})?`,
+        prompt: `A population is modeled by P = ${a}(${b})^t, where t is time in years. What is the initial population, when t = 0?`,
         options,
         answerIndex,
-        explanation: `Substitute x = ${x} into the quadratic and simplify to get ${correct}.`
+        explanation: `At t = 0, P = ${a}(${b})^0 = ${a}(1) = ${a}, since any nonzero number raised to the power 0 equals 1.`
       };
     }
 
@@ -13058,59 +13474,257 @@ const questionFactories = {
       if (tier === 2) {
         const angle = pick([25, 28, 32, 35, 38, 41, 47, 52, 56, 63], rng);
         const knownSide = number(6, 24, rng);
-        const mode = index % 3;
-        const ratios = [Math.sin(angle * Math.PI / 180), Math.cos(angle * Math.PI / 180), Math.tan(angle * Math.PI / 180)];
-        const correct = roundTenth(knownSide * ratios[mode]);
-        const labels = ["opposite side", "adjacent side", "opposite side"];
-        const givens = ["hypotenuse", "hypotenuse", "adjacent side"];
-        const ratioNames = ["sine", "cosine", "tangent"];
-        const { options, answerIndex } = buildOptions(correct, [roundTenth(correct + 2), roundTenth(Math.max(0.1, correct - 2)), roundTenth(knownSide / ratios[mode])], rng);
+        const tier2Mode = index % 5;
+
+        if (tier2Mode <= 2) {
+          const ratios = [Math.sin(angle * Math.PI / 180), Math.cos(angle * Math.PI / 180), Math.tan(angle * Math.PI / 180)];
+          const correct = roundTenth(knownSide * ratios[tier2Mode]);
+          const labels = ["opposite side", "adjacent side", "opposite side"];
+          const givens = ["hypotenuse", "hypotenuse", "adjacent side"];
+          const ratioNames = ["sine", "cosine", "tangent"];
+          const { options, answerIndex } = buildOptions(correct, [roundTenth(correct + 2), roundTenth(Math.max(0.1, correct - 2)), roundTenth(knownSide / ratios[tier2Mode])], rng);
+          return {
+            prompt: `A right triangle has an angle of ${angle} degrees and a ${givens[tier2Mode]} of ${knownSide} cm. Find the ${labels[tier2Mode]} to the nearest tenth.`,
+            options,
+            answerIndex,
+            explanation: `Use ${ratioNames[tier2Mode]}: the required side is ${knownSide} x ${ratioNames[tier2Mode]}(${angle} degrees) = ${correct} cm.`
+          };
+        }
+
+        if (tier2Mode === 3) {
+          const correct = roundTenth(knownSide / Math.sin(angle * Math.PI / 180));
+          const { options, answerIndex } = buildOptions(correct, [roundTenth(correct + 2), roundTenth(Math.max(0.1, correct - 2)), roundTenth(knownSide * Math.sin(angle * Math.PI / 180))], rng);
+          return {
+            prompt: `A right triangle has an angle of ${angle} degrees and the opposite side is ${knownSide} cm. Find the hypotenuse to the nearest tenth.`,
+            options,
+            answerIndex,
+            explanation: `Use sine: sin(${angle} degrees) = ${knownSide} / hypotenuse, so hypotenuse = ${knownSide} / sin(${angle} degrees) = ${correct} cm.`
+          };
+        }
+
+        const correct = roundTenth(knownSide / Math.cos(angle * Math.PI / 180));
+        const { options, answerIndex } = buildOptions(correct, [roundTenth(correct + 2), roundTenth(Math.max(0.1, correct - 2)), roundTenth(knownSide * Math.cos(angle * Math.PI / 180))], rng);
         return {
-          prompt: `A right triangle has an angle of ${angle} degrees and a ${givens[mode]} of ${knownSide} cm. Find the ${labels[mode]} to the nearest tenth.`,
+          prompt: `A right triangle has an angle of ${angle} degrees and the adjacent side is ${knownSide} cm. Find the hypotenuse to the nearest tenth.`,
           options,
           answerIndex,
-          explanation: `Use ${ratioNames[mode]}: the required side is ${knownSide} x ${ratioNames[mode]}(${angle} degrees) = ${correct} cm.`
+          explanation: `Use cosine: cos(${angle} degrees) = ${knownSide} / hypotenuse, so hypotenuse = ${knownSide} / cos(${angle} degrees) = ${correct} cm.`
         };
       }
 
       if (tier === 3) {
-        const adjacent = number(5, 22, rng);
-        const opposite = number(4, 20, rng);
-        const angle = roundTenth(Math.atan(opposite / adjacent) * 180 / Math.PI);
-        const { options, answerIndex } = buildOptions(angle, [roundTenth(90 - angle), roundTenth(angle + 8), roundTenth(Math.max(1, angle - 8))], rng);
+        const tier3Mode = index % 5;
+
+        if (tier3Mode === 0) {
+          const adjacent = number(5, 22, rng);
+          const opposite = number(4, 20, rng);
+          const angle = roundTenth(Math.atan(opposite / adjacent) * 180 / Math.PI);
+          const { options, answerIndex } = buildOptions(angle, [roundTenth(90 - angle), roundTenth(angle + 8), roundTenth(Math.max(1, angle - 8))], rng);
+          return {
+            prompt: `In a right triangle, the side opposite angle theta is ${opposite} m and the adjacent side is ${adjacent} m. Find theta to the nearest tenth of a degree.`,
+            options,
+            answerIndex,
+            explanation: `tan(theta) = ${opposite}/${adjacent}. Therefore theta = tan^-1(${opposite}/${adjacent}) = ${angle} degrees.`
+          };
+        }
+
+        if (tier3Mode === 1) {
+          const opposite = number(4, 18, rng);
+          const hypotenuse = opposite + number(3, 15, rng);
+          const angle = roundTenth(Math.asin(opposite / hypotenuse) * 180 / Math.PI);
+          const { options, answerIndex } = buildOptions(angle, [roundTenth(90 - angle), roundTenth(angle + 8), roundTenth(Math.max(1, angle - 8))], rng);
+          return {
+            prompt: `In a right triangle, the side opposite angle theta is ${opposite} m and the hypotenuse is ${hypotenuse} m. Find theta to the nearest tenth of a degree.`,
+            options,
+            answerIndex,
+            explanation: `sin(theta) = ${opposite}/${hypotenuse}. Therefore theta = sin^-1(${opposite}/${hypotenuse}) = ${angle} degrees.`
+          };
+        }
+
+        if (tier3Mode === 2) {
+          const adjacent = number(4, 18, rng);
+          const hypotenuse = adjacent + number(3, 15, rng);
+          const angle = roundTenth(Math.acos(adjacent / hypotenuse) * 180 / Math.PI);
+          const { options, answerIndex } = buildOptions(angle, [roundTenth(90 - angle), roundTenth(angle + 8), roundTenth(Math.max(1, angle - 8))], rng);
+          return {
+            prompt: `In a right triangle, the side adjacent to angle theta is ${adjacent} m and the hypotenuse is ${hypotenuse} m. Find theta to the nearest tenth of a degree.`,
+            options,
+            answerIndex,
+            explanation: `cos(theta) = ${adjacent}/${hypotenuse}. Therefore theta = cos^-1(${adjacent}/${hypotenuse}) = ${angle} degrees.`
+          };
+        }
+
+        if (tier3Mode === 3) {
+          const opposite = number(4, 18, rng);
+          const hypotenuse = opposite + number(3, 15, rng);
+          const correct = (Math.round((opposite / hypotenuse) * 100) / 100).toFixed(2);
+          const { options, answerIndex } = buildOptions(correct, [
+            (Math.round((hypotenuse / opposite) * 100) / 100).toFixed(2),
+            (Math.round(((opposite + 1) / hypotenuse) * 100) / 100).toFixed(2),
+            (Math.round((opposite / (hypotenuse + 1)) * 100) / 100).toFixed(2)
+          ], rng);
+          return {
+            prompt: `In a right triangle, the side opposite angle theta is ${opposite} m and the hypotenuse is ${hypotenuse} m. What is sin(theta), rounded to the nearest hundredth?`,
+            options,
+            answerIndex,
+            explanation: `sin(theta) = opposite / hypotenuse = ${opposite}/${hypotenuse} ≈ ${correct}.`
+          };
+        }
+
+        const adjacent = number(4, 18, rng);
+        const hypotenuse = adjacent + number(3, 15, rng);
+        const correct = (Math.round((adjacent / hypotenuse) * 100) / 100).toFixed(2);
+        const { options, answerIndex } = buildOptions(correct, [
+          (Math.round((hypotenuse / adjacent) * 100) / 100).toFixed(2),
+          (Math.round(((adjacent + 1) / hypotenuse) * 100) / 100).toFixed(2),
+          (Math.round((adjacent / (hypotenuse + 1)) * 100) / 100).toFixed(2)
+        ], rng);
         return {
-          prompt: `In a right triangle, the side opposite angle theta is ${opposite} m and the adjacent side is ${adjacent} m. Find theta to the nearest tenth of a degree.`,
+          prompt: `In a right triangle, the side adjacent to angle theta is ${adjacent} m and the hypotenuse is ${hypotenuse} m. What is cos(theta), rounded to the nearest hundredth?`,
           options,
           answerIndex,
-          explanation: `tan(theta) = ${opposite}/${adjacent}. Therefore theta = tan^-1(${opposite}/${adjacent}) = ${angle} degrees.`
+          explanation: `cos(theta) = adjacent / hypotenuse = ${adjacent}/${hypotenuse} ≈ ${correct}.`
         };
       }
 
       if (tier === 4) {
-        const angle = number(24, 58, rng);
-        const horizontal = number(12, 48, rng);
-        const eyeHeight = pick([1.5, 1.6, 1.7], rng);
-        const height = roundTenth(horizontal * Math.tan(angle * Math.PI / 180) + eyeHeight);
-        const { options, answerIndex } = buildOptions(height, [roundTenth(height - eyeHeight), roundTenth(horizontal / Math.tan(angle * Math.PI / 180)), roundTenth(height + horizontal / 10)], rng);
+        const tier4Mode = index % 5;
+
+        if (tier4Mode === 0) {
+          const angle = number(24, 58, rng);
+          const horizontal = number(12, 48, rng);
+          const eyeHeight = pick([1.5, 1.6, 1.7], rng);
+          const height = roundTenth(horizontal * Math.tan(angle * Math.PI / 180) + eyeHeight);
+          const { options, answerIndex } = buildOptions(height, [roundTenth(height - eyeHeight), roundTenth(horizontal / Math.tan(angle * Math.PI / 180)), roundTenth(height + horizontal / 10)], rng);
+          return {
+            prompt: `From ${horizontal} m away, a surveyor measures an angle of elevation of ${angle} degrees to the top of a building. The instrument is ${eyeHeight} m high. Find the building height to the nearest tenth.`,
+            options,
+            answerIndex,
+            explanation: `First find the rise: ${horizontal}tan(${angle} degrees). Then add the ${eyeHeight} m instrument height, giving ${height} m.`
+          };
+        }
+
+        if (tier4Mode === 1) {
+          const cliffHeight = number(15, 60, rng);
+          const angle = number(20, 55, rng);
+          const distance = roundTenth(cliffHeight / Math.tan(angle * Math.PI / 180));
+          const { options, answerIndex } = buildOptions(distance, [roundTenth(distance + 5), roundTenth(Math.max(1, distance - 5)), roundTenth(cliffHeight * Math.tan(angle * Math.PI / 180))], rng);
+          return {
+            prompt: `A lighthouse is ${cliffHeight} m tall. From the top, the angle of depression to a boat is ${angle} degrees. Find the horizontal distance to the boat to the nearest tenth.`,
+            options,
+            answerIndex,
+            explanation: `The angle of depression equals the angle of elevation from the boat. tan(${angle} degrees) = ${cliffHeight} / distance, so distance = ${cliffHeight} / tan(${angle} degrees) = ${distance} m.`
+          };
+        }
+
+        if (tier4Mode === 2) {
+          const ladderLength = number(8, 20, rng);
+          const angle = number(30, 70, rng);
+          const height = roundTenth(ladderLength * Math.sin(angle * Math.PI / 180));
+          const { options, answerIndex } = buildOptions(height, [roundTenth(height + 1), roundTenth(Math.max(0.5, height - 1)), roundTenth(ladderLength * Math.cos(angle * Math.PI / 180))], rng);
+          return {
+            prompt: `A ${ladderLength} m ladder leans against a wall, making an angle of ${angle} degrees with the ground. How high up the wall does it reach, to the nearest tenth?`,
+            options,
+            answerIndex,
+            explanation: `The height reached is the side opposite the angle, so height = ${ladderLength} x sin(${angle} degrees) = ${height} m.`
+          };
+        }
+
+        if (tier4Mode === 3) {
+          const escalatorLength = number(10, 30, rng);
+          const angle = number(20, 40, rng);
+          const horizontalRun = roundTenth(escalatorLength * Math.cos(angle * Math.PI / 180));
+          const { options, answerIndex } = buildOptions(horizontalRun, [roundTenth(horizontalRun + 3), roundTenth(Math.max(1, horizontalRun - 3)), roundTenth(escalatorLength * Math.sin(angle * Math.PI / 180))], rng);
+          return {
+            prompt: `An escalator is ${escalatorLength} m long and rises at an angle of ${angle} degrees. Find the horizontal distance it covers, to the nearest tenth.`,
+            options,
+            answerIndex,
+            explanation: `The horizontal run is adjacent to the angle, so horizontal distance = ${escalatorLength} x cos(${angle} degrees) = ${horizontalRun} m.`
+          };
+        }
+
+        const ziplineLength = number(15, 45, rng);
+        const angle = number(10, 35, rng);
+        const verticalDrop = roundTenth(ziplineLength * Math.sin(angle * Math.PI / 180));
+        const { options, answerIndex } = buildOptions(verticalDrop, [roundTenth(verticalDrop + 3), roundTenth(Math.max(1, verticalDrop - 3)), roundTenth(ziplineLength * Math.cos(angle * Math.PI / 180))], rng);
         return {
-          prompt: `From ${horizontal} m away, a surveyor measures an angle of elevation of ${angle} degrees to the top of a building. The instrument is ${eyeHeight} m high. Find the building height to the nearest tenth.`,
+          prompt: `A zip line is ${ziplineLength} m long and slopes down at an angle of ${angle} degrees. Find the vertical drop from start to finish, to the nearest tenth.`,
           options,
           answerIndex,
-          explanation: `First find the rise: ${horizontal}tan(${angle} degrees). Then add the ${eyeHeight} m instrument height, giving ${height} m.`
+          explanation: `The vertical drop is opposite the angle, so vertical drop = ${ziplineLength} x sin(${angle} degrees) = ${verticalDrop} m.`
         };
       }
 
-      const angle = number(28, 62, rng);
-      const shadow = number(9, 35, rng);
-      const firstHeight = roundTenth(shadow * Math.tan(angle * Math.PI / 180));
-      const extension = number(2, 8, rng);
-      const finalHeight = roundTenth(firstHeight + extension);
-      const { options, answerIndex } = buildOptions(finalHeight, [firstHeight, roundTenth(finalHeight - extension / 2), roundTenth(shadow / Math.tan(angle * Math.PI / 180) + extension)], rng);
+      const tier5Mode = index % 5;
+
+      if (tier5Mode === 0) {
+        const angle = number(28, 62, rng);
+        const shadow = number(9, 35, rng);
+        const firstHeight = roundTenth(shadow * Math.tan(angle * Math.PI / 180));
+        const extension = number(2, 8, rng);
+        const finalHeight = roundTenth(firstHeight + extension);
+        const { options, answerIndex } = buildOptions(finalHeight, [firstHeight, roundTenth(finalHeight - extension / 2), roundTenth(shadow / Math.tan(angle * Math.PI / 180) + extension)], rng);
+        return {
+          prompt: `A tower casts a ${shadow} m shadow when the angle of elevation is ${angle} degrees. A ${extension} m antenna sits on top. Find the total height to the nearest tenth.`,
+          options,
+          answerIndex,
+          explanation: `Tower height = ${shadow}tan(${angle} degrees) = ${firstHeight} m. Add the ${extension} m antenna: ${firstHeight} + ${extension} = ${finalHeight} m.`
+        };
+      }
+
+      if (tier5Mode === 1) {
+        const anchorDistance = number(6, 20, rng);
+        const angle = number(35, 70, rng);
+        const wireLength = roundTenth(anchorDistance / Math.cos(angle * Math.PI / 180));
+        const { options, answerIndex } = buildOptions(wireLength, [roundTenth(wireLength + 2), roundTenth(Math.max(1, wireLength - 2)), roundTenth(anchorDistance * Math.cos(angle * Math.PI / 180))], rng);
+        return {
+          prompt: `A guy wire anchors a flagpole to the ground ${anchorDistance} m from its base, making an angle of ${angle} degrees with the ground. Find the length of the wire to the nearest tenth.`,
+          options,
+          answerIndex,
+          explanation: `The wire is the hypotenuse, and the anchor distance is adjacent to the angle. cos(${angle} degrees) = ${anchorDistance} / wire length, so wire length = ${anchorDistance} / cos(${angle} degrees) = ${wireLength} m.`
+        };
+      }
+
+      if (tier5Mode === 2) {
+        const windowHeight = number(3, 12, rng);
+        const distance = number(10, 40, rng);
+        const angle = number(15, 45, rng);
+        const buildingHeight = roundTenth(windowHeight + (distance * Math.tan(angle * Math.PI / 180)));
+        const { options, answerIndex } = buildOptions(buildingHeight, [roundTenth(buildingHeight - windowHeight), roundTenth(distance * Math.tan(angle * Math.PI / 180)), roundTenth(buildingHeight + windowHeight)], rng);
+        return {
+          prompt: `From a window ${windowHeight} m above the ground, the angle of elevation to the top of a building ${distance} m away is ${angle} degrees. Find the height of the building to the nearest tenth.`,
+          options,
+          answerIndex,
+          explanation: `Rise above the window = ${distance}tan(${angle} degrees). Add the window height: ${distance}tan(${angle} degrees) + ${windowHeight} = ${buildingHeight} m.`
+        };
+      }
+
+      if (tier5Mode === 3) {
+        const cliffHeight = number(20, 70, rng);
+        const nearAngle = number(35, 60, rng);
+        const farAngle = number(15, nearAngle - 5, rng);
+        const nearDistance = cliffHeight / Math.tan(nearAngle * Math.PI / 180);
+        const farDistance = cliffHeight / Math.tan(farAngle * Math.PI / 180);
+        const correct = roundTenth(farDistance - nearDistance);
+        const { options, answerIndex } = buildOptions(correct, [roundTenth(farDistance + nearDistance), roundTenth(correct + 5), roundTenth(Math.max(1, correct - 5))], rng);
+        return {
+          prompt: `From the top of a ${cliffHeight} m cliff, the angles of depression to two boats in a line are ${nearAngle} degrees and ${farAngle} degrees. Find the distance between the boats to the nearest tenth.`,
+          options,
+          answerIndex,
+          explanation: `Find each boat's distance from the base of the cliff using tan(angle) = height / distance, then subtract: ${cliffHeight}/tan(${farAngle} degrees) - ${cliffHeight}/tan(${nearAngle} degrees) ≈ ${correct} m.`
+        };
+      }
+
+      const windowHeight = number(3, 12, rng);
+      const buildingHeight = windowHeight + number(8, 40, rng);
+      const angle = number(15, 45, rng);
+      const distance = roundTenth((buildingHeight - windowHeight) / Math.tan(angle * Math.PI / 180));
+      const { options, answerIndex } = buildOptions(distance, [roundTenth(distance + 5), roundTenth(Math.max(1, distance - 5)), roundTenth((buildingHeight - windowHeight) * Math.tan(angle * Math.PI / 180))], rng);
       return {
-        prompt: `A tower casts a ${shadow} m shadow when the angle of elevation is ${angle} degrees. A ${extension} m antenna sits on top. Find the total height to the nearest tenth.`,
+        prompt: `From a window ${windowHeight} m above the ground, the angle of elevation to the top of a ${buildingHeight} m building is ${angle} degrees. How far away is the building, to the nearest tenth?`,
         options,
         answerIndex,
-        explanation: `Tower height = ${shadow}tan(${angle} degrees) = ${firstHeight} m. Add the ${extension} m antenna: ${firstHeight} + ${extension} = ${finalHeight} m.`
+        explanation: `The rise above the window is ${buildingHeight} - ${windowHeight} = ${buildingHeight - windowHeight} m. Since tan(${angle} degrees) = rise / distance, distance = ${buildingHeight - windowHeight} / tan(${angle} degrees) ≈ ${distance} m.`
       };
     }
 
@@ -13435,7 +14049,9 @@ const questionFactories = {
       };
     }
 
-    if (index % 2 === 0) {
+    const financeMode = index % 5;
+
+    if (financeMode === 0) {
       const price = number(20, difficultyStep(40, difficulty, 850), rng);
       const discount = pick(difficulty <= 3 ? [5, 10, 15, 20, 25] : [5, 10, 12, 15, 18, 20, 25, 30, 35], rng);
       const correct = (price * (1 - discount / 100)).toFixed(2);
@@ -13452,19 +14068,70 @@ const questionFactories = {
       };
     }
 
-    const principal = number(100, difficultyStep(150, difficulty, 7000), rng);
-    const rate = pick(difficulty <= 3 ? [2, 3, 4, 5, 6] : [2.5, 3, 4.5, 5, 6.5, 8], rng);
-    const correct = (principal * rate / 100).toFixed(2);
+    if (financeMode === 1) {
+      const principal = number(100, difficultyStep(150, difficulty, 7000), rng);
+      const rate = pick(difficulty <= 3 ? [2, 3, 4, 5, 6] : [2.5, 3, 4.5, 5, 6.5, 8], rng);
+      const correct = (principal * rate / 100).toFixed(2);
+      const { options, answerIndex } = buildOptions(correct, [
+        (principal + principal * rate / 100).toFixed(2),
+        (principal / rate).toFixed(2),
+        (principal * (rate + 1) / 100).toFixed(2)
+      ], rng);
+      return {
+        prompt: `What is the simple interest on $${principal} for 1 year at ${rate}%?`,
+        options: options.map((option) => `$${option}`),
+        answerIndex,
+        explanation: `Simple interest = principal x rate = ${principal} x ${rate}% = $${correct}.`
+      };
+    }
+
+    if (financeMode === 2) {
+      const price = number(15, difficultyStep(35, difficulty, 600), rng);
+      const taxRate = pick(difficulty <= 3 ? [5, 6, 7, 8] : [5, 6, 7, 8, 9, 10, 12], rng);
+      const correct = (price * (1 + taxRate / 100)).toFixed(2);
+      const { options, answerIndex } = buildOptions(correct, [
+        (price * (taxRate / 100)).toFixed(2),
+        (price * (1 - taxRate / 100)).toFixed(2),
+        (price + taxRate).toFixed(2)
+      ], rng);
+      return {
+        prompt: `An item costs $${price} before tax. If the sales tax rate is ${taxRate}%, what is the total price including tax?`,
+        options: options.map((option) => `$${option}`),
+        answerIndex,
+        explanation: `Total price = ${price} x (1 + ${taxRate}/100) = $${correct}.`
+      };
+    }
+
+    if (financeMode === 3) {
+      const bill = number(15, difficultyStep(30, difficulty, 200), rng);
+      const tipRate = pick(difficulty <= 3 ? [10, 15, 20] : [10, 12, 15, 18, 20, 22], rng);
+      const correct = (bill * (1 + tipRate / 100)).toFixed(2);
+      const { options, answerIndex } = buildOptions(correct, [
+        (bill * (tipRate / 100)).toFixed(2),
+        (bill + tipRate).toFixed(2),
+        (bill * (1 - tipRate / 100)).toFixed(2)
+      ], rng);
+      return {
+        prompt: `A restaurant bill is $${bill}. If a ${tipRate}% tip is added, what is the total amount paid?`,
+        options: options.map((option) => `$${option}`),
+        answerIndex,
+        explanation: `Total paid = ${bill} x (1 + ${tipRate}/100) = $${correct}.`
+      };
+    }
+
+    const income = number(400, difficultyStep(800, difficulty, 4500), rng);
+    const percent = pick(difficulty <= 3 ? [10, 20, 25, 30] : [10, 15, 20, 25, 30, 35, 40], rng);
+    const correct = (income * percent / 100).toFixed(2);
     const { options, answerIndex } = buildOptions(correct, [
-      (principal + principal * rate / 100).toFixed(2),
-      (principal / rate).toFixed(2),
-      (principal * (rate + 1) / 100).toFixed(2)
+      (income * (1 - percent / 100)).toFixed(2),
+      (income / percent).toFixed(2),
+      (income * (percent + 5) / 100).toFixed(2)
     ], rng);
     return {
-      prompt: `What is the simple interest on $${principal} for 1 year at ${rate}%?`,
+      prompt: `A monthly budget sets aside ${percent}% of a $${income} income for groceries. How much money is that?`,
       options: options.map((option) => `$${option}`),
       answerIndex,
-      explanation: `Simple interest = principal x rate = ${principal} x ${rate}% = $${correct}.`
+      explanation: `Budget amount = ${income} x ${percent}/100 = $${correct}.`
     };
   },
 
