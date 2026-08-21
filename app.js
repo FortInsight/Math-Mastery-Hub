@@ -6862,6 +6862,23 @@ function createEmptyStudyTime() {
   };
 }
 
+// A parent account with no child profile selected yet (or a brand-new
+// parent account that hasn't added a child) can still land on the quiz
+// screen and rack up study time. getActiveStudyTimeStore() and
+// renderHeroActivity() used to hand back a fresh createEmptyStudyTime()
+// object in that case - since nothing ever held onto that object, every
+// second recorded while no child was selected was silently thrown away
+// instead of being saved anywhere. Parking it on the account itself keeps
+// it from disappearing; it can be migrated onto a child profile later if
+// needed.
+function getOrCreateAccountUnassignedStudyTime(account) {
+  if (!account.unassignedStudyTime || typeof account.unassignedStudyTime !== "object") {
+    account.unassignedStudyTime = createEmptyStudyTime();
+  }
+  ensureStudyTimeShape(account.unassignedStudyTime);
+  return account.unassignedStudyTime;
+}
+
 function createEmptyLearnerGoals() {
   return {
     selectedSubject: "math",
@@ -6903,7 +6920,7 @@ function getActiveStudyTimeStore() {
     return profile.studyTime;
   }
   if (account) {
-    return createEmptyStudyTime();
+    return getOrCreateAccountUnassignedStudyTime(account);
   }
   ensureGuestStoreShape();
   return guestStore.studyTime;
@@ -7049,6 +7066,11 @@ function persistStudyTime() {
     return;
   }
   if (account) {
+    // No active child profile - the time was tracked onto
+    // account.unassignedStudyTime by getActiveStudyTimeStore(), so it
+    // still needs to actually be saved here instead of being dropped.
+    profilesStore.profiles[account.id] = account;
+    saveProfilesStore();
     return;
   }
   saveGuestStore();
@@ -7099,7 +7121,7 @@ function renderHeroActivity() {
   const account = getCurrentAccount();
   const profile = getCurrentProfile();
   ensureGuestStoreShape();
-  const studyTime = profile ? profile.studyTime : account ? createEmptyStudyTime() : guestStore.studyTime;
+  const studyTime = profile ? profile.studyTime : account ? getOrCreateAccountUnassignedStudyTime(account) : guestStore.studyTime;
   const scoreHistory = profile ? profile.scoreHistory : account ? [] : guestStore.scoreHistory;
   ensureStudyTimeShape(studyTime);
 
